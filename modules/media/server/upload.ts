@@ -12,6 +12,17 @@ import { writeFile, mkdir } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
 
+type VariantRecord = {
+  variant: string;
+  storedName: string;
+  relPath: string;
+  absPath: string;
+  url: string;
+  width: number;
+  height: number;
+  size: number;
+};
+
 export async function uploadMediaAction(
   formData: FormData
 ): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
@@ -42,28 +53,22 @@ export async function uploadMediaAction(
   }
 
   const root = getUploadRoot();
-  const variantRecords: {
-    variant: string;
-    absPath: string;
-    url: string;
-    width: number;
-    height: number;
-    size: number;
-  }[] = [];
+  const variantRecords: VariantRecord[] = [];
 
   for (const variantName of Object.keys(processed.variants) as Array<
     keyof typeof processed.variants
   >) {
     const v = processed.variants[variantName];
-    const filename = `${variantName}.webp`;
-    const storedName = `${randomUUID()}-${filename}`;
-    const rel = pathForUpload(storedName);
-    const abs = join(root, rel);
-    await mkdir(dirname(abs), { recursive: true });
-    await writeFile(abs, v.buffer);
+    const storedName = `${randomUUID()}-${variantName}.webp`;
+    const relPath = pathForUpload(storedName);
+    const absPath = join(root, relPath);
+    await mkdir(dirname(absPath), { recursive: true });
+    await writeFile(absPath, v.buffer);
     variantRecords.push({
       variant: variantName,
-      absPath: abs,
+      storedName,
+      relPath,
+      absPath,
       url: publicUrlFor(storedName),
       width: v.width,
       height: v.height,
@@ -75,8 +80,8 @@ export async function uploadMediaAction(
   const record = await db.media.create({
     data: {
       originalName: file.name.slice(0, 255),
-      storedName: first.absPath.split(/[\\/]/).pop() ?? 'upload.webp',
-      path: first.absPath.slice(root.length + 1).replace(/\\/g, '/'),
+      storedName: first.storedName,
+      path: first.relPath, // already posix — DB stores verbatim
       url: first.url,
       mimeType: 'image/webp',
       fileSize: first.size,

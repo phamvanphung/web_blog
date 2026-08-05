@@ -5,7 +5,7 @@
 // this route entirely — see P7 deploy notes.
 
 import { getUploadRoot } from '@/lib/storage';
-import { join, normalize, sep } from 'node:path';
+import { join, sep } from 'node:path';
 import { createReadStream, statSync } from 'node:fs';
 import { Readable } from 'node:stream';
 
@@ -32,11 +32,11 @@ export async function GET(
   if (segments.some((s) => s === '..' || s.includes('\0'))) {
     return new Response('Forbidden', { status: 403 });
   }
-  const rel = segments.join('/');
-  const root = normalize(getUploadRoot()) + sep;
-  const abs = normalize(join(getUploadRoot(), rel));
+  // getUploadRoot() already normalises (path.resolve). Append sep so prefix check is exact.
+  const root = getUploadRoot() + sep;
+  const abs = join(root, segments.join(sep));
   // Ensure resolved path is still under the upload root.
-  if (!normalize(abs).startsWith(root)) {
+  if (!(abs + sep).startsWith(root)) {
     return new Response('Forbidden', { status: 403 });
   }
   let stat;

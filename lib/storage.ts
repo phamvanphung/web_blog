@@ -1,5 +1,7 @@
 // lib/storage.ts
-// Storage helpers (local filesystem). Real implementation arrives in P2 (Media).
+// Storage helpers (local filesystem). Storage path is always posix-style
+// (YYYY/MM/<name>) for cross-platform DB portability; FS ops join with
+// OS-native separators via node:path at call time.
 //
 // Cross-platform rules:
 //   - Never hardcode OS-specific paths in source.
@@ -11,8 +13,9 @@ import path from 'node:path';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
-export { MAX_UPLOAD_BYTES } from '@/modules/media/types';
 import { MAX_UPLOAD_BYTES } from '@/modules/media/types';
+
+export { MAX_UPLOAD_BYTES };
 
 const DEFAULT_ROOT = './storage/uploads';
 
@@ -25,15 +28,6 @@ export function getUploadRoot(): string {
 /** Public URL prefix where uploads are served (Nginx static in production). */
 export function getUploadPublicBase(): string {
   return process.env.UPLOAD_PUBLIC_BASE ?? '/uploads';
-}
-
-/**
- * Build an absolute filesystem path for a given stored name.
- * Real impl (P2) will sanitise the name, ensure it's inside the root,
- * and create year/month subdirectories. STUB for now.
- */
-export function buildStoragePath(_storedName: string): string {
-  return getUploadRoot();
 }
 
 /**
@@ -111,7 +105,6 @@ export class LocalDiskStorage implements StorageAdapter {
 export const storage = {
   getUploadRoot,
   getUploadPublicBase,
-  buildStoragePath,
   pathForUpload,
   newStoredName,
   publicUrlFor,
