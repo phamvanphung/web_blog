@@ -1,0 +1,39 @@
+node_modules/
+.next/
+out/
+build/
+dist/
+
+# env
+.env
+.env.local
+.env.*.local
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# os
+.DS_Store
+Thumbs.db
+
+# editor
+.vscode/
+.idea/
+*.swp
+
+# prisma
+prisma/migrations/dev.db*
+
+# uploads (storage ngoài source trên prod; local có thể tạm commit)
+# storage/uploads/**
+
+# tests
+coverage/
+playwright-report/
+test-results/
+
+# tsbuild
+*.tsbuildinfo
+next-env.d.ts
