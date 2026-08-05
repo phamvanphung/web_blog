@@ -26,4 +26,9 @@ if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma;
 }
 
+// `db` is the conventional alias used by route handlers and Server Components
+// (see app/admin/(authenticated)/dashboard/page.tsx). Re-exporting it keeps
+// imports readable while preserving the original `prisma` name for clarity.
+export const db = prisma;
+
 export default prisma;
