@@ -8,6 +8,7 @@
 //   - Set UPLOAD_ROOT in the environment to override the default at deploy time.
 
 import path from 'node:path';
+import { randomUUID } from 'node:crypto';
 
 const DEFAULT_ROOT = './storage/uploads';
 
@@ -29,6 +30,29 @@ export function getUploadPublicBase(): string {
  */
 export function buildStoragePath(_storedName: string): string {
   return getUploadRoot();
+}
+
+/**
+ * Build the relative disk path for a stored upload file.
+ * Format: YYYY/MM/<name> (year/month derived from current date UTC).
+ * Uses posix separators so the value is stable across Windows/Linux.
+ */
+export function pathForUpload(storedName: string): string {
+  const now = new Date();
+  const year = String(now.getUTCFullYear());
+  const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+  return path.posix.join(year, month, storedName);
+}
+
+/** Generate a unique stored filename. */
+export function newStoredName(ext = 'webp'): string {
+  return `${randomUUID()}.${ext}`;
+}
+
+/** Public URL for a stored upload. Uses UPLOAD_PUBLIC_BASE (defaults to /uploads). */
+export function publicUrlFor(storedName: string): string {
+  const base = getUploadPublicBase().replace(/\/$/, '');
+  return `${base}/${pathForUpload(storedName)}`.replace(/\\/g, '/');
 }
 
 // ============================================================
@@ -67,7 +91,10 @@ export class LocalDiskStorage implements StorageAdapter {
 export const storage = {
   getUploadRoot,
   getUploadPublicBase,
-  buildStoragePath
+  buildStoragePath,
+  pathForUpload,
+  newStoredName,
+  publicUrlFor
 };
 
 export default storage;
