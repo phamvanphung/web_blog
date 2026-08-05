@@ -20,7 +20,10 @@ export function newSessionId(): string {
 /** SHA-256(pepper + ip), truncated to fit @db.VarChar(64). */
 export function hashIpSync(ip: string): string {
   const pepper = process.env.SESSION_IP_PEPPER ?? '';
-  return createHash('sha256').update(pepper + '|' + ip).digest('hex').slice(0, 64);
+  return createHash('sha256')
+    .update(pepper + '|' + ip)
+    .digest('hex')
+    .slice(0, 64);
 }
 
 /**

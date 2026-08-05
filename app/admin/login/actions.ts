@@ -14,10 +14,7 @@ export async function loginAction(
   const password = String(formData.get('password') ?? '');
 
   const h = await headers();
-  const ip =
-    h.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    h.get('x-real-ip') ??
-    null;
+  const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? null;
   const userAgent = h.get('user-agent') ?? null;
 
   const result = await attemptLogin({ email, password, ip, userAgent });

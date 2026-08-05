@@ -43,10 +43,7 @@ export default function LoginPage() {
         </label>
 
         {state?.error && (
-          <div
-            role="alert"
-            className="border border-line bg-bg p-3 text-sm text-muted"
-          >
+          <div role="alert" className="border border-line bg-bg p-3 text-sm text-muted">
             {state.error}
           </div>
         )}

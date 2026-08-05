@@ -18,8 +18,7 @@ const Credentials = z.object({
 const attemptsLimiter = createLimiter({ max: 5, windowMs: 15 * 60 * 1000 });
 
 export type LoginResult =
-  | { ok: true }
-  | { ok: false; code: 'invalid' | 'throttled' | 'disabled'; message: string };
+  { ok: true } | { ok: false; code: 'invalid' | 'throttled' | 'disabled'; message: string };
 
 export async function attemptLogin(args: {
   email: string;

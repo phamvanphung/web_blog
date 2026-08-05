@@ -40,7 +40,10 @@ export default async function SettingsPage() {
                 className="w-full border border-line bg-bg px-3 py-2 text-sm"
               />
               <p className="text-xs text-muted">Cập nhật: {s.updatedAt.toISOString()}</p>
-              <button type="submit" className="border border-line px-3 py-1 text-sm hover:bg-line/40">
+              <button
+                type="submit"
+                className="border border-line px-3 py-1 text-sm hover:bg-line/40"
+              >
                 Lưu
               </button>
             </form>

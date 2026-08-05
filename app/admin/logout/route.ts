@@ -21,8 +21,7 @@ export async function POST(): Promise<Response> {
     await db.session.delete({ where: { id: sid } }).catch(() => {});
     if (session) {
       const h = await headers();
-      const ip =
-        h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? null;
+      const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? null;
       await audit({
         userId: session.userId,
         action: 'logout',

@@ -98,13 +98,37 @@ pnpm db:studio          # Prisma Studio GUI
 ## Phase progress
 
 - [x] **P0. Foundation** — scaffold, Prisma schema, ESLint/Prettier, layout shells, SEO helper, test skeletons
-- [ ] P1. Auth & Settings
+- [x] **P1. Auth & Settings** — session cookie `sid`, Argon2id password hash, role-based admin (ADMIN/EDITOR), audit log, settings module
 - [ ] P2. Media & Categories/Tags
 - [ ] P3. Posts (Tiptap)
 - [ ] P4. Pages & Menus
 - [ ] P5. Public site
 - [ ] P6. SEO & Polish
 - [ ] P7. Deploy (VPS Ubuntu + Nginx + PM2)
+
+## Auth & Roles
+
+CMS dùng session cookie `sid` (HttpOnly + SameSite=Lax; Secure ở production). Lưu trong DB (`Session` table). Argon2id cho password hash. Mọi thao tác admin đều ghi vào `AuditLog` (userId, action, target, ipHash).
+
+Hai role:
+
+- **ADMIN** — toàn quyền (incl. Users, Settings, Menus write).
+- **EDITOR** — Posts, Pages, Categories, Tags, Media, Contacts. Settings là read-only.
+
+Default admin (seed bởi `prisma/seed.ts`):
+
+- Email: `admin@9ent.vn`
+- Password: `changeme123!` ← đổi ngay sau khi login lần đầu (sẽ có UI ở P2+).
+
+Login flow: `/admin/login`. Rate-limit 5 attempts / 15 min / IP (in-memory). Production: thay bằng Redis-backed.
+
+Để generate `SESSION_IP_PEPPER` thật:
+
+```bash
+node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
+```
+
+Paste giá trị 64-hex-char vào `.env` (KHÔNG commit).
 
 ## Note về MySQL chưa có
 
