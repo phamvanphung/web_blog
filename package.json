@@ -14,6 +14,7 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
+    "postinstall": "prisma generate",
     "format": "prettier --write \"**/*.{ts,tsx,js,cjs,mjs,md,json,css}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,cjs,mjs,md,json,css}\""
   },
