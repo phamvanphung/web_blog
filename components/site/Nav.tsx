@@ -12,7 +12,7 @@ export function Nav() {
   return (
     <nav aria-label="Chính" className="flex items-center gap-6 text-sm">
       {ITEMS.map((it) => (
-        <Link key={it.href} href={it.href} className="hover:underline">
+        <Link key={it.href} href={it.href} className="hover:text-muted">
           {it.label}
         </Link>
       ))}

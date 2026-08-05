@@ -5,7 +5,8 @@ import '@/styles/globals.css';
 
 export default function SiteLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-bg text-fg font-ui">
+    // min-h-screen only — colors/fonts come from styles/globals.css (single source of truth).
+    <div className="min-h-screen">
       <Header />
       <main>{children}</main>
       <Footer />
