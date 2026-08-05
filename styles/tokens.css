@@ -1,0 +1,15 @@
+:root {
+  /* Brand tokens — sẽ override bằng brand thật khi có */
+  --color-bg: #faf9f6;
+  --color-fg: #1f1e1b;
+  --color-muted: #6b6a66;
+  --color-accent: #b08968;
+  --color-line: #e8e5de;
+
+  /* Typography */
+  --font-heading: 'Source Serif 4', Georgia, serif;
+  --font-ui: 'Inter', system-ui, sans-serif;
+
+  /* Spacing */
+  --space-rhythm: 1.5rem;
+}
