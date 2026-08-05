@@ -13,7 +13,9 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json,css}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,md,json,css}\""
   },
   "engines": {
     "node": ">=20"
@@ -29,7 +31,11 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "autoprefixer": "^10.5.4",
+    "eslint": "8",
+    "eslint-config-next": "15",
+    "eslint-config-prettier": "^10.1.8",
     "postcss": "^8.5.25",
+    "prettier": "^3.9.6",
     "tailwindcss": "3",
     "typescript": "^6.0.3"
   }
