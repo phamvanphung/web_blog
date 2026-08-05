@@ -1,45 +1,55 @@
 // lib/auth.ts
-// Stub for auth utilities. Full implementation arrives in Task 1.x (P1 phase).
-// Keep this file present so other modules can import the eventual API surface
-// without churn when the real implementation lands.
+// Stub for auth utilities. Full implementation arrives in P1 (Auth & Settings).
+// Public API here MUST match what P1 will export so callers can import today
+// without churn later.
 
-export type AuthSession = {
-  userId: string;
-  sessionId: string;
-  role: 'ADMIN' | 'EDITOR';
+import type { UserRole } from '@prisma/client';
+
+/** Minimal user shape that admin modules will pass around. P1 may extend. */
+export type SessionUser = {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
 };
 
-export type AuthResult =
-  | { ok: true; session: AuthSession }
-  | { ok: false; reason: 'unauthenticated' | 'expired' | 'invalid' };
-
 /**
- * Resolve the current session from a request. Real impl will read the
- * session cookie, look up the Session row, and validate expiry.
- * STUB: returns unauthenticated until P1 ships.
+ * Resolve the current session from a request context.
+ * STUB: returns null until P1 ships.
  */
-export async function getSessionFromRequest(_req: Request): Promise<AuthResult> {
-  return { ok: false, reason: 'unauthenticated' };
+export async function getSession(): Promise<SessionUser | null> {
+  return null;
 }
 
 /**
- * Hash a plaintext password with argon2id. STUB: throws until P1 ships.
+ * Require an authenticated session; throw otherwise. For use in Server Components
+ * and Server Actions that must reject anonymous callers.
+ * STUB: throws until P1 ships.
+ */
+export async function requireAuth(): Promise<SessionUser> {
+  throw new Error('Not implemented (P1)');
+}
+
+/**
+ * Require a session whose user has the given role.
+ * STUB: throws until P1 ships.
+ */
+export async function requireRole(_role: UserRole): Promise<SessionUser> {
+  throw new Error('Not implemented (P1)');
+}
+
+/**
+ * Hash a plaintext password with argon2id.
+ * STUB: throws until P1 ships.
  */
 export async function hashPassword(_plain: string): Promise<string> {
   throw new Error('hashPassword not implemented yet (P1)');
 }
 
 /**
- * Verify a plaintext password against a stored hash. STUB: throws until P1 ships.
+ * Verify a plaintext password against a stored argon2id hash.
+ * STUB: throws until P1 ships.
  */
 export async function verifyPassword(_plain: string, _hash: string): Promise<boolean> {
   throw new Error('verifyPassword not implemented yet (P1)');
 }
-
-export const auth = {
-  getSessionFromRequest,
-  hashPassword,
-  verifyPassword
-};
-
-export default auth;

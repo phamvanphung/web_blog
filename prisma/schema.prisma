@@ -103,6 +103,7 @@ model Post {
   @@index([slug])
   @@index([authorId])
   @@index([deletedAt])
+  @@index([isFeatured, status, publishedAt])
   @@fulltext([title, excerpt, contentText])
 }
 
