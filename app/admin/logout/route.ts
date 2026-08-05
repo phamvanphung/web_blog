@@ -1,5 +1,9 @@
 // app/admin/logout/route.ts
 // POST /admin/logout — destroy session, clear cookie, redirect to /admin/login.
+//
+// POST only. We deliberately do NOT accept GET because `<img src="/admin/logout">`
+// could silently log out any admin who views a third-party page (CSRF-style
+// nuisance attack). The layout's logout form already sends POST.
 
 import { redirect } from 'next/navigation';
 import { cookies, headers } from 'next/headers';
@@ -32,11 +36,4 @@ export async function POST(): Promise<Response> {
   }
   jar.delete(COOKIE_NAME);
   redirect('/admin/login');
-}
-
-// Allow GET as a fallback (some crawlers / hand-shutdowns hit GET).
-// In production we recommend POSTing from a form, but this avoids
-// "Method not allowed" surprises for admins.
-export async function GET(): Promise<Response> {
-  return POST();
 }

@@ -22,6 +22,7 @@ export async function loginAction(
     return { error: result.message, code: result.code };
   }
 
-  const from = String(formData.get('from') ?? '/admin/dashboard');
-  redirect(from.startsWith('/admin') ? from : '/admin/dashboard');
+  // Deep-link support can be added later (e.g. `?next=/admin/posts/new`).
+  // For now, successful login always lands on the dashboard.
+  redirect('/admin/dashboard');
 }

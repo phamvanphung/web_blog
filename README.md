@@ -120,7 +120,9 @@ Default admin (seed bởi `prisma/seed.ts`):
 - Email: `admin@9ent.vn`
 - Password: `changeme123!` ← đổi ngay sau khi login lần đầu (sẽ có UI ở P2+).
 
-Login flow: `/admin/login`. Rate-limit 5 attempts / 15 min / IP (in-memory). Production: thay bằng Redis-backed.
+Login flow: `/admin/login`. Rate-limit 5 attempts / 15 min / IP. P1 implementation is **in-memory per Node process** — fine for dev + single-instance deploy. For multi-instance (PM2 cluster, k8s, etc.) replace `lib/rateLimit.ts` with a Redis-backed implementation before launch; the sliding-window API stays the same.
+
+Logout: `POST /admin/logout` only (no GET — to prevent `<img src>` logout-CSRF by third-party pages).
 
 Để generate `SESSION_IP_PEPPER` thật:
 

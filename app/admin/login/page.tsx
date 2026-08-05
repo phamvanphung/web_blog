@@ -17,8 +17,6 @@ export default function LoginPage() {
       <p className="mb-8 text-sm text-muted">CMS nội bộ 9ent — chỉ dành cho Admin / Editor.</p>
 
       <form action={formAction} className="space-y-4">
-        <input type="hidden" name="from" value="" />
-
         <label className="block">
           <span className="mb-1 block text-sm">Email</span>
           <input

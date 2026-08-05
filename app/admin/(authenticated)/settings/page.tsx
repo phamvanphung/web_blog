@@ -1,6 +1,6 @@
 import { requireRole } from '@/lib/auth';
 import { listSettings } from '@/modules/settings/server';
-import { updateSettingAction } from './actions';
+import { SettingRow } from './SettingRow';
 
 // Server-rendered (DB read on each request). force-dynamic so build doesn't
 // try to pre-render before MySQL is wired.
@@ -22,31 +22,12 @@ export default async function SettingsPage() {
       ) : (
         <div className="space-y-4 max-w-prose">
           {settings.map((s) => (
-            <form
+            <SettingRow
               key={s.key}
-              action={updateSettingAction}
-              className="space-y-1 border-b border-line pb-4"
-            >
-              <label
-                className="block text-xs uppercase tracking-wider text-muted"
-                htmlFor={`k-${s.key}`}
-              >
-                {s.key}
-              </label>
-              <input id={`k-${s.key}`} type="hidden" name="key" value={s.key} />
-              <input
-                name="value"
-                defaultValue={s.value}
-                className="w-full border border-line bg-bg px-3 py-2 text-sm"
-              />
-              <p className="text-xs text-muted">Cập nhật: {s.updatedAt.toISOString()}</p>
-              <button
-                type="submit"
-                className="border border-line px-3 py-1 text-sm hover:bg-line/40"
-              >
-                Lưu
-              </button>
-            </form>
+              keyName={s.key}
+              value={s.value}
+              updatedAt={s.updatedAt.toISOString()}
+            />
           ))}
         </div>
       )}

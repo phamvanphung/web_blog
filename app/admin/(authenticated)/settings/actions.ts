@@ -12,14 +12,21 @@ const SettingUpdate = z.object({
   value: z.string().max(2000)
 });
 
-export async function updateSettingAction(formData: FormData): Promise<void> {
+export type SettingFormState = { ok: true } | { ok: false; error: string };
+
+export async function updateSettingAction(
+  _prev: SettingFormState | undefined,
+  formData: FormData
+): Promise<SettingFormState> {
   const me = await requireRole('ADMIN');
 
   const parsed = SettingUpdate.safeParse({
     key: String(formData.get('key') ?? ''),
     value: String(formData.get('value') ?? '')
   });
-  if (!parsed.success) return;
+  if (!parsed.success) {
+    return { ok: false, error: 'Key/value không hợp lệ (key 1–80 chars, value ≤ 2000 chars).' };
+  }
 
   await upsertSetting(parsed.data.key, parsed.data.value);
 
@@ -34,4 +41,5 @@ export async function updateSettingAction(formData: FormData): Promise<void> {
   });
 
   revalidatePath('/admin/settings');
+  return { ok: true };
 }

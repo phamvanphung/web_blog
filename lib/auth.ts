@@ -7,8 +7,9 @@ import type { UserRole } from '@prisma/client';
 import { redirect } from 'next/navigation';
 import { readSession } from '@/modules/auth/server/session';
 
-/** Argon2id parameters — chosen OWASP-recommended for interactive auth (2024).
- *  algorithm: 2 = Algorithm.Argon2id (const enum, used as numeric to satisfy isolatedModules). */
+/** Argon2id parameters — OWASP-recommended for interactive auth (2024).
+ *  algorithm: 2 = Argon2id (numeric literal; Algorithm.Argon2id is a const enum
+ *  that wouldn't survive `isolatedModules: true` erasure at the type level). */
 const ARGON_OPTS = {
   algorithm: 2,
   memoryCost: 19456, // 19 MiB
