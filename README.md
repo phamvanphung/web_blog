@@ -99,7 +99,7 @@ pnpm db:studio          # Prisma Studio GUI
 
 - [x] **P0. Foundation** — scaffold, Prisma schema, ESLint/Prettier, layout shells, SEO helper, test skeletons
 - [x] **P1. Auth & Settings** — session cookie `sid`, Argon2id password hash, role-based admin (ADMIN/EDITOR), audit log, settings module
-- [ ] P2. Media & Categories/Tags
+- [x] **P2. Media & Categories/Tags** — Sharp pipeline (4 WebP variants), upload via Server Action, media library, categories tree, tags CRUD.
 - [ ] P3. Posts (Tiptap)
 - [ ] P4. Pages & Menus
 - [ ] P5. Public site
@@ -132,10 +132,38 @@ node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 
 Paste giá trị 64-hex-char vào `.env` (KHÔNG commit).
 
-## Note về MySQL chưa có
+## Media
 
-Phase P0 scaffolds toàn bộ nhưng **không yêu cầu MySQL để build**. Các chỗ cần DB thực (dashboard counters, health endpoint, e2e tests) đều dùng `force-dynamic` hoặc try/catch để không crash khi DB chưa cấu hình. Sau khi cài MySQL + chạy migrate/seed thì mọi thứ hoạt động đầy đủ.
+Upload qua **Server Action** từ `/admin/media` (Admin-only). Sharp pipeline tạo 4 variant WebP ngay khi upload:
 
-## Source layout
+- `original` — giữ nguyên kích thước gốc + EXIF-rotate
+- `large` — 1600w · q82
+- `medium` — 800w · q82
+- `thumb` — 400w · q80
+
+Lưu local trong `UPLOAD_ROOT/YYYY/MM/<uuid>-<variant>.webp`. Mỗi bản ghi `Media` (DB) trỏ vào 1 variant + metadata chung (width/height/altText/caption). Public URL format: `/uploads/YYYY/MM/<uuid>-<variant>.webp`.
+
+**Dev**: Next.js route handler `app/uploads/[...path]/route.ts` stream file từ disk.  
+**Prod**: Nginx serve `/uploads/*` trực tiếp từ `UPLOAD_ROOT` (cấu hình ở P7) — route handler bypass hoàn toàn.
+
+Limits: 10 MB / ảnh, MIME: JPEG/PNG/WebP/GIF (không SVG, không script).
+
+## Categories & Tags
+
+**Categories**: tree 2 cấp qua `parentId` self-relation. Admin CRUD ở `/admin/categories`. Slug tự sinh từ tên qua `slugify()` (chuẩn hóa Vietnamese diacritics, ví dụ `Giới thiệu` → `gioi-thieu`).
+
+**Tags**: flat danh sách ở `/admin/tags`. Slug tự sinh, unique qua `ensureUniqueSlug()` (append `-2`, `-3`, … nếu trùng).
+
+Cả hai module đều ghi `AuditLog` cho mỗi mutation.
+
+## Note về local DB
+
+Một số gates yêu cầu MySQL thật để pass:
+
+- `/api/health` trả `{ ok: true, db: 'up' }` (P0/P1) — không có DB → 503 với `{ db: 'down' }`.
+- E2E test `home.spec.ts > health endpoint returns ok` (P0) — fail khi MySQL down.
+- E2E login round-trip thật (right password → dashboard) — cần seed admin user.
+
+Build, typecheck, lint, unit tests, và hầu hết e2e tests (auth-gate + 404/traversal + form-render) **không cần** DB. Phase P0/P1/P2 ship được mà không cần MySQL.
 
 Xem `docs/superpowers/plans/2026-08-05-9ent-vn-blog-cms.md` (P0 plan) và `docs/superpowers/specs/2026-08-05-9ent-vn-blog-cms-design.md` (design gốc) để biết chi tiết kiến trúc.
