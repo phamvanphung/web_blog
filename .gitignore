@@ -26,8 +26,10 @@ Thumbs.db
 # prisma
 prisma/migrations/dev.db*
 
-# uploads (storage ngoài source trên prod; local có thể tạm commit)
-# storage/uploads/**
+# uploads (local: chỉ commit .gitkeep placeholder; uploaded files bị ignore)
+# production storage: /srv/9ent/storage/uploads (out-of-repo, configured in .env via UPLOAD_ROOT)
+storage/uploads/*
+!storage/uploads/.gitkeep
 
 # tests
 coverage/
