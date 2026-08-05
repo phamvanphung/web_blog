@@ -4,6 +4,7 @@
 
 import { hash, verify } from '@node-rs/argon2';
 import type { UserRole } from '@prisma/client';
+import { redirect } from 'next/navigation';
 import { readSession } from '@/modules/auth/server/session';
 
 /** Argon2id parameters — chosen OWASP-recommended for interactive auth (2024).
@@ -44,9 +45,18 @@ export async function getSession(): Promise<SessionUser | null> {
 }
 
 export async function requireAuth(): Promise<SessionUser> {
-  throw new Error('requireAuth not implemented yet (P1 task 1.5)');
+  const s = await readSession();
+  if (!s) {
+    redirect('/admin/login');
+  }
+  return s.user;
 }
 
-export async function requireRole(_role: UserRole): Promise<SessionUser> {
-  throw new Error('requireRole not implemented yet (P1 task 1.6)');
+export async function requireRole(role: UserRole): Promise<SessionUser> {
+  const user = await requireAuth();
+  if (user.role !== role) {
+    // not authorized — bounce to dashboard with a code (404 would be fine too)
+    redirect('/admin/dashboard?denied=1');
+  }
+  return user;
 }
