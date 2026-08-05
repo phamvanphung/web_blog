@@ -21,18 +21,49 @@ const SERVER_EXTENSIONS = [
 
 const PURIFY_CONFIG = {
   ALLOWED_TAGS: [
-    'p', 'br', 'strong', 'em', 'u', 's', 'code', 'pre',
-    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-    'ul', 'ol', 'li',
-    'a', 'img', 'figure', 'figcaption',
+    'p',
+    'br',
+    'strong',
+    'em',
+    'u',
+    's',
+    'code',
+    'pre',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'ul',
+    'ol',
+    'li',
+    'a',
+    'img',
+    'figure',
+    'figcaption',
     'blockquote',
-    'table', 'thead', 'tbody', 'tr', 'th', 'td',
+    'table',
+    'thead',
+    'tbody',
+    'tr',
+    'th',
+    'td',
     'iframe'
   ],
   ALLOWED_ATTR: [
-    'href', 'src', 'alt', 'title', 'class', 'target', 'rel',
-    'width', 'height',
-    'allow', 'allowfullscreen', 'frameborder'
+    'href',
+    'src',
+    'alt',
+    'title',
+    'class',
+    'target',
+    'rel',
+    'width',
+    'height',
+    'allow',
+    'allowfullscreen',
+    'frameborder'
   ]
 };
 
