@@ -5,6 +5,9 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['tests/unit/**/*.test.ts'],
+    // Load .env so modules that read DATABASE_URL at import time (lib/db.ts)
+    // don't throw when tests don't pass env explicitly.
+    setupFiles: ['dotenv/config'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],

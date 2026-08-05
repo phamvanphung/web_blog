@@ -4,6 +4,7 @@
 
 import { hash, verify } from '@node-rs/argon2';
 import type { UserRole } from '@prisma/client';
+import { readSession } from '@/modules/auth/server/session';
 
 /** Argon2id parameters — chosen OWASP-recommended for interactive auth (2024).
  *  algorithm: 2 = Algorithm.Argon2id (const enum, used as numeric to satisfy isolatedModules). */
@@ -38,7 +39,8 @@ export type SessionUser = {
 };
 
 export async function getSession(): Promise<SessionUser | null> {
-  return null;
+  const s = await readSession();
+  return s?.user ?? null;
 }
 
 export async function requireAuth(): Promise<SessionUser> {
