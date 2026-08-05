@@ -11,6 +11,8 @@ import path from 'node:path';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
+export { MAX_UPLOAD_BYTES } from '@/modules/media/types';
+import { MAX_UPLOAD_BYTES } from '@/modules/media/types';
 
 const DEFAULT_ROOT = './storage/uploads';
 
@@ -112,7 +114,8 @@ export const storage = {
   buildStoragePath,
   pathForUpload,
   newStoredName,
-  publicUrlFor
+  publicUrlFor,
+  MAX_UPLOAD_BYTES
 };
 
 export default storage;
