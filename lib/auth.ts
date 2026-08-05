@@ -1,11 +1,35 @@
 // lib/auth.ts
-// Stub for auth utilities. Full implementation arrives in P1 (Auth & Settings).
-// Public API here MUST match what P1 will export so callers can import today
-// without churn later.
+// Real authentication helpers. Argon2id for passwords; DB-backed sessions.
+// Server-only — do NOT import from a Client Component.
 
+import { hash, verify } from '@node-rs/argon2';
 import type { UserRole } from '@prisma/client';
 
-/** Minimal user shape that admin modules will pass around. P1 may extend. */
+/** Argon2id parameters — chosen OWASP-recommended for interactive auth (2024).
+ *  algorithm: 2 = Algorithm.Argon2id (const enum, used as numeric to satisfy isolatedModules). */
+const ARGON_OPTS = {
+  algorithm: 2,
+  memoryCost: 19456, // 19 MiB
+  timeCost: 2,
+  outputLen: 32,
+  parallelism: 1
+} as const;
+
+export async function hashPassword(plain: string): Promise<string> {
+  return hash(plain, ARGON_OPTS);
+}
+
+export async function verifyPassword(plain: string, digest: string): Promise<boolean> {
+  try {
+    return await verify(digest, plain);
+  } catch {
+    // verify throws on malformed digest; treat as "no match".
+    return false;
+  }
+}
+
+export type { UserRole };
+
 export type SessionUser = {
   id: string;
   email: string;
@@ -13,43 +37,14 @@ export type SessionUser = {
   role: UserRole;
 };
 
-/**
- * Resolve the current session from a request context.
- * STUB: returns null until P1 ships.
- */
 export async function getSession(): Promise<SessionUser | null> {
   return null;
 }
 
-/**
- * Require an authenticated session; throw otherwise. For use in Server Components
- * and Server Actions that must reject anonymous callers.
- * STUB: throws until P1 ships.
- */
 export async function requireAuth(): Promise<SessionUser> {
-  throw new Error('Not implemented (P1)');
+  throw new Error('requireAuth not implemented yet (P1 task 1.5)');
 }
 
-/**
- * Require a session whose user has the given role.
- * STUB: throws until P1 ships.
- */
 export async function requireRole(_role: UserRole): Promise<SessionUser> {
-  throw new Error('Not implemented (P1)');
-}
-
-/**
- * Hash a plaintext password with argon2id.
- * STUB: throws until P1 ships.
- */
-export async function hashPassword(_plain: string): Promise<string> {
-  throw new Error('hashPassword not implemented yet (P1)');
-}
-
-/**
- * Verify a plaintext password against a stored argon2id hash.
- * STUB: throws until P1 ships.
- */
-export async function verifyPassword(_plain: string, _hash: string): Promise<boolean> {
-  throw new Error('verifyPassword not implemented yet (P1)');
+  throw new Error('requireRole not implemented yet (P1 task 1.6)');
 }
