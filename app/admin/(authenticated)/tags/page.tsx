@@ -29,10 +29,7 @@ export default async function TagsPage() {
               </span>
               <form action={deleteTagAction}>
                 <input type="hidden" name="id" value={t.id} />
-                <button
-                  type="submit"
-                  className="text-xs text-muted underline hover:no-underline"
-                >
+                <button type="submit" className="text-xs text-muted underline hover:no-underline">
                   Xóa
                 </button>
               </form>

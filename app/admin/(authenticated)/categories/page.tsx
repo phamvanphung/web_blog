@@ -19,9 +19,7 @@ export default async function CategoriesPage() {
         Admin-only. Cây phân cấp — slug tự sinh từ tên (đổi slug qua DB nếu cần giữ URL cũ).
       </p>
 
-      <CategoryForm
-        parents={flat.map((c) => ({ id: c.id, name: c.name }))}
-      />
+      <CategoryForm parents={flat.map((c) => ({ id: c.id, name: c.name }))} />
 
       <h2 className="mb-3 mt-10 text-lg font-semibold">Cây hiện tại</h2>
       <CategoryTreeView nodes={tree} />

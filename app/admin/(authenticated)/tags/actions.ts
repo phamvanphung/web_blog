@@ -22,7 +22,13 @@ export async function createTagAction(
   const tag = await createTag(parsed.data);
   const h = await headers();
   const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? null;
-  await audit({ userId: me.id, action: 'tag.create', target: 'Tag', targetId: tag.id, ipHash: await hashIp(ip) });
+  await audit({
+    userId: me.id,
+    action: 'tag.create',
+    target: 'Tag',
+    targetId: tag.id,
+    ipHash: await hashIp(ip)
+  });
   revalidatePath('/admin/tags');
   return { ok: true };
 }
@@ -34,6 +40,12 @@ export async function deleteTagAction(formData: FormData): Promise<void> {
   await deleteTag(id);
   const h = await headers();
   const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? null;
-  await audit({ userId: me.id, action: 'tag.delete', target: 'Tag', targetId: id, ipHash: await hashIp(ip) });
+  await audit({
+    userId: me.id,
+    action: 'tag.delete',
+    target: 'Tag',
+    targetId: id,
+    ipHash: await hashIp(ip)
+  });
   revalidatePath('/admin/tags');
 }

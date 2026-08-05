@@ -24,7 +24,8 @@ export function UploadForm() {
     setBusy(true);
     const fd = new FormData();
     fd.set('file', file);
-    const altText = (e.currentTarget.elements.namedItem('altText') as HTMLInputElement)?.value ?? '';
+    const altText =
+      (e.currentTarget.elements.namedItem('altText') as HTMLInputElement)?.value ?? '';
     if (altText) fd.set('altText', altText);
     const result = await uploadMediaAction(fd);
     setBusy(false);
@@ -61,8 +62,16 @@ export function UploadForm() {
         <Button disabled={busy} size="sm">
           {busy ? 'Đang upload...' : 'Upload'}
         </Button>
-        {err && <span role="alert" className="text-sm text-muted">{err}</span>}
-        {ok && <span role="status" className="text-sm text-muted">{ok}</span>}
+        {err && (
+          <span role="alert" className="text-sm text-muted">
+            {err}
+          </span>
+        )}
+        {ok && (
+          <span role="status" className="text-sm text-muted">
+            {ok}
+          </span>
+        )}
       </div>
     </form>
   );

@@ -22,7 +22,10 @@ export async function uploadMediaAction(
     return { ok: false, error: 'Không có file.' };
   }
   if (file.size > MAX_UPLOAD_BYTES) {
-    return { ok: false, error: `File quá lớn (>${Math.round(MAX_UPLOAD_BYTES / 1024 / 1024)} MB).` };
+    return {
+      ok: false,
+      error: `File quá lớn (>${Math.round(MAX_UPLOAD_BYTES / 1024 / 1024)} MB).`
+    };
   }
   const mime = file.type;
   if (!ALLOWED_MIME_SET.has(mime)) {
@@ -39,9 +42,18 @@ export async function uploadMediaAction(
   }
 
   const root = getUploadRoot();
-  const variantRecords: { variant: string; absPath: string; url: string; width: number; height: number; size: number }[] = [];
+  const variantRecords: {
+    variant: string;
+    absPath: string;
+    url: string;
+    width: number;
+    height: number;
+    size: number;
+  }[] = [];
 
-  for (const variantName of Object.keys(processed.variants) as Array<keyof typeof processed.variants>) {
+  for (const variantName of Object.keys(processed.variants) as Array<
+    keyof typeof processed.variants
+  >) {
     const v = processed.variants[variantName];
     const filename = `${variantName}.webp`;
     const storedName = `${randomUUID()}-${filename}`;

@@ -15,8 +15,9 @@ export async function createCategory(input: {
   description?: string | null;
 }) {
   const base = slugify(input.name);
-  const slug = await ensureUniqueSlug(base || 'category', async (s) =>
-    !!(await db.category.findUnique({ where: { slug: s } }))
+  const slug = await ensureUniqueSlug(
+    base || 'category',
+    async (s) => !!(await db.category.findUnique({ where: { slug: s } }))
   );
   return db.category.create({
     data: {
@@ -28,17 +29,22 @@ export async function createCategory(input: {
   });
 }
 
-export async function updateCategory(id: string, input: {
-  name?: string;
-  parentId?: string | null;
-  description?: string | null;
-}) {
+export async function updateCategory(
+  id: string,
+  input: {
+    name?: string;
+    parentId?: string | null;
+    description?: string | null;
+  }
+) {
   return db.category.update({
     where: { id },
     data: {
       ...(input.name != null ? { name: input.name.slice(0, 120) } : {}),
       ...(input.parentId !== undefined ? { parentId: input.parentId } : {}),
-      ...(input.description !== undefined ? { description: input.description?.slice(0, 1000) ?? null } : {})
+      ...(input.description !== undefined
+        ? { description: input.description?.slice(0, 1000) ?? null }
+        : {})
     }
   });
 }

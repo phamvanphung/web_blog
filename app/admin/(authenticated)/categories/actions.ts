@@ -37,7 +37,13 @@ export async function createCategoryAction(
   const cat = await createCategory(parsed.data);
   const h = await headers();
   const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? null;
-  await audit({ userId: me.id, action: 'category.create', target: 'Category', targetId: cat.id, ipHash: await hashIp(ip) });
+  await audit({
+    userId: me.id,
+    action: 'category.create',
+    target: 'Category',
+    targetId: cat.id,
+    ipHash: await hashIp(ip)
+  });
   revalidatePath('/admin/categories');
   return { ok: true };
 }
@@ -50,15 +56,25 @@ export async function updateCategoryAction(
   const parsed = UpdateSchema.safeParse({
     id: String(formData.get('id') ?? ''),
     name: formData.get('name') ? String(formData.get('name')) : undefined,
-    parentId: formData.has('parentId') ? (formData.get('parentId') as string | null) || null : undefined,
-    description: formData.has('description') ? (formData.get('description') as string | null) || null : undefined
+    parentId: formData.has('parentId')
+      ? (formData.get('parentId') as string | null) || null
+      : undefined,
+    description: formData.has('description')
+      ? (formData.get('description') as string | null) || null
+      : undefined
   });
   if (!parsed.success) return { ok: false, error: 'Dữ liệu không hợp lệ.' };
 
   await updateCategory(parsed.data.id, parsed.data);
   const h = await headers();
   const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? null;
-  await audit({ userId: me.id, action: 'category.update', target: 'Category', targetId: parsed.data.id, ipHash: await hashIp(ip) });
+  await audit({
+    userId: me.id,
+    action: 'category.update',
+    target: 'Category',
+    targetId: parsed.data.id,
+    ipHash: await hashIp(ip)
+  });
   revalidatePath('/admin/categories');
   return { ok: true };
 }
@@ -70,6 +86,12 @@ export async function deleteCategoryAction(formData: FormData): Promise<void> {
   await deleteCategory(id);
   const h = await headers();
   const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? null;
-  await audit({ userId: me.id, action: 'category.delete', target: 'Category', targetId: id, ipHash: await hashIp(ip) });
+  await audit({
+    userId: me.id,
+    action: 'category.delete',
+    target: 'Category',
+    targetId: id,
+    ipHash: await hashIp(ip)
+  });
   revalidatePath('/admin/categories');
 }

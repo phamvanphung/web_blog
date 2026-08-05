@@ -12,7 +12,8 @@ export default async function MediaPage() {
     <div>
       <h1 className="mb-2 text-3xl">Media</h1>
       <p className="mb-8 text-sm text-muted">
-        Admin-only. Upload qua form dưới — Sharp tạo 4 variant WebP (original / 1600w / 800w / 400w).
+        Admin-only. Upload qua form dưới — Sharp tạo 4 variant WebP (original / 1600w / 800w /
+        400w).
       </p>
 
       <UploadForm />

@@ -5,12 +5,7 @@
 import sharp from 'sharp';
 import { MEDIA_VARIANTS, type MediaVariant } from '@/modules/media/types';
 
-export const ALLOWED_MIME_SET = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/gif'
-]);
+export const ALLOWED_MIME_SET = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 
 export type ProcessResult = {
   variants: Record<MediaVariant, { buffer: Buffer; width: number; height: number }>;

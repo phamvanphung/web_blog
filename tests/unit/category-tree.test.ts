@@ -17,9 +17,7 @@ describe('buildCategoryTree', () => {
   });
 
   it('handles orphans (parent missing from list) by treating them as roots', () => {
-    const flat = [
-      { id: '1', name: 'Web', slug: 'web', parentId: '99' }
-    ];
+    const flat = [{ id: '1', name: 'Web', slug: 'web', parentId: '99' }];
     const tree = buildCategoryTree(flat);
     expect(tree).toHaveLength(1);
     expect(tree[0]!.id).toBe('1');
