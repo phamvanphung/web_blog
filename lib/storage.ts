@@ -8,6 +8,8 @@
 //   - Set UPLOAD_ROOT in the environment to override the default at deploy time.
 
 import path from 'node:path';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { join, dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
 
 const DEFAULT_ROOT = './storage/uploads';
@@ -77,14 +79,30 @@ export interface StorageAdapter {
 
 /**
  * Default local-disk storage adapter.
- * STUB: throws until P2 ships. P2 will fill in the Sharp pipeline.
+ * Writes buffers to UPLOAD_ROOT/<YYYY>/MM/<uuid>.webp via node:fs/promises.
+ * Cross-OS safe: posix-style relative path from pathForUpload is joined with
+ * OS-native separators by node:path for filesystem ops.
  */
 export class LocalDiskStorage implements StorageAdapter {
-  async save(_buffer: Buffer, _originalName: string, _mime: string): Promise<UploadResult> {
-    throw new Error('LocalDiskStorage.save not implemented (P2)');
+  async save(buffer: Buffer, _originalName: string, _mime: string): Promise<UploadResult> {
+    const ext = 'webp';
+    const storedName = newStoredName(ext);
+    const relPath = pathForUpload(storedName); // already uses posix joins — gives "YYYY/MM/<uuid>.webp"
+    const absPath = join(getUploadRoot(), relPath); // join with OS separator for FS ops
+    await mkdir(dirname(absPath), { recursive: true });
+    await writeFile(absPath, buffer);
+    return {
+      storedName,
+      path: relPath, // posix-style relative — DB stores this verbatim
+      url: publicUrlFor(storedName), // "/uploads/YYYY/MM/<uuid>.webp"
+      fileSize: buffer.byteLength,
+      mimeType: 'image/webp'
+    };
   }
-  async delete(_path: string): Promise<void> {
-    throw new Error('LocalDiskStorage.delete not implemented (P2)');
+
+  async delete(relPath: string): Promise<void> {
+    const abs = join(getUploadRoot(), relPath);
+    await rm(abs, { force: true }).catch(() => {});
   }
 }
 
