@@ -4,10 +4,12 @@ import { notFound } from 'next/navigation';
 import { Container } from '@/components/ui/Container';
 import { PostCard } from '@/components/site/PostCard';
 import { Pagination } from '@/components/site/Pagination';
+import { JsonLd } from '@/components/site/JsonLd';
 import { buildMetadata } from '@/lib/seo';
 import { getTagBySlug } from '@/modules/tags/server/public';
 import { listPublishedPosts } from '@/modules/posts/server/public';
 import { parsePage } from '@/lib/pagination';
+import { breadcrumbJsonLd, collectionPageJsonLd } from '@/modules/seo/lib/jsonld';
 
 export const revalidate = 120;
 
@@ -46,8 +48,25 @@ export default async function TagPage({
     pageCount: 1
   }));
 
+  const APP_URL = process.env.APP_URL ?? 'http://localhost:3000';
+  const url = `${APP_URL}/tag/${slug}`;
+
   return (
     <Container width="prose" className="py-16">
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: 'Home', url: `${APP_URL}/` },
+          { name: 'Chủ đề', url: `${APP_URL}/chu-de` },
+          { name: `#${tag.name}`, url }
+        ])}
+      />
+      <JsonLd
+        data={collectionPageJsonLd({
+          name: `#${tag.name}`,
+          description: null,
+          url
+        })}
+      />
       <p className="mb-2 text-sm uppercase tracking-widest text-muted">Tag</p>
       <h1 className="mb-8 text-4xl">#{tag.name}</h1>
       {result.rows.length === 0 ? (
@@ -56,7 +75,7 @@ export default async function TagPage({
         result.rows.map((p) => <PostCard key={p.id} post={p} />)
       )}
       <Pagination
-        page={result.page}
+        page={page}
         pageCount={result.pageCount}
         hrefFor={(p) => (p === 1 ? `/tag/${slug}` : `/tag/${slug}?page=${p}`)}
       />

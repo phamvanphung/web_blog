@@ -64,3 +64,17 @@ export function organizationJsonLd(input: { name: string; url: string; logo: str
     logo: input.logo
   };
 }
+
+export function collectionPageJsonLd(input: {
+  name: string;
+  description?: string | null;
+  url: string;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: input.name,
+    description: input.description ?? undefined,
+    url: input.url
+  };
+}
