@@ -102,7 +102,7 @@ pnpm db:studio          # Prisma Studio GUI
 - [x] **P2. Media & Categories/Tags** — Sharp pipeline (4 WebP variants), upload via Server Action, media library, categories tree, tags CRUD.
 - [x] **P3. Posts & Tiptap** — Tiptap editor (autosave + revisions), draft/publish flow, slug uniqueness + 301 redirect on rename.
 - [x] **P4. Pages & Menus** — static Pages CRUD (text + status), hierarchical Menus + MenuItems, slug uniqueness + 301 redirect.
-- [ ] P5. Public site
+- [x] P5. Public site
 - [ ] P6. SEO & Polish
 - [ ] P7. Deploy (VPS Ubuntu + Nginx + PM2)
 

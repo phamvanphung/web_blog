@@ -15,7 +15,7 @@ describe('submitContact', () => {
     (rateLimit as ReturnType<typeof vi.fn>).mockResolvedValue({ ok: true });
     (db.contactSubmission.create as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 'c1' });
     const out = await submitContact(
-      { name: 'N', email: 'a@b.c', message: 'm' },
+      { name: 'N', email: 'a@b.com', message: 'm' },
       { ip: '1.2.3.4', userAgent: 'ua' }
     );
     expect(out.ok).toBe(true);
@@ -33,7 +33,7 @@ describe('submitContact', () => {
   it('rejects when rate-limited', async () => {
     (rateLimit as ReturnType<typeof vi.fn>).mockResolvedValue({ ok: false, retryAfterSec: 60 });
     const out = await submitContact(
-      { name: 'N', email: 'a@b.c', message: 'm' },
+      { name: 'N', email: 'a@b.com', message: 'm' },
       { ip: '1.2.3.4', userAgent: 'ua' }
     );
     expect(out.ok).toBe(false);
