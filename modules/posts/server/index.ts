@@ -33,11 +33,13 @@ export async function ensureUniquePostSlug(
 
 /* ---------- DB queries (read-only — mutations in Task 3.5) ---------- */
 
-export async function listPosts(opts: {
-  status?: 'DRAFT' | 'PENDING' | 'SCHEDULED' | 'PUBLISHED' | 'HIDDEN' | 'TRASHED';
-  take?: number;
-  skip?: number;
-} = {}) {
+export async function listPosts(
+  opts: {
+    status?: 'DRAFT' | 'PENDING' | 'SCHEDULED' | 'PUBLISHED' | 'HIDDEN' | 'TRASHED';
+    take?: number;
+    skip?: number;
+  } = {}
+) {
   const { status, take = 20, skip = 0 } = opts;
   return db.post.findMany({
     where: { ...(status ? { status } : {}), deletedAt: null },
@@ -131,8 +133,7 @@ export async function updateDraft(input: {
   const existing = await db.post.findUnique({ where: { id: parsed.data.id } });
   if (!existing) throw new Error('Post not found');
 
-  const titleChanged =
-    parsed.data.title !== undefined && parsed.data.title !== existing.title;
+  const titleChanged = parsed.data.title !== undefined && parsed.data.title !== existing.title;
 
   await db.post.update({
     where: { id: parsed.data.id },
@@ -151,9 +152,8 @@ export async function updateDraft(input: {
   // Slug-change → 301 redirect
   if (titleChanged) {
     const newSlug = postSlugFromTitle(parsed.data.title!);
-    const finalSlug = await ensureUniquePostSlug(
-      newSlug,
-      async (s) => postSlugExists(s, parsed.data.id)
+    const finalSlug = await ensureUniquePostSlug(newSlug, async (s) =>
+      postSlugExists(s, parsed.data.id)
     );
     if (finalSlug !== existing.slug) {
       const oldUrl = `/blog/${existing.slug}`;
