@@ -130,8 +130,7 @@ model Page {
   id              String     @id @default(cuid())
   title           String     @db.VarChar(255)
   slug            String     @unique @db.VarChar(255)
-  contentJson     Json
-  contentHtml     String     @db.LongText
+  content         String     @db.LongText
   status          PageStatus @default(DRAFT)
   seoTitle        String?    @db.VarChar(255)
   seoDescription  String?    @db.VarChar(500)
@@ -139,6 +138,8 @@ model Page {
   author          User       @relation(fields: [authorId], references: [id])
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
+
+  redirects       Redirect[] @relation("RedirectToPage")
 
   @@index([status])
   @@index([slug])
@@ -291,6 +292,8 @@ model Redirect {
   toPath      String   @db.VarChar(500)
   postId      String?
   post        Post?    @relation("RedirectToPost", fields: [postId], references: [id], onDelete: SetNull)
+  pageId      String?
+  page        Page?    @relation("RedirectToPage", fields: [pageId], references: [id], onDelete: SetNull)
   statusCode  Int      @default(301)
   createdAt   DateTime @default(now())
 
