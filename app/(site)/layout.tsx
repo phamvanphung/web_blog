@@ -4,20 +4,26 @@ import { Header } from '@/components/site/Header';
 import { Footer } from '@/components/site/Footer';
 import { SubNavFrosted } from '@/components/site/SubNavFrosted';
 import { buildMetadata } from '@/lib/seo';
+import { getBrand } from '@/lib/brand';
 
-export const metadata: Metadata = buildMetadata({
-  title: '9ent — Blog công ty',
-  description:
-    'Show dự án, chia sẻ quá trình làm. Nơi khách hàng hiện hữu và tiềm năng thấy cách chúng tôi làm việc.'
-});
+// Async metadata — reads the same brand cache as the layout below.
+export async function generateMetadata(): Promise<Metadata> {
+  const brand = await getBrand();
+  return buildMetadata({
+    title: `${brand.siteName} — ${brand.tagline}`,
+    description: brand.taglineLong,
+    path: '/'
+  });
+}
 
-export default function SiteLayout({ children }: { children: ReactNode }) {
+export default async function SiteLayout({ children }: { children: ReactNode }) {
+  const brand = await getBrand();
   return (
     <div className="flex min-h-screen flex-col bg-canvas">
-      <Header />
+      <Header siteName={brand.siteName} />
       <SubNavFrosted />
       <main className="flex-1">{children}</main>
-      <Footer />
+      <Footer siteName={brand.siteName} tagline={brand.taglineLong} />
     </div>
   );
 }

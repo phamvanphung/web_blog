@@ -1,6 +1,11 @@
 import { Container } from '@/components/ui/Container';
 import { Logo } from './Logo';
 
+type Props = {
+  siteName?: string;
+  tagline?: string;
+};
+
 const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
   {
     title: 'Blog',
@@ -31,11 +36,16 @@ const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
 
 /**
  * Parment bg, 4-col dense link list + legal row.
- * Asserted text per tests/e2e/home.spec.ts: must contain
- * the literal "Mọi quyền được bảo lưu".
+ * Brand wordmark + tagline come from the `Setting` table (lib/brand.ts).
+ * Asserted text per tests/e2e/home.spec.ts: footer must contain the
+ * literal "Mọi quyền được bảo lưu".
  */
-export function Footer() {
+export function Footer({ siteName, tagline }: Props = {}) {
   const year = new Date().getFullYear();
+  const brand = (siteName ?? '9ent').trim() || '9ent';
+  const strip = (
+    tagline?.trim() || 'Show dự án, chia sẻ quá trình làm.'
+  ).trim();
   return (
     <footer className="bg-canvas-parchment">
       <Container
@@ -43,10 +53,9 @@ export function Footer() {
         className="grid grid-cols-2 gap-x-10 gap-y-10 py-section md:grid-cols-4"
       >
         <div className="col-span-2 md:col-span-1">
-          <Logo tone="ink" />
+          <Logo tone="ink" text={brand} />
           <p className="mt-4 max-w-[36ch] text-[13px] leading-snug text-ink-80">
-            Show dự án, chia sẻ quá trình làm — nơi khách hàng hiện hữu và tiềm năng
-            thấy cách chúng tôi làm việc.
+            {strip}
           </p>
         </div>
         {COLUMNS.map((col) => (
@@ -61,7 +70,9 @@ export function Footer() {
                     href={l.href}
                     className="hover:text-primary"
                     target={l.href.startsWith('http') ? '_blank' : undefined}
-                    rel={l.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                    rel={
+                      l.href.startsWith('http') ? 'noopener noreferrer' : undefined
+                    }
                   >
                     {l.label}
                   </a>
@@ -73,7 +84,7 @@ export function Footer() {
       </Container>
       <div className="border-t border-hairline">
         <Container className="flex flex-wrap items-center justify-between gap-2 py-6 text-[12px] text-ink-48">
-          <p>© {year} 9ent. Mọi quyền được bảo lưu.</p>
+          <p>© {year} {brand}. Mọi quyền được bảo lưu.</p>
           <p>Built with care. No tracking cookies.</p>
         </Container>
       </div>
