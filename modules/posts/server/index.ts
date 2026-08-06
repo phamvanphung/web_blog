@@ -239,3 +239,77 @@ export async function deletePost(id: string): Promise<void> {
 
   revalidatePath('/admin/posts');
 }
+
+/* ---------- Taxonomy (admin) ---------- */
+
+export async function setPostCategories(postId: string, categoryIds: string[]): Promise<void> {
+  const me = await requireRole('ADMIN');
+  const existing = await db.post.findUnique({ where: { id: postId }, select: { id: true } });
+  if (!existing) throw new Error('Post not found');
+  await db.$transaction([
+    db.postCategory.deleteMany({ where: { postId } }),
+    ...(categoryIds.length > 0
+      ? [
+          db.postCategory.createMany({
+            data: categoryIds.map((categoryId) => ({ postId, categoryId })),
+            skipDuplicates: true
+          })
+        ]
+      : [])
+  ]);
+  const h = await headers();
+  const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? null;
+  await audit({
+    userId: me.id,
+    action: 'post.setCategories',
+    target: 'Post',
+    targetId: postId,
+    ipHash: await hashIp(ip)
+  });
+  revalidatePath('/admin/posts');
+}
+
+export async function setPostTags(postId: string, tagIds: string[]): Promise<void> {
+  const me = await requireRole('ADMIN');
+  const existing = await db.post.findUnique({ where: { id: postId }, select: { id: true } });
+  if (!existing) throw new Error('Post not found');
+  await db.$transaction([
+    db.postTag.deleteMany({ where: { postId } }),
+    ...(tagIds.length > 0
+      ? [
+          db.postTag.createMany({
+            data: tagIds.map((tagId) => ({ postId, tagId })),
+            skipDuplicates: true
+          })
+        ]
+      : [])
+  ]);
+  const h = await headers();
+  const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? null;
+  await audit({
+    userId: me.id,
+    action: 'post.setTags',
+    target: 'Post',
+    targetId: postId,
+    ipHash: await hashIp(ip)
+  });
+  revalidatePath('/admin/posts');
+}
+
+export async function setFeaturedMedia(postId: string, mediaId: string | null): Promise<void> {
+  const me = await requireRole('ADMIN');
+  await db.post.update({
+    where: { id: postId },
+    data: { featuredMediaId: mediaId }
+  });
+  const h = await headers();
+  const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? null;
+  await audit({
+    userId: me.id,
+    action: 'post.setFeaturedMedia',
+    target: 'Post',
+    targetId: postId,
+    ipHash: await hashIp(ip)
+  });
+  revalidatePath('/admin/posts');
+}

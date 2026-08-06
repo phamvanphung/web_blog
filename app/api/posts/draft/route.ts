@@ -1,6 +1,7 @@
 // app/api/posts/draft/route.ts
-// POST /api/posts/draft — autosave endpoint for the Tiptap editor (Task 3.6).
-// Admin-only. Accepts { id?: string|null, title: string, contentJson: unknown }.
+// POST /api/posts/draft — save endpoint for the Tiptap editor (P5.1 manual save).
+// Admin-only. Accepts { id?: string|null, title: string, contentJson: unknown,
+//   categoryIds?: string[], tagIds?: string[], featuredMediaId?: string|null }.
 // Returns { id: string } on success.
 
 import { NextResponse } from 'next/server';
@@ -8,7 +9,13 @@ import { z } from 'zod';
 import { requireRole } from '@/lib/auth';
 import { audit, hashIp } from '@/lib/audit';
 import { headers } from 'next/headers';
-import { createDraft, updateDraft } from '@/modules/posts/server';
+import {
+  createDraft,
+  updateDraft,
+  setPostCategories,
+  setPostTags,
+  setFeaturedMedia
+} from '@/modules/posts/server';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -16,7 +23,10 @@ export const runtime = 'nodejs';
 const Body = z.object({
   id: z.string().nullable().optional(),
   title: z.string().max(255),
-  contentJson: z.unknown()
+  contentJson: z.unknown(),
+  categoryIds: z.array(z.string()).optional(),
+  tagIds: z.array(z.string()).optional(),
+  featuredMediaId: z.string().nullable().optional()
 });
 
 export async function POST(req: Request): Promise<Response> {
@@ -35,13 +45,11 @@ export async function POST(req: Request): Promise<Response> {
 
   let postId: string;
   if (!parsed.data.id) {
-    // First save: create new draft.
     postId = await createDraft({
       title: parsed.data.title || 'Untitled',
       contentJson: parsed.data.contentJson
     });
   } else {
-    // Subsequent save: update existing draft.
     await updateDraft({
       id: parsed.data.id,
       title: parsed.data.title || undefined,
@@ -50,11 +58,18 @@ export async function POST(req: Request): Promise<Response> {
     postId = parsed.data.id;
   }
 
+  // Apply taxonomy if provided.
+  if (parsed.data.categoryIds) await setPostCategories(postId, parsed.data.categoryIds);
+  if (parsed.data.tagIds) await setPostTags(postId, parsed.data.tagIds);
+  if (parsed.data.featuredMediaId !== undefined) {
+    await setFeaturedMedia(postId, parsed.data.featuredMediaId);
+  }
+
   const h = await headers();
   const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? null;
   await audit({
     userId: me.id,
-    action: 'post.autosave',
+    action: 'post.save',
     target: 'Post',
     targetId: postId,
     ipHash: await hashIp(ip)

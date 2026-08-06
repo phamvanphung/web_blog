@@ -1,14 +1,17 @@
 import { notFound, redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { requireRole } from '@/lib/auth';
+import { db } from '@/lib/db';
 import { getPost, publishPost, deletePost } from '@/modules/posts/server';
+import { listCategories } from '@/modules/categories/server';
+import { listTags } from '@/modules/tags/server';
+import { listMedia } from '@/modules/media/server';
 import { Tiptap } from '@/components/editor/Tiptap';
+import { PostTaxonomyPanel } from '@/components/editor/PostTaxonomyPanel';
 import { Button } from '@/components/ui/Button';
 
 export const dynamic = 'force-dynamic';
 
-// Inline Server Actions — `deletePost()` already audits + revalidates internally,
-// so the wrapper only needs role check + redirect.
 async function publishAction(formData: FormData) {
   'use server';
   const id = String(formData.get('id') ?? '');
@@ -22,8 +25,6 @@ async function deleteAction(formData: FormData) {
   await requireRole('ADMIN');
   const id = String(formData.get('id') ?? '');
   await deletePost(id);
-  // After delete, the edit page would re-render the (now-trashed) record.
-  // Bounce back to the list instead.
   redirect('/admin/posts?status=TRASHED');
 }
 
@@ -33,7 +34,19 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
   const post = await getPost(id);
   if (!post) notFound();
 
+  const [categories, tags, mediaPage, postWithRel] = await Promise.all([
+    listCategories(),
+    listTags(),
+    listMedia({ take: 12 }),
+    db.post.findUnique({
+      where: { id: post.id },
+      include: { categories: { select: { categoryId: true } }, tags: { select: { tagId: true } } }
+    })
+  ]);
+
   const initialContent = post.contentJson ?? { type: 'doc', content: [{ type: 'paragraph' }] };
+  const initialCategoryIds = postWithRel?.categories.map((c) => c.categoryId) ?? [];
+  const initialTagIds = postWithRel?.tags.map((t) => t.tagId) ?? [];
 
   return (
     <div className="space-y-6">
@@ -59,7 +72,29 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
         </div>
       </header>
 
-      <Tiptap initialContent={initialContent as never} initialTitle={post.title} postId={post.id} />
+      <div className="grid grid-cols-3 gap-6">
+        <div className="col-span-2">
+          <Tiptap
+            initialContent={initialContent as never}
+            initialTitle={post.title}
+            postId={post.id}
+            initialStatus={post.status}
+          />
+        </div>
+        <PostTaxonomyPanel
+          postId={post.id}
+          initialCategoryIds={initialCategoryIds}
+          initialTagIds={initialTagIds}
+          initialFeaturedMediaId={post.featuredMediaId}
+          categories={categories.map((c) => ({ id: c.id, name: c.name, slug: c.slug }))}
+          tags={tags.map((t) => ({ id: t.id, name: t.name, slug: t.slug }))}
+          recentMedia={mediaPage.items.map((m) => ({
+            id: m.id,
+            url: m.url,
+            altText: m.altText
+          }))}
+        />
+      </div>
     </div>
   );
 }
