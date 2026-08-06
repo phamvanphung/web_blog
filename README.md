@@ -100,7 +100,7 @@ pnpm db:studio          # Prisma Studio GUI
 - [x] **P0. Foundation** — scaffold, Prisma schema, ESLint/Prettier, layout shells, SEO helper, test skeletons
 - [x] **P1. Auth & Settings** — session cookie `sid`, Argon2id password hash, role-based admin (ADMIN/EDITOR), audit log, settings module
 - [x] **P2. Media & Categories/Tags** — Sharp pipeline (4 WebP variants), upload via Server Action, media library, categories tree, tags CRUD.
-- [ ] P3. Posts (Tiptap)
+- [x] **P3. Posts & Tiptap** — Tiptap editor (autosave + revisions), draft/publish flow, slug uniqueness + 301 redirect on rename.
 - [ ] P4. Pages & Menus
 - [ ] P5. Public site
 - [ ] P6. SEO & Polish
@@ -155,6 +155,23 @@ Limits: 10 MB / ảnh, MIME: JPEG/PNG/WebP/GIF (không SVG, không script).
 **Tags**: flat danh sách ở `/admin/tags`. Slug tự sinh, unique qua `ensureUniqueSlug()` (append `-2`, `-3`, … nếu trùng).
 
 Cả hai module đều ghi `AuditLog` cho mỗi mutation.
+
+## Posts & Editor
+
+Tiptap (ProseMirror) editor ở `/admin/posts/new` và `/admin/posts/[id]/edit`. Autosave mỗi 1.5s sau khi ngừng gõ — tạo draft ngay lần gõ đầu (khi `postId=null`) hoặc update draft hiện có. Server lưu `id` trả về về client để các autosave tiếp theo update đúng bản ghi.
+
+- **Drafts**: status `DRAFT` — không lên public site, chỉ admin thấy.
+- **Publish**: tạo row `PostRevision` (snapshot content_json + title), set `status=PUBLISHED` + `publishedAt` (giữ nguyên ngày publish đầu nếu re-publish).
+- **Slug tự sinh** từ title qua `slugify()` (Unicode-safe, Vietnamese diacritic). Unique qua `ensureUniquePostSlug()`.
+- **Đổi slug khi sửa title**: insert row `Redirect` (`fromPath=/blog/<old>`, `toPath=/blog/<new>`, status 301). Public site (P5) sẽ check bảng này khi serve `/blog/<old>`.
+
+Server-render bằng `@tiptap/html/server` + `isomorphic-dompurify` (strip `<script>`, event handlers, …). Output lưu `contentHtml` (sanitised HTML) + `contentText` (plain text cho FULLTEXT search ở P5+).
+
+Admin pages:
+
+- `/admin/posts` — list + status filter (`?status=PUBLISHED|TRASHED`)
+- `/admin/posts/new` — empty editor, autosave tạo draft
+- `/admin/posts/[id]/edit` — load title + content, nút Publish + Xóa
 
 ## Note về local DB
 
