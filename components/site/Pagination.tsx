@@ -12,23 +12,36 @@ export function Pagination({ page, pageCount, hrefFor }: Props) {
   const prev = page > 1 ? hrefFor(page - 1) : null;
   const next = page < pageCount ? hrefFor(page + 1) : null;
   return (
-    <nav aria-label="Phân trang" className="mt-10 flex items-center justify-between text-sm">
+    <nav
+      aria-label="Phân trang"
+      className="mt-12 flex items-center justify-between text-[13px]"
+    >
       {prev ? (
-        <Link href={prev} className="underline hover:no-underline">
+        <Link
+          href={prev}
+          className="rounded-pill bg-canvas-parchment px-4 py-2 text-ink hover:bg-chip"
+        >
           ← Trang trước
         </Link>
       ) : (
-        <span className="text-muted">← Trang trước</span>
+        <span className="rounded-pill bg-canvas-parchment px-4 py-2 text-ink-48">
+          ← Trang trước
+        </span>
       )}
-      <span className="text-muted">
+      <span className="text-ink-48">
         Trang {page} / {pageCount}
       </span>
       {next ? (
-        <Link href={next} className="underline hover:no-underline">
+        <Link
+          href={next}
+          className="rounded-pill bg-canvas-parchment px-4 py-2 text-ink hover:bg-chip"
+        >
           Trang sau →
         </Link>
       ) : (
-        <span className="text-muted">Trang sau →</span>
+        <span className="rounded-pill bg-canvas-parchment px-4 py-2 text-ink-48">
+          Trang sau →
+        </span>
       )}
     </nav>
   );

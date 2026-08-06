@@ -6,7 +6,7 @@ type Props = { html: string };
 export function PostContent({ html }: Props) {
   return (
     <div
-      className="prose mt-8"
+      className="prose mt-md"
       // Server-side sanitised HTML — never trust client.
       dangerouslySetInnerHTML={{ __html: html }}
     />
