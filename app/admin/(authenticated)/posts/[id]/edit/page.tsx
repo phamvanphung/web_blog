@@ -8,6 +8,7 @@ import { listTags } from '@/modules/tags/server';
 import { listMedia } from '@/modules/media/server';
 import { Tiptap } from '@/components/editor/Tiptap';
 import { PostTaxonomyPanel } from '@/components/editor/PostTaxonomyPanel';
+import { AdminBreadcrumb } from '@/components/admin/AdminBreadcrumb';
 import { Button } from '@/components/ui/Button';
 
 export const dynamic = 'force-dynamic';
@@ -50,10 +51,17 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
 
   return (
     <div className="space-y-8">
-      <header className="flex items-center justify-between">
-        <h1 className="text-d-sm">
-          {post.status === 'PUBLISHED' ? 'Sửa (đã xuất bản)' : 'Sửa bài viết'}
-        </h1>
+      <header>
+        <AdminBreadcrumb
+          items={[
+            { href: '/admin/posts', label: 'Bài viết' },
+            { label: post.title || 'Sửa' }
+          ]}
+        />
+        <div className="flex items-center justify-between">
+          <h1 className="text-d-sm">
+            {post.status === 'PUBLISHED' ? 'Sửa (đã xuất bản)' : 'Sửa bài viết'}
+          </h1>
         <div className="flex items-center gap-4">
           {post.status !== 'PUBLISHED' && (
             <form action={publishAction}>
@@ -69,6 +77,7 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
               Xóa
             </button>
           </form>
+        </div>
         </div>
       </header>
 

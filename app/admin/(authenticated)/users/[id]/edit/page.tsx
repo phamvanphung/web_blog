@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { requireRole } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { Button } from '@/components/ui/Button';
+import { AdminBreadcrumb } from '@/components/admin/AdminBreadcrumb';
 import { updateUserAction } from '../../actions';
 
 export const dynamic = 'force-dynamic';
@@ -25,6 +26,7 @@ export default async function EditUserPage({
 
   return (
     <div className="max-w-prose">
+      <AdminBreadcrumb items={[{ href: '/admin/users', label: 'Users' }, { label: 'Sửa' }]} />
       <h1 className="mb-2 text-d-sm">Sửa user</h1>
       {sp.error === 'invalid' && (
         <div className="mb-4 rounded-11 border border-hairline bg-canvas-parchment p-3 text-[13px] text-[#d70015]">

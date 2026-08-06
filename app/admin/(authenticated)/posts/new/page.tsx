@@ -1,6 +1,7 @@
 // app/admin/(authenticated)/posts/new/page.tsx
 import { Tiptap } from '@/components/editor/Tiptap';
 import { PostTaxonomyPanel } from '@/components/editor/PostTaxonomyPanel';
+import { AdminBreadcrumb } from '@/components/admin/AdminBreadcrumb';
 import { listCategories } from '@/modules/categories/server';
 import { listTags } from '@/modules/tags/server';
 import { listMedia } from '@/modules/media/server';
@@ -17,6 +18,7 @@ export default async function NewPostPage() {
   const empty = { type: 'doc', content: [{ type: 'paragraph' }] };
   return (
     <div>
+      <AdminBreadcrumb items={[{ href: '/admin/posts', label: 'Bài viết' }, { label: 'Mới' }]} />
       <h1 className="mb-2 text-d-sm">Bài viết mới</h1>
       <p className="mb-6 text-[13px] text-ink-48">
         Soạn nội dung, click <strong>Lưu nháp</strong> khi xong. Sau khi lưu, có thể publish.

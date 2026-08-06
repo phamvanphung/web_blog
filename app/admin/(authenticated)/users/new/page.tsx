@@ -1,5 +1,6 @@
 import { requireRole } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
+import { AdminBreadcrumb } from '@/components/admin/AdminBreadcrumb';
 import { createUserAction } from '../actions';
 
 export const dynamic = 'force-dynamic';
@@ -12,6 +13,7 @@ export default async function NewUserPage() {
   await requireRole('ADMIN');
   return (
     <div className="max-w-prose">
+      <AdminBreadcrumb items={[{ href: '/admin/users', label: 'Users' }, { label: 'Mới' }]} />
       <h1 className="mb-2 text-d-sm">Tạo user</h1>
       <form action={createUserAction} className="space-y-5">
         <div>

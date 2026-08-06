@@ -1,3 +1,5 @@
+import { clsx } from 'clsx';
+
 type Tone = 'ink' | 'ondark';
 
 type Props = {
@@ -5,42 +7,51 @@ type Props = {
   tone?: Tone;
   /** Brand wordmark text. Defaults to "9ent". */
   text?: string;
+  /** Show the small colored accent dot after the word. Defaults to true. */
+  withDot?: boolean;
+};
+
+const TEXT_COLOR: Record<Tone, string> = {
+  ink: 'text-ink',
+  ondark: 'text-white'
+};
+
+const DOT_COLOR: Record<Tone, string> = {
+  ink: 'bg-primary',
+  ondark: 'bg-primary-ondark'
 };
 
 /**
- * 9ent-style wordmark rendered inline so the colors follow the consuming
- * surface. `tone="ink"` → dark ink on light surfaces; `tone="ondark"` →
- * white on the black GlobalNav. `text` is the brand name read from the
- * `Setting` table (lib/brand.ts).
+ * 9ent-style wordmark rendered as HTML (text + colored accent dot).
+ * HTML keeps the layout responsive to the brand length, which the previous
+ * SVG-with-`<text>` could not do (truncated/clipped when brand was longer
+ * than the static viewBox, e.g. "Đậu Đậu").
+ *
+ * `tone="ink"` → dark ink on light surfaces (default chrome).
+ * `tone="ondark"` → white on the black GlobalNav.
  */
-export function Logo({ className = '', tone = 'ink', text }: Props) {
-  const siteName = (text ?? '9ent').trim() || '9ent';
-  const ink = tone === 'ondark' ? '#FFFFFF' : '#1D1D1F';
-  const dot = tone === 'ondark' ? '#2997FF' : '#0066CC';
-
-  // Wordmark renders the supplied text. Dot is a visual accent — kept as a
-  // constant brand mark rather than a dynamic character.
+export function Logo({ className, tone = 'ink', text, withDot = true }: Props) {
+  const brand = (text ?? '9ent').trim() || '9ent';
   return (
-    <svg
-      viewBox="0 0 120 32"
-      width="120"
-      height="32"
+    <span
       role="img"
-      aria-label={siteName}
-      className={className}
+      aria-label={brand}
+      className={clsx(
+        'inline-flex items-baseline gap-[3px] font-sans font-semibold leading-none tracking-[-0.01em]',
+        TEXT_COLOR[tone],
+        className
+      )}
     >
-      <text
-        x="0"
-        y="24"
-        fontFamily="Inter, system-ui, sans-serif"
-        fontSize="24"
-        fontWeight="600"
-        letterSpacing="-0.5"
-        fill={ink}
-      >
-        {siteName}
-      </text>
-      <circle cx="106" cy="16" r="3" fill={dot} />
-    </svg>
+      <span className="text-[22px]">{brand}</span>
+      {withDot && (
+        <span
+          aria-hidden="true"
+          className={clsx(
+            'inline-block h-[6px] w-[6px] translate-y-[2px] rounded-full',
+            DOT_COLOR[tone]
+          )}
+        />
+      )}
+    </span>
   );
 }

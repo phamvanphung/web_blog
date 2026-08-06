@@ -11,6 +11,7 @@ import {
   setMenuLocation
 } from '@/modules/menus/server';
 import { Button } from '@/components/ui/Button';
+import { AdminBreadcrumb } from '@/components/admin/AdminBreadcrumb';
 import { MenuEditor } from '../../MenuEditor';
 
 export const dynamic = 'force-dynamic';
@@ -79,6 +80,7 @@ export default async function MenuEditPage({
 
   return (
     <div>
+      <AdminBreadcrumb items={[{ href: '/admin/menus', label: 'Menus' }, { label: menu.name || 'Sửa' }]} />
       <h1 className="mb-2 text-d-sm">Menu: {menu.name}</h1>
       <p className="mb-6 text-[13px] text-ink-48">
         Admin-only. Items đa cấp; sortOrder tăng dần → render thứ tự.
