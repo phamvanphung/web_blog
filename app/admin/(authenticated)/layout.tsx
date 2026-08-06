@@ -26,7 +26,7 @@ export default async function AuthedLayout({ children }: { children: ReactNode }
   const brand = await getBrand();
 
   return (
-    <div className="grid min-h-screen grid-cols-1 md:grid-cols-[14rem_1fr]">
+    <div className="grid min-h-screen grid-cols-1 md:grid-cols-[15rem_1fr]">
       <aside className="bg-tile-1 p-6 text-ink-ondark md:border-r md:border-tile-2">
         <Link
           href="/admin/dashboard"
@@ -59,7 +59,7 @@ export default async function AuthedLayout({ children }: { children: ReactNode }
           ))}
         </nav>
       </aside>
-      <Container width="wide" className="py-12">
+      <Container width="xl" className="py-12">
         {children}
       </Container>
     </div>
