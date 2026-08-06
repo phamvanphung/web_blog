@@ -13,7 +13,8 @@ const NAV = [
   { href: '/admin/menus', label: 'Menu' },
   { href: '/admin/contacts', label: 'Liên hệ' },
   { href: '/admin/users', label: 'Users' },
-  { href: '/admin/settings', label: 'Settings' }
+  { href: '/admin/settings', label: 'Settings' },
+  { href: '/admin/audit-log', label: 'Audit log' }
 ];
 
 export default async function AuthedLayout({ children }: { children: ReactNode }) {
