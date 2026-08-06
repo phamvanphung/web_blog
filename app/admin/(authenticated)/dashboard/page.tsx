@@ -52,11 +52,14 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      <h1 className="mb-2 text-3xl">Dashboard</h1>
-      <p className="mb-8 text-sm text-muted">Tổng quan nhanh.</p>
+      <h1 className="mb-2 text-d-sm">Dashboard</h1>
+      <p className="mb-10 text-[13px] text-ink-48">Tổng quan nhanh.</p>
 
       {dbDown && (
-        <div role="status" className="mb-6 border border-line bg-bg p-4 text-sm text-muted">
+        <div
+          role="status"
+          className="mb-6 rounded-11 border border-hairline bg-canvas-parchment p-4 text-[13px] text-ink-48"
+        >
           Database chưa kết nối. Kiểm tra <code>DATABASE_URL</code> trong <code>.env</code>.
         </div>
       )}
@@ -76,20 +79,20 @@ export default async function DashboardPage() {
         <Stat label="Settings" sub="Key/value" href="/admin/settings" />
       </div>
 
-      <h2 className="mb-3 mt-10 text-lg font-semibold">Bài viết gần đây</h2>
+      <h2 className="mb-4 mt-12 text-[21px] font-semibold tracking-tight">Bài viết gần đây</h2>
       {recentPosts.length === 0 ? (
-        <p className="text-sm text-muted">Chưa có bài viết.</p>
+        <p className="text-[13px] text-ink-48">Chưa có bài viết.</p>
       ) : (
-        <ul className="space-y-2 text-sm">
+        <ul className="divide-y divide-hairline border-y border-hairline">
           {recentPosts.map((p) => (
-            <li key={p.id} className="border-b border-line py-2">
+            <li key={p.id} className="py-3">
               <Link
                 href={`/admin/posts/${p.id}/edit`}
-                className="font-ui underline hover:no-underline"
+                className="text-ink hover:text-primary"
               >
                 {p.title}
               </Link>
-              <span className="ml-2 text-xs text-muted">
+              <span className="ml-2 text-[12px] text-ink-48">
                 · {p.status} · {p.updatedAt.toISOString()}
               </span>
             </li>
@@ -102,9 +105,12 @@ export default async function DashboardPage() {
 
 function Stat({ label, sub, href }: { label: string; sub: string; href: string }) {
   return (
-    <Link href={href} className="block border border-line p-4 hover:border-accent">
-      <div className="text-xs uppercase tracking-wider text-muted">{label}</div>
-      <div className="mt-1 text-sm text-muted">{sub}</div>
+    <Link
+      href={href}
+      className="block rounded-18 bg-canvas-parchment p-5 transition-colors hover:bg-chip"
+    >
+      <div className="text-[12px] uppercase tracking-[0.08em] text-ink-48">{label}</div>
+      <div className="mt-1 text-[21px] font-semibold tracking-tight text-ink">{sub}</div>
     </Link>
   );
 }

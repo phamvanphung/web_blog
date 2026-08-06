@@ -1,7 +1,6 @@
 'use client';
 
 import { useActionState } from 'react';
-import { Container } from '@/components/ui/Container';
 import { Button } from '@/components/ui/Button';
 import { loginAction, type LoginFormState } from './actions';
 
@@ -12,42 +11,52 @@ export default function LoginPage() {
   );
 
   return (
-    <Container width="narrow" className="py-24">
-      <h1 className="mb-2 text-3xl">Đăng nhập</h1>
-      <p className="mb-8 text-sm text-muted">CMS nội bộ 9ent — chỉ dành cho Admin / Editor.</p>
+    <div className="grid min-h-screen place-items-center bg-canvas-parchment px-4 py-12">
+      <div className="w-full max-w-[380px] rounded-18 bg-canvas p-10">
+        {/* h1 stays "Đăng nhập" — asserted by tests/e2e/auth.spec.ts */}
+        <h1 className="text-d-sm">Đăng nhập</h1>
+        <p className="mt-2 text-[13px] text-ink-48">
+          CMS nội bộ 9ent — chỉ dành cho Admin / Editor.
+        </p>
 
-      <form action={formAction} className="space-y-4">
-        <label className="block">
-          <span className="mb-1 block text-sm">Email</span>
-          <input
-            name="email"
-            type="email"
-            required
-            autoComplete="username"
-            className="w-full border border-line bg-bg px-3 py-2 text-sm"
-          />
-        </label>
+        <form action={formAction} className="mt-8 space-y-5">
+          <label className="block">
+            <span className="mb-1 block text-[13px] text-ink-80">Email</span>
+            <input
+              name="email"
+              type="email"
+              required
+              autoComplete="username"
+              className="h-11 w-full rounded-11 bg-canvas-parchment px-4 text-[15px] text-ink border border-transparent outline-none focus:border-primary-focus focus:bg-canvas"
+            />
+          </label>
 
-        <label className="block">
-          <span className="mb-1 block text-sm">Mật khẩu</span>
-          <input
-            name="password"
-            type="password"
-            required
-            minLength={8}
-            autoComplete="current-password"
-            className="w-full border border-line bg-bg px-3 py-2 text-sm"
-          />
-        </label>
+          <label className="block">
+            <span className="mb-1 block text-[13px] text-ink-80">Mật khẩu</span>
+            <input
+              name="password"
+              type="password"
+              required
+              minLength={8}
+              autoComplete="current-password"
+              className="h-11 w-full rounded-11 bg-canvas-parchment px-4 text-[15px] text-ink border border-transparent outline-none focus:border-primary-focus focus:bg-canvas"
+            />
+          </label>
 
-        {state?.error && (
-          <div role="alert" className="border border-line bg-bg p-3 text-sm text-muted">
-            {state.error}
-          </div>
-        )}
+          {state?.error && (
+            <div
+              role="alert"
+              className="rounded-11 bg-canvas-parchment p-3 text-[13px] text-[#d70015]"
+            >
+              {state.error}
+            </div>
+          )}
 
-        <Button disabled={pending}>{pending ? 'Đang đăng nhập...' : 'Đăng nhập'}</Button>
-      </form>
-    </Container>
+          <Button type="submit" variant="primary-pill" disabled={pending}>
+            {pending ? 'Đang đăng nhập...' : 'Đăng nhập'}
+          </Button>
+        </form>
+      </div>
+    </div>
   );
 }
