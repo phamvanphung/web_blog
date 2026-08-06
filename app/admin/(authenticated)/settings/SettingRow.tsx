@@ -11,7 +11,7 @@ export function SettingRow({
 }: {
   keyName: string;
   value: string;
-  updatedAt: string; // serialised ISO string from Server Component
+  updatedAt: string;
 }) {
   const [state, formAction, pending] = useActionState<SettingFormState | undefined, FormData>(
     updateSettingAction,
@@ -19,7 +19,13 @@ export function SettingRow({
   );
 
   return (
-    <form action={formAction} className="space-y-1 border-b border-line pb-4">
+    // key={updatedAt} forces remount when the server returns a fresh updatedAt,
+    // so the input's defaultValue reflects the just-saved value.
+    <form
+      key={updatedAt}
+      action={formAction}
+      className="space-y-1 border-b border-line pb-4"
+    >
       <label className="block text-xs uppercase tracking-wider text-muted" htmlFor={`k-${keyName}`}>
         {keyName}
       </label>
@@ -31,13 +37,13 @@ export function SettingRow({
       />
       <p className="text-xs text-muted">Cập nhật: {updatedAt}</p>
       {state?.ok === false && (
-        <p role="alert" className="text-xs text-muted">
+        <p role="alert" className="text-xs text-red-700">
           {state.error}
         </p>
       )}
       {state?.ok === true && (
-        <p role="status" className="text-xs text-muted">
-          Đã lưu.
+        <p role="status" className="text-xs text-accent">
+          ✓ Đã lưu.
         </p>
       )}
       <Button disabled={pending} size="sm">
