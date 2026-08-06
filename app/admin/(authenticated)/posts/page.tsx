@@ -21,7 +21,14 @@ export default async function PostsPage({
 }) {
   await requireRole('ADMIN');
   const sp = await searchParams;
-  const validStatuses = ['DRAFT', 'PENDING', 'SCHEDULED', 'PUBLISHED', 'HIDDEN', 'TRASHED'] as const;
+  const validStatuses = [
+    'DRAFT',
+    'PENDING',
+    'SCHEDULED',
+    'PUBLISHED',
+    'HIDDEN',
+    'TRASHED'
+  ] as const;
   type PostStatus = (typeof validStatuses)[number];
   const status: PostStatus | undefined =
     sp.status && (validStatuses as readonly string[]).includes(sp.status)
@@ -82,7 +89,10 @@ export default async function PostsPage({
                 <td className="py-2">{STATUS_LABELS[p.status] ?? p.status}</td>
                 <td className="py-2 text-xs text-muted">{p.updatedAt.toISOString()}</td>
                 <td className="py-2 text-right">
-                  <Link href={`/admin/posts/${p.id}/edit`} className="text-xs underline hover:no-underline">
+                  <Link
+                    href={`/admin/posts/${p.id}/edit`}
+                    className="text-xs underline hover:no-underline"
+                  >
                     Sửa
                   </Link>
                 </td>

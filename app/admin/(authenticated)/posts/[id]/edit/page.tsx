@@ -1,15 +1,14 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { headers } from 'next/headers';
 import { requireRole } from '@/lib/auth';
 import { getPost, publishPost, deletePost } from '@/modules/posts/server';
 import { Tiptap } from '@/components/editor/Tiptap';
 import { Button } from '@/components/ui/Button';
-import { audit, hashIp } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
-// Inline Server Actions for publish + delete (per spec — keeps all UX in one file).
+// Inline Server Actions — `deletePost()` already audits + revalidates internally,
+// so the wrapper only needs role check + redirect.
 async function publishAction(formData: FormData) {
   'use server';
   const id = String(formData.get('id') ?? '');
@@ -20,19 +19,12 @@ async function publishAction(formData: FormData) {
 
 async function deleteAction(formData: FormData) {
   'use server';
-  const me = await requireRole('ADMIN');
+  await requireRole('ADMIN');
   const id = String(formData.get('id') ?? '');
   await deletePost(id);
-  const h = await headers();
-  const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? null;
-  await audit({
-    userId: me.id,
-    action: 'post.delete',
-    target: 'Post',
-    targetId: id,
-    ipHash: await hashIp(ip)
-  });
-  revalidatePath('/admin/posts');
+  // After delete, the edit page would re-render the (now-trashed) record.
+  // Bounce back to the list instead.
+  redirect('/admin/posts?status=TRASHED');
 }
 
 export default async function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
@@ -67,7 +59,7 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
         </div>
       </header>
 
-      <Tiptap initialContent={initialContent as never} postId={post.id} />
+      <Tiptap initialContent={initialContent as never} initialTitle={post.title} postId={post.id} />
     </div>
   );
 }

@@ -6,11 +6,17 @@ import { extensionBundle } from './extensions';
 
 type Props = {
   initialContent: unknown;
+  initialTitle?: string;
   postId: string | null;
   onSaved?: () => void;
 };
 
-export function Tiptap({ initialContent, postId: initialPostId, onSaved }: Props) {
+export function Tiptap({
+  initialContent,
+  initialTitle = '',
+  postId: initialPostId,
+  onSaved
+}: Props) {
   const editor = useEditor({
     extensions: extensionBundle,
     content: initialContent as never,
@@ -18,7 +24,7 @@ export function Tiptap({ initialContent, postId: initialPostId, onSaved }: Props
     editorProps: { attributes: { class: 'prose max-w-prose focus:outline-none min-h-[300px]' } }
   });
 
-  const [title, setTitle] = useState<string>('');
+  const [title, setTitle] = useState<string>(initialTitle);
   const [postId, setPostId] = useState<string | null>(initialPostId);
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
