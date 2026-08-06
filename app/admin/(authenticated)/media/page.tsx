@@ -1,6 +1,7 @@
 import { requireRole } from '@/lib/auth';
 import { listMedia } from '@/modules/media/server';
 import { UploadForm } from './UploadForm';
+import { deleteMediaFormAction } from './actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,8 +13,7 @@ export default async function MediaPage() {
     <div>
       <h1 className="mb-2 text-3xl">Media</h1>
       <p className="mb-8 text-sm text-muted">
-        Admin-only. Upload qua form dưới — Sharp tạo 4 variant WebP (original / 1600w / 800w /
-        400w).
+        Admin-only. Upload qua form dưới — Sharp tạo 4 variant WebP.
       </p>
 
       <UploadForm />
@@ -35,6 +35,15 @@ export default async function MediaPage() {
               <p className="text-xs text-muted">
                 {m.width}×{m.height} · {(m.fileSize / 1024).toFixed(1)} KB
               </p>
+              <form action={deleteMediaFormAction}>
+                <input type="hidden" name="id" value={m.id} />
+                <button
+                  type="submit"
+                  className="text-xs text-red-700 underline hover:no-underline"
+                >
+                  Xóa
+                </button>
+              </form>
             </li>
           ))}
         </ul>

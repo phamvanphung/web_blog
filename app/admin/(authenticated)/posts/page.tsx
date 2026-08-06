@@ -1,5 +1,7 @@
 import { requireRole } from '@/lib/auth';
 import { listPosts } from '@/modules/posts/server';
+import { deletePost } from '@/modules/posts/server';
+import { revalidatePath } from 'next/cache';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 
@@ -13,6 +15,14 @@ const STATUS_LABELS: Record<string, string> = {
   HIDDEN: 'Đã ẩn',
   TRASHED: 'Thùng rác'
 };
+
+async function deleteAction(formData: FormData) {
+  'use server';
+  await requireRole('ADMIN');
+  const id = String(formData.get('id') ?? '');
+  await deletePost(id);
+  revalidatePath('/admin/posts');
+}
 
 export default async function PostsPage({
   searchParams
@@ -47,20 +57,26 @@ export default async function PostsPage({
           <Button size="sm">+ Viết bài mới</Button>
         </Link>
       </div>
-      <p className="mb-6 text-sm text-muted">Admin-only. Editor (Tiptap) + autosave + revisions.</p>
+      <p className="mb-6 text-sm text-muted">Admin-only. Click Sửa để mở editor.</p>
 
       <nav className="mb-6 flex gap-2 text-xs">
         <Link
           href="/admin/posts"
           className={`border border-line px-2 py-1 ${!status ? 'bg-line' : ''}`}
         >
-          Nháp
+          Tất cả
         </Link>
         <Link
           href="/admin/posts?status=PUBLISHED"
           className={`border border-line px-2 py-1 ${status === 'PUBLISHED' ? 'bg-line' : ''}`}
         >
           Đã xuất bản
+        </Link>
+        <Link
+          href="/admin/posts?status=DRAFT"
+          className={`border border-line px-2 py-1 ${status === 'DRAFT' ? 'bg-line' : ''}`}
+        >
+          Nháp
         </Link>
         <Link
           href="/admin/posts?status=TRASHED"
@@ -79,7 +95,7 @@ export default async function PostsPage({
               <th className="py-2">Tiêu đề</th>
               <th className="py-2">Trạng thái</th>
               <th className="py-2">Cập nhật</th>
-              <th className="py-2"></th>
+              <th className="py-2 text-right">Hành động</th>
             </tr>
           </thead>
           <tbody>
@@ -89,12 +105,25 @@ export default async function PostsPage({
                 <td className="py-2">{STATUS_LABELS[p.status] ?? p.status}</td>
                 <td className="py-2 text-xs text-muted">{p.updatedAt.toISOString()}</td>
                 <td className="py-2 text-right">
-                  <Link
-                    href={`/admin/posts/${p.id}/edit`}
-                    className="text-xs underline hover:no-underline"
-                  >
-                    Sửa
-                  </Link>
+                  <div className="flex justify-end gap-2">
+                    <Link
+                      href={`/admin/posts/${p.id}/edit`}
+                      className="text-xs underline hover:no-underline"
+                    >
+                      Sửa
+                    </Link>
+                    {p.status !== 'TRASHED' && (
+                      <form action={deleteAction}>
+                        <input type="hidden" name="id" value={p.id} />
+                        <button
+                          type="submit"
+                          className="text-xs text-red-700 underline hover:no-underline"
+                        >
+                          Xóa
+                        </button>
+                      </form>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
