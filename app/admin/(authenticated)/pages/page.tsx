@@ -1,7 +1,7 @@
 import { requireRole } from '@/lib/auth';
 import { listPages } from '@/modules/pages/server';
 import Link from 'next/link';
-import { Button } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/ButtonLink';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,61 +26,63 @@ export default async function PagesPage({
       : undefined;
   const pages = await listPages({ ...(status ? { status } : {}), take: 100 });
 
+  const filterClass = (active: boolean) =>
+    `rounded-pill px-3 py-1 text-[12px] transition-colors ${
+      active ? 'bg-ink text-white' : 'bg-canvas-parchment text-ink hover:bg-chip'
+    }`;
+
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <h1 className="mb-2 text-3xl">Trang</h1>
-        <Link href="/admin/pages/new">
-          <Button size="sm">+ Trang mới</Button>
-        </Link>
+      <div className="mb-2 flex items-center justify-between">
+        <h1 className="text-d-sm">Trang</h1>
+        <ButtonLink href="/admin/pages/new" variant="primary-pill" size="sm">
+          + Trang mới
+        </ButtonLink>
       </div>
-      <p className="mb-6 text-sm text-muted">
+      <p className="mb-6 text-[13px] text-ink-48">
         Admin-only. Trang tĩnh (plain text, không có Tiptap).
       </p>
 
-      <nav className="mb-6 flex gap-2 text-xs">
-        <Link
-          href="/admin/pages"
-          className={`border border-line px-2 py-1 ${!status ? 'bg-line' : ''}`}
-        >
+      <nav className="mb-6 flex flex-wrap gap-2 text-xs">
+        <Link href="/admin/pages" className={filterClass(!status)}>
           Tất cả
         </Link>
         <Link
           href="/admin/pages?status=PUBLISHED"
-          className={`border border-line px-2 py-1 ${status === 'PUBLISHED' ? 'bg-line' : ''}`}
+          className={filterClass(status === 'PUBLISHED')}
         >
           Đã xuất bản
         </Link>
         <Link
           href="/admin/pages?status=DRAFT"
-          className={`border border-line px-2 py-1 ${status === 'DRAFT' ? 'bg-line' : ''}`}
+          className={filterClass(status === 'DRAFT')}
         >
           Nháp
         </Link>
       </nav>
 
       {pages.length === 0 ? (
-        <p className="text-sm text-muted">Chưa có trang nào.</p>
+        <p className="text-[13px] text-ink-48">Chưa có trang nào.</p>
       ) : (
-        <table className="w-full max-w-prose text-sm">
+        <table className="w-full text-[13px]">
           <thead>
-            <tr className="border-b border-line text-left text-xs uppercase tracking-wider text-muted">
-              <th className="py-2">Tiêu đề</th>
-              <th className="py-2">Trạng thái</th>
-              <th className="py-2">Cập nhật</th>
-              <th className="py-2"></th>
+            <tr className="border-b border-hairline text-left text-[12px] uppercase tracking-[0.08em] text-ink-48">
+              <th className="py-3">Tiêu đề</th>
+              <th className="py-3">Trạng thái</th>
+              <th className="py-3">Cập nhật</th>
+              <th className="py-3"></th>
             </tr>
           </thead>
           <tbody>
             {pages.map((p) => (
-              <tr key={p.id} className="border-b border-line">
-                <td className="py-2 font-ui">{p.title}</td>
-                <td className="py-2">{STATUS_LABELS[p.status] ?? p.status}</td>
-                <td className="py-2 text-xs text-muted">{p.updatedAt.toISOString()}</td>
-                <td className="py-2 text-right">
+              <tr key={p.id} className="border-b border-hairline hover:bg-canvas-parchment">
+                <td className="py-3 text-ink">{p.title}</td>
+                <td className="py-3 text-ink-80">{STATUS_LABELS[p.status] ?? p.status}</td>
+                <td className="py-3 text-[12px] text-ink-48">{p.updatedAt.toISOString()}</td>
+                <td className="py-3 text-right">
                   <Link
                     href={`/admin/pages/${p.id}/edit`}
-                    className="text-xs underline hover:no-underline"
+                    className="text-primary hover:underline"
                   >
                     Sửa
                   </Link>

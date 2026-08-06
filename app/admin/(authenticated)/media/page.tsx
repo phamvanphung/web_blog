@@ -11,16 +11,16 @@ export default async function MediaPage() {
 
   return (
     <div>
-      <h1 className="mb-2 text-3xl">Media</h1>
-      <p className="mb-8 text-sm text-muted">
+      <h1 className="mb-2 text-d-sm">Media</h1>
+      <p className="mb-8 text-[13px] text-ink-48">
         Admin-only. Upload qua form dưới — Sharp tạo 4 variant WebP.
       </p>
 
       <UploadForm />
 
-      <h2 className="mb-3 mt-10 text-lg font-semibold">Tất cả ({total})</h2>
+      <h2 className="mb-3 mt-10 text-[21px] font-semibold tracking-tight">Tất cả ({total})</h2>
       {items.length === 0 ? (
-        <p className="text-sm text-muted">Chưa có media nào.</p>
+        <p className="text-[13px] text-ink-48">Chưa có media nào.</p>
       ) : (
         <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
           {items.map((m) => (
@@ -29,18 +29,15 @@ export default async function MediaPage() {
               <img
                 src={m.url}
                 alt={m.altText ?? m.originalName}
-                className="aspect-square w-full border border-line object-cover"
+                className="aspect-square w-full rounded-11 border border-hairline object-cover"
               />
-              <p className="truncate text-xs text-muted">{m.originalName}</p>
-              <p className="text-xs text-muted">
+              <p className="truncate text-[12px] text-ink-80">{m.originalName}</p>
+              <p className="text-[12px] text-ink-48">
                 {m.width}×{m.height} · {(m.fileSize / 1024).toFixed(1)} KB
               </p>
               <form action={deleteMediaFormAction}>
                 <input type="hidden" name="id" value={m.id} />
-                <button
-                  type="submit"
-                  className="text-xs text-red-700 underline hover:no-underline"
-                >
+                <button type="submit" className="text-[12px] text-[#d70015] hover:underline">
                   Xóa
                 </button>
               </form>

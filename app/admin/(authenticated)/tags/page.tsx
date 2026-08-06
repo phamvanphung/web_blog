@@ -11,25 +11,30 @@ export default async function TagsPage() {
 
   return (
     <div>
-      <h1 className="mb-2 text-3xl">Tags</h1>
-      <p className="mb-8 text-sm text-muted">Admin-only. Flat danh sách, slug tự sinh.</p>
+      <h1 className="mb-2 text-d-sm">Tags</h1>
+      <p className="mb-8 text-[13px] text-ink-48">Admin-only. Flat danh sách, slug tự sinh.</p>
 
       <TagForm />
 
-      <h2 className="mb-3 mt-10 text-lg font-semibold">Tất cả ({tags.length})</h2>
+      <h2 className="mb-3 mt-12 text-[21px] font-semibold tracking-tight">
+        Tất cả ({tags.length})
+      </h2>
       {tags.length === 0 ? (
-        <p className="text-sm text-muted">Chưa có tag nào.</p>
+        <p className="text-[13px] text-ink-48">Chưa có tag nào.</p>
       ) : (
-        <ul className="space-y-1 text-sm max-w-prose">
+        <ul className="max-w-prose text-[13px]">
           {tags.map((t) => (
-            <li key={t.id} className="flex items-center justify-between border-b border-line py-2">
+            <li
+              key={t.id}
+              className="flex items-center justify-between border-b border-hairline py-2"
+            >
               <span>
-                <span className="font-ui">{t.name}</span>
-                <span className="ml-2 text-muted">/{t.slug}</span>
+                <span className="text-ink">{t.name}</span>
+                <span className="ml-2 text-ink-48">/{t.slug}</span>
               </span>
               <form action={deleteTagAction}>
                 <input type="hidden" name="id" value={t.id} />
-                <button type="submit" className="text-xs text-muted underline hover:no-underline">
+                <button type="submit" className="text-[12px] text-[#d70015] hover:underline">
                   Xóa
                 </button>
               </form>

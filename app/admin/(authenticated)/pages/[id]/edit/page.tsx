@@ -13,12 +13,12 @@ export default async function EditPagePage({ params }: { params: Promise<{ id: s
   if (!page) notFound();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <header className="flex items-center justify-between">
-        <h1 className="font-ui text-2xl">Sửa trang</h1>
+        <h1 className="text-d-sm">Sửa trang</h1>
         <form action={deletePageAction}>
           <input type="hidden" name="id" value={page.id} />
-          <button type="submit" className="border border-line px-3 py-1 text-sm hover:bg-line/40">
+          <button type="submit" className="text-[13px] text-[#d70015] hover:underline">
             Xóa trang
           </button>
         </form>

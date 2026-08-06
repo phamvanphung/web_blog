@@ -17,12 +17,12 @@ export default async function NewPostPage() {
   const empty = { type: 'doc', content: [{ type: 'paragraph' }] };
   return (
     <div>
-      <h1 className="mb-2 text-3xl">Bài viết mới</h1>
-      <p className="mb-6 text-sm text-muted">
+      <h1 className="mb-2 text-d-sm">Bài viết mới</h1>
+      <p className="mb-6 text-[13px] text-ink-48">
         Soạn nội dung, click <strong>Lưu nháp</strong> khi xong. Sau khi lưu, có thể publish.
       </p>
-      <div className="grid grid-cols-3 gap-6">
-        <div className="col-span-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
           <Tiptap initialContent={empty} postId={null} />
         </div>
         <PostTaxonomyPanel

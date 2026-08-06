@@ -1,9 +1,14 @@
 import { notFound } from 'next/navigation';
 import { requireRole } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { Button } from '@/components/ui/Button';
 import { updateUserAction } from '../../actions';
 
 export const dynamic = 'force-dynamic';
+
+const inputClass =
+  'h-11 w-full rounded-11 bg-canvas-parchment px-4 text-[15px] text-ink border border-transparent outline-none focus:border-primary-focus focus:bg-canvas';
+const labelClass = 'mb-1 block text-[13px] text-ink-80';
 
 export default async function EditUserPage({
   params,
@@ -20,67 +25,54 @@ export default async function EditUserPage({
 
   return (
     <div className="max-w-prose">
-      <h1 className="mb-2 text-3xl">Sửa user</h1>
+      <h1 className="mb-2 text-d-sm">Sửa user</h1>
       {sp.error === 'invalid' && (
-        <p className="mb-4 border border-line bg-bg p-3 text-sm text-red-700">
+        <div className="mb-4 rounded-11 border border-hairline bg-canvas-parchment p-3 text-[13px] text-[#d70015]">
           Dữ liệu không hợp lệ.
-        </p>
+        </div>
       )}
-      <form action={updateUserAction} className="space-y-4">
+      <form action={updateUserAction} className="space-y-5">
         <input type="hidden" name="id" value={user.id} />
         <div>
-          <label className="mb-1 block text-sm">Email</label>
+          <label className={labelClass}>Email</label>
           <input
             type="email"
             name="email"
             defaultValue={user.email}
             required
-            className="w-full border border-line bg-bg px-3 py-2 text-sm"
+            className={inputClass}
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm">Tên</label>
-          <input
-            name="name"
-            defaultValue={user.name}
-            required
-            className="w-full border border-line bg-bg px-3 py-2 text-sm"
-          />
+          <label className={labelClass}>Tên</label>
+          <input name="name" defaultValue={user.name} required className={inputClass} />
         </div>
         <div>
-          <label className="mb-1 block text-sm">Mật khẩu mới (để trống nếu giữ)</label>
+          <label className={labelClass}>Mật khẩu mới (để trống nếu giữ)</label>
           <input
             type="password"
             name="password"
             minLength={8}
-            className="w-full border border-line bg-bg px-3 py-2 text-sm"
+            className={inputClass}
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm">Role</label>
-          <select
-            name="role"
-            defaultValue={user.role}
-            className="w-full border border-line bg-bg px-3 py-2 text-sm"
-          >
+          <label className={labelClass}>Role</label>
+          <select name="role" defaultValue={user.role} className={inputClass}>
             <option value="ADMIN">Admin</option>
             <option value="EDITOR">Editor</option>
           </select>
         </div>
         <div>
-          <label className="mb-1 block text-sm">Trạng thái</label>
-          <select
-            name="status"
-            defaultValue={user.status}
-            className="w-full border border-line bg-bg px-3 py-2 text-sm"
-          >
+          <label className={labelClass}>Trạng thái</label>
+          <select name="status" defaultValue={user.status} className={inputClass}>
             <option value="ACTIVE">Active</option>
             <option value="DISABLED">Disabled</option>
           </select>
         </div>
-        <button type="submit" className="border border-line bg-fg px-5 py-2 text-sm text-bg">
+        <Button type="submit" variant="primary-pill">
           Lưu
-        </button>
+        </Button>
       </form>
     </div>
   );

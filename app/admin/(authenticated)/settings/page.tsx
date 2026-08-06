@@ -12,15 +12,15 @@ export default async function SettingsPage() {
 
   return (
     <div>
-      <h1 className="mb-2 text-3xl">Settings</h1>
-      <p className="mb-8 text-sm text-muted">
+      <h1 className="mb-2 text-d-sm">Settings</h1>
+      <p className="mb-8 text-[13px] text-ink-48">
         Admin-only. Key/value store cho site name, tagline, social, analytics, …
       </p>
 
       {settings.length === 0 ? (
-        <p className="text-sm text-muted">Chưa có setting nào.</p>
+        <p className="text-[13px] text-ink-48">Chưa có setting nào.</p>
       ) : (
-        <div className="space-y-4 max-w-prose">
+        <div className="max-w-prose space-y-4">
           {settings.map((s) => (
             <SettingRow
               key={s.key}

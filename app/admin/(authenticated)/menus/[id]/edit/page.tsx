@@ -10,6 +10,7 @@ import {
   updateMenuItem,
   setMenuLocation
 } from '@/modules/menus/server';
+import { Button } from '@/components/ui/Button';
 import { MenuEditor } from '../../MenuEditor';
 
 export const dynamic = 'force-dynamic';
@@ -72,32 +73,39 @@ export default async function MenuEditPage({
   const tree = await buildMenuTreeFor(id);
   const serialisableTree = JSON.parse(JSON.stringify(tree));
 
+  const inputClass =
+    'h-11 w-full rounded-11 bg-canvas-parchment px-4 text-[15px] text-ink border border-transparent outline-none focus:border-primary-focus focus:bg-canvas';
+  const labelClass = 'mb-1 block text-[13px] text-ink-80';
+
   return (
     <div>
-      <h1 className="mb-2 text-3xl">Menu: {menu.name}</h1>
-      <p className="mb-6 text-sm text-muted">
+      <h1 className="mb-2 text-d-sm">Menu: {menu.name}</h1>
+      <p className="mb-6 text-[13px] text-ink-48">
         Admin-only. Items đa cấp; sortOrder tăng dần → render thứ tự.
       </p>
 
       <form
         action={setLocationAction}
-        className="mb-6 flex max-w-prose items-end gap-3 border-b border-line pb-4"
+        className="mb-8 flex max-w-prose items-end gap-3 border-b border-hairline pb-5"
       >
         <input type="hidden" name="id" value={id} />
         <div className="flex-1">
-          <label className="mb-1 block text-sm">
-            Location <span className="text-muted">(đặt <code>primary</code> để hiện ở header)</span>
+          <label className={labelClass}>
+            Location{' '}
+            <span className="text-ink-48">
+              (đặt <code>primary</code> để hiện ở header)
+            </span>
           </label>
           <input
             name="location"
             defaultValue={menu.location ?? ''}
             placeholder="primary / footer / ..."
-            className="w-full border border-line bg-bg px-3 py-2 text-sm"
+            className={inputClass}
           />
         </div>
-        <button type="submit" className="border border-line bg-fg px-4 py-2 text-sm text-bg">
+        <Button type="submit" variant="primary-pill" size="sm">
           Lưu location
-        </button>
+        </Button>
       </form>
 
       <MenuEditor

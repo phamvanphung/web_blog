@@ -4,9 +4,13 @@ import { requireRole } from '@/lib/auth';
 import { listAuditEntries } from '@/modules/audit/server/list';
 import { parsePage } from '@/lib/pagination';
 import { Pagination } from '@/components/site/Pagination';
+import { Button } from '@/components/ui/Button';
 import { purgeOldAction } from './actions';
 
 export const dynamic = 'force-dynamic';
+
+const filterInput =
+  'h-10 w-full rounded-8 bg-canvas-parchment px-3 text-[13px] text-ink border border-transparent outline-none focus:border-primary-focus focus:bg-canvas';
 
 export default async function AuditLogPage({
   searchParams
@@ -37,86 +41,61 @@ export default async function AuditLogPage({
     <div>
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="mb-2 text-3xl">Audit log</h1>
-          <p className="text-sm text-muted">{total} entries.</p>
+          <h1 className="mb-2 text-d-sm">Audit log</h1>
+          <p className="text-[13px] text-ink-48">{total} entries.</p>
         </div>
         <form action={purgeOldAction}>
-          <button type="submit" className="text-sm underline hover:no-underline">
+          <button type="submit" className="text-[13px] text-[#d70015] hover:underline">
             Xóa entries &gt; 90 ngày
           </button>
         </form>
       </div>
 
-      <form className="mb-6 grid grid-cols-2 gap-3 border border-line p-4 text-sm md:grid-cols-6">
-        <input
-          name="action"
-          placeholder="action"
-          defaultValue={sp.action ?? ''}
-          className="border border-line bg-bg px-2 py-1"
-        />
-        <input
-          name="target"
-          placeholder="target"
-          defaultValue={sp.target ?? ''}
-          className="border border-line bg-bg px-2 py-1"
-        />
-        <input
-          name="userId"
-          placeholder="user id"
-          defaultValue={sp.userId ?? ''}
-          className="border border-line bg-bg px-2 py-1"
-        />
-        <input
-          type="date"
-          name="from"
-          defaultValue={sp.from ?? ''}
-          className="border border-line bg-bg px-2 py-1"
-        />
-        <input
-          type="date"
-          name="to"
-          defaultValue={sp.to ?? ''}
-          className="border border-line bg-bg px-2 py-1"
-        />
-        <button type="submit" className="border border-line bg-fg px-4 py-1 text-bg">
+      <form className="mb-6 grid grid-cols-2 gap-3 rounded-18 border border-hairline p-5 text-[13px] md:grid-cols-6">
+        <input name="action" placeholder="action" defaultValue={sp.action ?? ''} className={filterInput} />
+        <input name="target" placeholder="target" defaultValue={sp.target ?? ''} className={filterInput} />
+        <input name="userId" placeholder="user id" defaultValue={sp.userId ?? ''} className={filterInput} />
+        <input type="date" name="from" defaultValue={sp.from ?? ''} className={filterInput} />
+        <input type="date" name="to" defaultValue={sp.to ?? ''} className={filterInput} />
+        <Button type="submit" variant="primary-pill" size="sm">
           Lọc
-        </button>
+        </Button>
       </form>
 
       {rows.length === 0 ? (
-        <p className="text-sm text-muted">Không có entries.</p>
+        <p className="text-[13px] text-ink-48">Không có entries.</p>
       ) : (
-        <table className="w-full border border-line text-sm">
-          <thead className="bg-bg text-left text-xs uppercase text-muted">
-            <tr>
-              <th className="px-3 py-2">Khi nào</th>
-              <th className="px-3 py-2">Action</th>
-              <th className="px-3 py-2">Target</th>
-              <th className="px-3 py-2">User</th>
-              <th className="px-3 py-2">IP hash</th>
+        <table className="w-full text-[13px]">
+          <thead className="text-left text-[12px] uppercase tracking-[0.08em] text-ink-48">
+            <tr className="border-b border-hairline">
+              <th className="py-3">Khi nào</th>
+              <th className="py-3">Action</th>
+              <th className="py-3">Target</th>
+              <th className="py-3">User</th>
+              <th className="py-3">IP hash</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.id} className="border-t border-line">
-                <td className="px-3 py-2 font-mono text-xs">{r.createdAt.toISOString()}</td>
-                <td className="px-3 py-2 font-mono text-xs">{r.action}</td>
-                <td className="px-3 py-2 text-xs">
-                  {r.target ?? '—'} <span className="text-muted">{r.targetId ?? ''}</span>
+              <tr key={r.id} className="border-b border-hairline hover:bg-canvas-parchment">
+                <td className="py-3 font-mono text-[12px] text-ink-80">{r.createdAt.toISOString()}</td>
+                <td className="py-3 font-mono text-[12px] text-ink">{r.action}</td>
+                <td className="py-3 text-[12px] text-ink-80">
+                  {r.target ?? '—'} <span className="text-ink-48">{r.targetId ?? ''}</span>
                 </td>
-                <td className="px-3 py-2 text-xs">
+                <td className="py-3 text-[12px]">
                   {r.userId ? (
                     <Link
                       href={`/admin/users/${r.userId}/edit`}
-                      className="underline hover:no-underline"
+                      className="text-primary hover:underline"
                     >
                       {r.userId.slice(0, 8)}…
                     </Link>
                   ) : (
-                    '—'
+                    <span className="text-ink-48">—</span>
                   )}
                 </td>
-                <td className="px-3 py-2 font-mono text-xs text-muted">
+                <td className="py-3 font-mono text-[12px] text-ink-48">
                   {r.ipHash ? r.ipHash.slice(0, 8) + '…' : '—'}
                 </td>
               </tr>

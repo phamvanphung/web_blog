@@ -49,31 +49,31 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
   const initialTagIds = postWithRel?.tags.map((t) => t.tagId) ?? [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <header className="flex items-center justify-between">
-        <h1 className="font-ui text-2xl">
+        <h1 className="text-d-sm">
           {post.status === 'PUBLISHED' ? 'Sửa (đã xuất bản)' : 'Sửa bài viết'}
         </h1>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-4">
           {post.status !== 'PUBLISHED' && (
             <form action={publishAction}>
               <input type="hidden" name="id" value={post.id} />
-              <Button type="submit" size="sm">
+              <Button type="submit" variant="primary-pill" size="sm">
                 Publish
               </Button>
             </form>
           )}
           <form action={deleteAction}>
             <input type="hidden" name="id" value={post.id} />
-            <button type="submit" className="border border-line px-3 py-1 text-sm hover:bg-line/40">
+            <button type="submit" className="text-[13px] text-[#d70015] hover:underline">
               Xóa
             </button>
           </form>
         </div>
       </header>
 
-      <div className="grid grid-cols-3 gap-6">
-        <div className="col-span-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
           <Tiptap
             initialContent={initialContent as never}
             initialTitle={post.title}

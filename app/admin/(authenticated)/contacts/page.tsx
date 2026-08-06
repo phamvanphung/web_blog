@@ -19,41 +19,47 @@ export default async function ContactsPage() {
 
   return (
     <div>
-      <h1 className="mb-2 text-3xl">Liên hệ</h1>
-      <p className="mb-8 text-sm text-muted">
+      <h1 className="mb-2 text-d-sm">Liên hệ</h1>
+      <p className="mb-8 text-[13px] text-ink-48">
         Admin-only. Tất cả form liên hệ từ public site sẽ xuất hiện ở đây.
       </p>
 
       {items.length === 0 ? (
-        <p className="text-sm text-muted">Chưa có submission nào.</p>
+        <p className="text-[13px] text-ink-48">Chưa có submission nào.</p>
       ) : (
-        <ul className="space-y-4 max-w-prose">
+        <ul className="grid max-w-prose gap-4">
           {items.map((c) => (
-            <li key={c.id} className="border border-line p-4">
-              <div className="flex items-start justify-between">
+            <li
+              key={c.id}
+              className="space-y-3 rounded-18 border border-hairline bg-canvas-parchment p-5"
+            >
+              <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-ui">
-                    {c.name} · <a href={`mailto:${c.email}`}>{c.email}</a>
+                  <p className="text-[15px] text-ink">
+                    {c.name} ·{' '}
+                    <a href={`mailto:${c.email}`} className="text-primary hover:underline">
+                      {c.email}
+                    </a>
                   </p>
-                  {c.phone && <p className="text-xs text-muted">ĐT: {c.phone}</p>}
-                  {c.subject && <p className="text-xs text-muted">Chủ đề: {c.subject}</p>}
-                  <p className="mt-1 text-xs text-muted">{c.createdAt.toISOString()}</p>
+                  {c.phone && <p className="text-[12px] text-ink-48">ĐT: {c.phone}</p>}
+                  {c.subject && <p className="text-[12px] text-ink-48">Chủ đề: {c.subject}</p>}
+                  <p className="mt-1 text-[12px] text-ink-48">{c.createdAt.toISOString()}</p>
                 </div>
                 <span
-                  className={`text-xs uppercase tracking-wider ${
-                    c.status === 'NEW' ? 'text-accent' : 'text-muted'
+                  className={`rounded-pill px-2 py-1 text-[12px] uppercase tracking-[0.08em] ${
+                    c.status === 'NEW' ? 'bg-primary text-white' : 'bg-canvas text-ink-48'
                   }`}
                 >
                   {STATUS_LABELS[c.status] ?? c.status}
                 </span>
               </div>
-              <p className="mt-3 whitespace-pre-wrap text-sm">{c.message}</p>
-              <div className="mt-3 flex gap-2 text-xs">
+              <p className="whitespace-pre-wrap text-[15px] text-ink-80">{c.message}</p>
+              <div className="flex flex-wrap gap-3 text-[13px]">
                 {c.status !== 'READ' && (
                   <form action={updateContactStatusAction}>
                     <input type="hidden" name="id" value={c.id} />
                     <input type="hidden" name="status" value="READ" />
-                    <button type="submit" className="underline hover:no-underline">
+                    <button type="submit" className="text-primary hover:underline">
                       Đánh dấu đã đọc
                     </button>
                   </form>
@@ -62,17 +68,14 @@ export default async function ContactsPage() {
                   <form action={updateContactStatusAction}>
                     <input type="hidden" name="id" value={c.id} />
                     <input type="hidden" name="status" value="ARCHIVED" />
-                    <button type="submit" className="underline hover:no-underline">
+                    <button type="submit" className="text-primary hover:underline">
                       Lưu trữ
                     </button>
                   </form>
                 )}
                 <form action={deleteContactAction}>
                   <input type="hidden" name="id" value={c.id} />
-                  <button
-                    type="submit"
-                    className="text-red-700 underline hover:no-underline"
-                  >
+                  <button type="submit" className="text-[#d70015] hover:underline">
                     Xóa
                   </button>
                 </form>
