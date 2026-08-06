@@ -107,6 +107,23 @@ export async function deleteMenu(id: string): Promise<void> {
   revalidatePath('/admin/menus');
 }
 
+export async function setMenuLocation(id: string, location: string | null): Promise<void> {
+  const me = await requireRole('ADMIN');
+  await db.menu.update({
+    where: { id },
+    data: { location: location === '' || location == null ? null : location }
+  });
+  await audit({
+    userId: me.id,
+    action: 'menu.setLocation',
+    target: 'Menu',
+    targetId: id,
+    ipHash: await hashIp(await clientIp())
+  });
+  revalidatePath('/admin/menus');
+  revalidatePath(`/admin/menus/${id}/edit`);
+}
+
 export async function addMenuItem(
   menuId: string,
   input: {

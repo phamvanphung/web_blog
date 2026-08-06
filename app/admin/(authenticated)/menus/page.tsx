@@ -25,11 +25,31 @@ async function createMenuAction(formData: FormData) {
 export default async function MenusPage() {
   await requireRole('ADMIN');
   const menus = await listMenus();
+  const primaryMenu = menus.find((m) => m.location === 'primary');
 
   return (
     <div>
       <h1 className="mb-2 text-3xl">Menus</h1>
-      <p className="mb-8 text-sm text-muted">Admin-only. Mỗi menu có nhiều item xếp theo sortOrder.</p>
+      <p className="mb-8 text-sm text-muted">
+        Admin-only. Mỗi menu có nhiều item xếp theo sortOrder.
+      </p>
+
+      <div className="mb-6 max-w-prose border border-line bg-bg p-4 text-sm">
+        <p className="mb-2">
+          <strong>Menu có <code>location = &apos;primary&apos;</code> sẽ hiển thị ở header trang
+          public.</strong>
+        </p>
+        {primaryMenu ? (
+          <p className="text-muted">
+            Hiện tại <strong>{primaryMenu.name}</strong> đang được gắn location <code>primary</code>.
+          </p>
+        ) : (
+          <p className="text-muted">
+            Chưa có menu nào gắn location <code>primary</code>. Tạo menu mới → Sửa items → set
+            location = primary để hiển thị ở header.
+          </p>
+        )}
+      </div>
 
       <form
         action={createMenuAction}
