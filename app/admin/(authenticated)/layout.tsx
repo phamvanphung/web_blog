@@ -3,20 +3,21 @@ import type { ReactNode } from 'react';
 import { Container } from '@/components/ui/Container';
 import { Logo } from '@/components/site/Logo';
 import { Button } from '@/components/ui/Button';
+import { Icon, type IconName } from '@/components/ui/Icon';
 import { requireAuth } from '@/lib/auth';
 
-const NAV = [
-  { href: '/admin/dashboard', label: 'Dashboard' },
-  { href: '/admin/posts', label: 'Bài viết' },
-  { href: '/admin/pages', label: 'Trang' },
-  { href: '/admin/categories', label: 'Danh mục' },
-  { href: '/admin/tags', label: 'Tag' },
-  { href: '/admin/media', label: 'Media' },
-  { href: '/admin/menus', label: 'Menu' },
-  { href: '/admin/contacts', label: 'Liên hệ' },
-  { href: '/admin/users', label: 'Users' },
-  { href: '/admin/settings', label: 'Settings' },
-  { href: '/admin/audit-log', label: 'Audit log' }
+const NAV: { href: string; label: string; icon: IconName }[] = [
+  { href: '/admin/dashboard', label: 'Dashboard', icon: 'dashboard' },
+  { href: '/admin/posts', label: 'Bài viết', icon: 'post' },
+  { href: '/admin/pages', label: 'Trang', icon: 'page' },
+  { href: '/admin/categories', label: 'Danh mục', icon: 'category' },
+  { href: '/admin/tags', label: 'Tag', icon: 'tag' },
+  { href: '/admin/media', label: 'Media', icon: 'media' },
+  { href: '/admin/menus', label: 'Menu', icon: 'menu' },
+  { href: '/admin/contacts', label: 'Liên hệ', icon: 'contact' },
+  { href: '/admin/users', label: 'Users', icon: 'user' },
+  { href: '/admin/settings', label: 'Settings', icon: 'settings' },
+  { href: '/admin/audit-log', label: 'Audit log', icon: 'audit' }
 ];
 
 export default async function AuthedLayout({ children }: { children: ReactNode }) {
@@ -32,24 +33,30 @@ export default async function AuthedLayout({ children }: { children: ReactNode }
         <p className="mb-6 text-[12px] text-ink-dim">
           {user.name} · {user.role.toLowerCase()} ·{' '}
           <form action="/admin/logout" method="post" className="inline">
-            <button type="submit" className="text-ink-dim underline hover:text-white hover:no-underline">
+            <button
+              type="submit"
+              className="text-ink-dim underline hover:text-white hover:no-underline"
+            >
               Logout
             </button>
           </form>
         </p>
-        <nav className="space-y-1 text-[14px]">
+        <nav aria-label="CMS" className="space-y-1 text-[14px]">
           {NAV.map((it) => (
             <Link
               key={it.href}
               href={it.href}
-              className="block rounded-8 px-3 py-2 text-ink-dim transition-colors hover:bg-tile-2 hover:text-white"
+              className="flex items-center gap-3 rounded-8 px-3 py-2 text-ink-dim transition-colors hover:bg-tile-2 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-focus"
             >
-              {it.label}
+              <Icon name={it.icon} size={16} className="shrink-0" />
+              <span>{it.label}</span>
             </Link>
           ))}
         </nav>
       </aside>
-      <Container width="wide" className="py-12">{children}</Container>
+      <Container width="wide" className="py-12">
+        {children}
+      </Container>
     </div>
   );
 }
