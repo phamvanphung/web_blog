@@ -34,10 +34,15 @@ export default async function PagesPage({
           <Button size="sm">+ Trang mới</Button>
         </Link>
       </div>
-      <p className="mb-6 text-sm text-muted">Admin-only. Trang tĩnh (plain text, không có Tiptap).</p>
+      <p className="mb-6 text-sm text-muted">
+        Admin-only. Trang tĩnh (plain text, không có Tiptap).
+      </p>
 
       <nav className="mb-6 flex gap-2 text-xs">
-        <Link href="/admin/pages" className={`border border-line px-2 py-1 ${!status ? 'bg-line' : ''}`}>
+        <Link
+          href="/admin/pages"
+          className={`border border-line px-2 py-1 ${!status ? 'bg-line' : ''}`}
+        >
           Tất cả
         </Link>
         <Link
@@ -73,7 +78,10 @@ export default async function PagesPage({
                 <td className="py-2">{STATUS_LABELS[p.status] ?? p.status}</td>
                 <td className="py-2 text-xs text-muted">{p.updatedAt.toISOString()}</td>
                 <td className="py-2 text-right">
-                  <Link href={`/admin/pages/${p.id}/edit`} className="text-xs underline hover:no-underline">
+                  <Link
+                    href={`/admin/pages/${p.id}/edit`}
+                    className="text-xs underline hover:no-underline"
+                  >
                     Sửa
                   </Link>
                 </td>

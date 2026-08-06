@@ -33,11 +33,13 @@ export async function ensureUniquePageSlug(
 
 /* ---------- DB queries ---------- */
 
-export async function listPages(opts: {
-  status?: 'DRAFT' | 'PUBLISHED' | 'HIDDEN';
-  take?: number;
-  skip?: number;
-} = {}) {
+export async function listPages(
+  opts: {
+    status?: 'DRAFT' | 'PUBLISHED' | 'HIDDEN';
+    take?: number;
+    skip?: number;
+  } = {}
+) {
   const { status, take = 50, skip = 0 } = opts;
   return db.page.findMany({
     where: { ...(status ? { status } : {}) },
@@ -120,8 +122,7 @@ export async function updatePage(input: {
   const existing = await db.page.findUnique({ where: { id: parsed.data.id } });
   if (!existing) throw new Error('Page not found');
 
-  const titleChanged =
-    parsed.data.title !== undefined && parsed.data.title !== existing.title;
+  const titleChanged = parsed.data.title !== undefined && parsed.data.title !== existing.title;
 
   await db.page.update({
     where: { id: parsed.data.id },
