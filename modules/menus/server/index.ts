@@ -73,7 +73,10 @@ async function clientIp(): Promise<string | null> {
   return h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? null;
 }
 
-export async function createMenu(input: { name: string; location?: string | null }): Promise<string> {
+export async function createMenu(input: {
+  name: string;
+  location?: string | null;
+}): Promise<string> {
   const me = await requireRole('ADMIN');
   const parsed = CreateMenuSchema.safeParse(input);
   if (!parsed.success) throw new Error('Invalid input');
