@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { clsx } from 'clsx';
 
-type Width = 'prose' | 'narrow' | 'wide';
+type Width = 'prose' | 'narrow' | 'wide' | 'full';
 
 // Static mapping keeps Tailwind's class scanner able to detect every emitted
 // class. A template literal (`container-${width}`) would compile fine but
@@ -9,7 +9,8 @@ type Width = 'prose' | 'narrow' | 'wide';
 const WIDTH: Record<Width, string> = {
   prose: 'container-prose',
   narrow: 'container-narrow',
-  wide: 'container-wide'
+  wide: 'container-wide',
+  full: 'w-full px-0' // full-bleed: no max-width, no inline gutter
 };
 
 export function Container({

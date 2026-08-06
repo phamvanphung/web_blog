@@ -1,34 +1,65 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { clsx } from 'clsx';
 
-type Variant = 'primary' | 'secondary' | 'ghost';
-type Size = 'sm' | 'md';
+// Legacy variants (primary / secondary / ghost) are retained as aliases so all
+// 20+ existing call sites keep compiling. New code uses the Apple names.
+export type ButtonVariant =
+  | 'primary'
+  | 'secondary'
+  | 'ghost'
+  | 'primary-pill'
+  | 'secondary-pill'
+  | 'dark-utility'
+  | 'pearl-capsule'
+  | 'icon-circular';
 
-const variantClass: Record<Variant, string> = {
-  primary: 'bg-fg text-bg hover:opacity-90',
-  secondary: 'border border-line text-fg hover:bg-line/40',
-  ghost: 'text-fg hover:bg-line/30'
+export type ButtonSize = 'sm' | 'md' | 'lg';
+
+export const BUTTON_BASE =
+  'inline-flex items-center justify-center gap-2 font-sans font-normal ' +
+  'transition-colors duration-150 disabled:opacity-40 disabled:pointer-events-none ' +
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-focus';
+
+export const BUTTON_VARIANT: Record<ButtonVariant, string> = {
+  // Apple pills — the signature CTA grammar
+  'primary-pill': 'rounded-pill bg-primary text-white hover:bg-primary-focus',
+  'secondary-pill':
+    'rounded-pill border border-primary text-primary hover:bg-primary hover:text-white',
+  'dark-utility': 'rounded-8 bg-tile-1 text-ink-ondark hover:bg-tile-2',
+  'pearl-capsule': 'rounded-pill bg-canvas-parchment text-ink hover:bg-chip',
+  'icon-circular':
+    'rounded-pill aspect-square p-0 bg-canvas-parchment text-ink hover:bg-chip',
+
+  // Legacy aliases (unchanged behaviour, re-skinned through tokens)
+  primary: 'rounded-pill bg-primary text-white hover:bg-primary-focus',
+  secondary: 'rounded-pill border border-hairline text-ink hover:bg-canvas-parchment',
+  ghost: 'rounded-8 text-primary hover:bg-canvas-parchment'
 };
-const sizeClass: Record<Size, string> = {
-  sm: 'px-3 py-1.5 text-sm',
-  md: 'px-4 py-2 text-sm'
+
+export const BUTTON_SIZE: Record<ButtonSize, string> = {
+  sm: 'h-8 px-4 text-[14px]',
+  md: 'h-11 px-md text-[15px]',
+  lg: 'h-12 px-6 text-[17px]'
 };
 
 type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: Variant;
-  size?: Size;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   children: ReactNode;
 };
 
-export function Button({ variant = 'primary', size = 'md', className, children, ...rest }: Props) {
+export function Button({
+  variant = 'primary',
+  size = 'md',
+  className,
+  children,
+  ...rest
+}: Props) {
+  // Fall back if a future variant slips through TS.
+  const variantCls = BUTTON_VARIANT[variant] ?? BUTTON_VARIANT.primary;
   return (
     <button
-      className={clsx(
-        'inline-flex items-center justify-center rounded-none font-ui transition',
-        variantClass[variant],
-        sizeClass[size],
-        className
-      )}
+      className={clsx(BUTTON_BASE, variantCls, BUTTON_SIZE[size], className)}
       {...rest}
     >
       {children}
