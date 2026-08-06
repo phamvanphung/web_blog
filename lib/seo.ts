@@ -1,3 +1,8 @@
+// lib/seo.ts
+// Central metadata builder. Every public route uses buildMetadata() so we get
+// consistent canonical, OG and Twitter tags. Use `defaultOgImage()` to point
+// at the branded /og-default.svg asset.
+
 import type { Metadata } from 'next';
 
 export type BuildMetaInput = {
@@ -8,10 +13,17 @@ export type BuildMetaInput = {
   noindex?: boolean;
 };
 
-const APP_URL = process.env.APP_URL ?? 'http://localhost:3000';
+function appUrl(): string {
+  return process.env.APP_URL ?? 'http://localhost:3000';
+}
+
+export function defaultOgImage(url = appUrl()): string {
+  return `${url}/og-default.svg`;
+}
 
 export function buildMetadata(input: BuildMetaInput): Metadata {
-  const url = input.path ? `${APP_URL}${input.path}` : APP_URL;
+  const url = input.path ? `${appUrl()}${input.path}` : appUrl();
+  const image = input.ogImage ?? defaultOgImage();
   return {
     title: input.title,
     description: input.description,
@@ -22,13 +34,13 @@ export function buildMetadata(input: BuildMetaInput): Metadata {
       description: input.description,
       url,
       type: 'website',
-      images: input.ogImage ? [{ url: input.ogImage }] : undefined
+      images: [{ url: image, width: 1200, height: 630, alt: input.title }]
     },
     twitter: {
       card: 'summary_large_image',
       title: input.title,
       description: input.description,
-      images: input.ogImage ? [input.ogImage] : undefined
+      images: [image]
     }
   };
 }
