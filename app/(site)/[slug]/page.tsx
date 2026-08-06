@@ -2,6 +2,7 @@
 import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import { Container } from '@/components/ui/Container';
+import { Tile } from '@/components/ui/Tile';
 import { buildMetadata } from '@/lib/seo';
 import { getPublishedPageBySlug } from '@/modules/pages/server/public';
 import { findRedirectForPath } from '@/lib/redirects';
@@ -59,15 +60,15 @@ export default async function StaticPage({
     .filter(Boolean);
 
   return (
-    <Container width="prose" className="py-16">
-      <h1 className="mb-8 text-4xl">{page.title}</h1>
-      <div className="space-y-4">
-        {paragraphs.map((p, i) => (
-          <p key={i} className="text-lg leading-relaxed">
-            {p}
-          </p>
-        ))}
-      </div>
-    </Container>
+    <Tile tone="light">
+      <Container width="prose" className="py-section">
+        <h1 className="text-d-md">{page.title}</h1>
+        <div className="prose mt-md">
+          {paragraphs.map((p, i) => (
+            <p key={i}>{p}</p>
+          ))}
+        </div>
+      </Container>
+    </Tile>
   );
 }

@@ -2,6 +2,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Container } from '@/components/ui/Container';
+import { Tile } from '@/components/ui/Tile';
 import { PostCard } from '@/components/site/PostCard';
 import { Pagination } from '@/components/site/Pagination';
 import { JsonLd } from '@/components/site/JsonLd';
@@ -52,7 +53,7 @@ export default async function TagPage({
   const url = `${APP_URL}/tag/${slug}`;
 
   return (
-    <Container width="prose" className="py-16">
+    <>
       <JsonLd
         data={breadcrumbJsonLd([
           { name: 'Home', url: `${APP_URL}/` },
@@ -67,18 +68,34 @@ export default async function TagPage({
           url
         })}
       />
-      <p className="mb-2 text-sm uppercase tracking-widest text-muted">Tag</p>
-      <h1 className="mb-8 text-4xl">#{tag.name}</h1>
-      {result.rows.length === 0 ? (
-        <p className="text-muted">Chưa có bài viết gắn thẻ này.</p>
-      ) : (
-        result.rows.map((p) => <PostCard key={p.id} post={p} />)
-      )}
-      <Pagination
-        page={page}
-        pageCount={result.pageCount}
-        hrefFor={(p) => (p === 1 ? `/tag/${slug}` : `/tag/${slug}?page=${p}`)}
-      />
-    </Container>
+
+      <Tile tone="parchment">
+        <Container width="wide" className="py-20 text-center">
+          <p className="mb-3 text-[13px] uppercase tracking-[0.08em] text-ink-48">
+            Tag
+          </p>
+          <h1 className="text-d-md">#{tag.name}</h1>
+        </Container>
+      </Tile>
+
+      <Tile tone="light">
+        <Container width="wide" className="py-section">
+          {result.rows.length === 0 ? (
+            <p className="text-ink-48">Chưa có bài viết gắn thẻ này.</p>
+          ) : (
+            <div className="divide-y divide-hairline border-y border-hairline">
+              {result.rows.map((p) => (
+                <PostCard key={p.id} post={p} variant="row" />
+              ))}
+            </div>
+          )}
+          <Pagination
+            page={page}
+            pageCount={result.pageCount}
+            hrefFor={(p) => (p === 1 ? `/tag/${slug}` : `/tag/${slug}?page=${p}`)}
+          />
+        </Container>
+      </Tile>
+    </>
   );
 }

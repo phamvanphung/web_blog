@@ -2,6 +2,7 @@
 import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import { Container } from '@/components/ui/Container';
+import { Tile } from '@/components/ui/Tile';
 import { PostContent } from '@/components/site/PostContent';
 import { PostMeta } from '@/components/site/PostMeta';
 import { RelatedPosts } from '@/components/site/RelatedPosts';
@@ -56,7 +57,7 @@ export default async function PostDetailPage({
   const related = await listRelatedPosts(post.id, categoryIds, 3).catch(() => []);
 
   return (
-    <Container width="prose" className="py-16">
+    <>
       <JsonLd
         data={articleJsonLd({
           title: post.title,
@@ -75,25 +76,43 @@ export default async function PostDetailPage({
         ])}
       />
 
-      <article>
-        <h1 className="mb-4 text-4xl">{post.title}</h1>
-        <PostMeta
-          publishedAt={post.publishedAt}
-          authorName={post.author.name}
-          categories={post.categories.map((pc) => pc.category)}
-          tags={post.tags.map((pt) => pt.tag)}
-        />
-        <PostContent html={post.contentHtml} />
-      </article>
+      <Tile tone="parchment">
+        <Container width="prose" className="py-20 text-center">
+          {/* h1 stays dynamic — title asserted by tests/e2e/public-blog.spec */}
+          <h1 className="text-d-md">{post.title}</h1>
+          <div className="mt-6 flex justify-center">
+            <PostMeta
+              publishedAt={post.publishedAt}
+              authorName={post.author.name}
+              categories={post.categories.map((pc) => pc.category)}
+              tags={post.tags.map((pt) => pt.tag)}
+            />
+          </div>
+        </Container>
+      </Tile>
 
-      <RelatedPosts
-        posts={related.map((r) => ({
-          title: r.title,
-          slug: r.slug,
-          excerpt: r.excerpt,
-          publishedAt: r.publishedAt
-        }))}
-      />
-    </Container>
+      <Tile tone="light">
+        <Container width="prose" className="py-section">
+          <article>
+            <PostContent html={post.contentHtml} />
+          </article>
+        </Container>
+      </Tile>
+
+      {related.length > 0 && (
+        <Tile tone="pearl">
+          <Container width="wide" className="py-section">
+            <RelatedPosts
+              posts={related.map((r) => ({
+                title: r.title,
+                slug: r.slug,
+                excerpt: r.excerpt,
+                publishedAt: r.publishedAt
+              }))}
+            />
+          </Container>
+        </Tile>
+      )}
+    </>
   );
 }

@@ -2,6 +2,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Container } from '@/components/ui/Container';
+import { Tile } from '@/components/ui/Tile';
 import { PostCard } from '@/components/site/PostCard';
 import { Pagination } from '@/components/site/Pagination';
 import { JsonLd } from '@/components/site/JsonLd';
@@ -48,7 +49,7 @@ export default async function CategoryPage({
   const url = `${APP_URL}/chu-de/${slug}`;
 
   return (
-    <Container width="prose" className="py-16">
+    <>
       <JsonLd
         data={breadcrumbJsonLd([
           { name: 'Home', url: `${APP_URL}/` },
@@ -63,19 +64,39 @@ export default async function CategoryPage({
           url
         })}
       />
-      <p className="mb-2 text-sm uppercase tracking-widest text-muted">Chủ đề</p>
-      <h1 className="mb-8 text-4xl">{category.name}</h1>
-      {category.description && <p className="mb-8 text-muted">{category.description}</p>}
-      {result.rows.length === 0 ? (
-        <p className="text-muted">Chưa có bài viết trong chủ đề này.</p>
-      ) : (
-        result.rows.map((p) => <PostCard key={p.id} post={p} />)
-      )}
-      <Pagination
-        page={result.page}
-        pageCount={result.pageCount}
-        hrefFor={(p) => (p === 1 ? `/chu-de/${slug}` : `/chu-de/${slug}?page=${p}`)}
-      />
-    </Container>
+
+      <Tile tone="parchment">
+        <Container width="wide" className="py-20 text-center">
+          <p className="mb-3 text-[13px] uppercase tracking-[0.08em] text-ink-48">
+            Chủ đề
+          </p>
+          <h1 className="text-d-md">{category.name}</h1>
+          {category.description && (
+            <p className="mx-auto mt-3 max-w-[44ch] text-[17px] text-ink-80">
+              {category.description}
+            </p>
+          )}
+        </Container>
+      </Tile>
+
+      <Tile tone="light">
+        <Container width="wide" className="py-section">
+          {result.rows.length === 0 ? (
+            <p className="text-ink-48">Chưa có bài viết trong chủ đề này.</p>
+          ) : (
+            <div className="divide-y divide-hairline border-y border-hairline">
+              {result.rows.map((p) => (
+                <PostCard key={p.id} post={p} variant="row" />
+              ))}
+            </div>
+          )}
+          <Pagination
+            page={result.page}
+            pageCount={result.pageCount}
+            hrefFor={(p) => (p === 1 ? `/chu-de/${slug}` : `/chu-de/${slug}?page=${p}`)}
+          />
+        </Container>
+      </Tile>
+    </>
   );
 }
