@@ -11,6 +11,10 @@ type Props = {
   toggleVisibleAction: (formData: FormData) => Promise<void>;
 };
 
+const inputClass =
+  'h-11 w-full rounded-11 bg-canvas-parchment px-4 text-[15px] text-ink border border-transparent outline-none focus:border-primary-focus focus:bg-canvas';
+const labelClass = 'mb-1 block text-[13px] text-ink-80';
+
 export function MenuEditor({
   menuId,
   items,
@@ -20,23 +24,19 @@ export function MenuEditor({
 }: Props) {
   return (
     <div className="max-w-prose space-y-6">
-      <form action={addAction} className="space-y-3 border-b border-line pb-6">
+      <form action={addAction} className="space-y-4 border-b border-hairline pb-6">
         <input type="hidden" name="menuId" value={menuId} />
         <div>
-          <label className="mb-1 block text-sm">Label</label>
-          <input
-            name="label"
-            required
-            className="w-full border border-line bg-bg px-3 py-2 text-sm"
-          />
+          <label className={labelClass}>Label</label>
+          <input name="label" required className={inputClass} />
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <div>
-            <label className="mb-1 block text-sm">Target type</label>
+            <label className={labelClass}>Target type</label>
             <select
               name="targetType"
               defaultValue="EXTERNAL"
-              className="w-full border border-line bg-bg px-3 py-2 text-sm"
+              className={inputClass}
             >
               <option value="EXTERNAL">External URL</option>
               <option value="PAGE">Page</option>
@@ -45,31 +45,31 @@ export function MenuEditor({
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-sm">External URL (nếu EXTERNAL)</label>
+            <label className={labelClass}>External URL (nếu EXTERNAL)</label>
             <input
               name="externalUrl"
               type="url"
               placeholder="https://…"
-              className="w-full border border-line bg-bg px-3 py-2 text-sm"
+              className={inputClass}
             />
           </div>
         </div>
         <div>
-          <label className="mb-1 block text-sm">Target ID (nếu PAGE / POST / CATEGORY)</label>
+          <label className={labelClass}>Target ID (nếu PAGE / POST / CATEGORY)</label>
           <input
             name="targetId"
-            className="w-full border border-line bg-bg px-3 py-2 text-sm"
+            className={inputClass}
             placeholder="cuid của target…"
           />
         </div>
-        <Button type="submit" size="sm">
+        <Button type="submit" variant="primary-pill" size="sm">
           + Thêm item
         </Button>
       </form>
 
-      <ul className="space-y-1 text-sm">
+      <ul className="space-y-1 text-[13px]">
         {items.length === 0 ? (
-          <li className="text-muted">Chưa có item.</li>
+          <li className="text-ink-48">Chưa có item.</li>
         ) : (
           items.map((it) => (
             <ItemRow
@@ -102,18 +102,21 @@ function ItemRow({
       ? item.externalUrl ?? '#'
       : `/${item.targetType.toLowerCase()}/${item.targetId ?? ''}`;
   return (
-    <li className="border-b border-line py-2" style={{ marginLeft: depth * 16 }}>
-      <div className="flex items-center justify-between">
+    <li
+      className="border-b border-hairline py-3"
+      style={{ marginLeft: depth * 16 }}
+    >
+      <div className="flex items-center justify-between gap-3">
         <span>
-          <span className="font-ui">{item.label}</span>{' '}
-          <a href={href} className="ml-2 text-xs text-muted underline hover:no-underline">
+          <span className="text-ink">{item.label}</span>{' '}
+          <a href={href} className="ml-2 text-[12px] text-primary hover:underline">
             {href}
           </a>
         </span>
-        <div className="flex items-center gap-3 text-xs">
+        <div className="flex items-center gap-4 text-[12px]">
           <form action={toggleVisibleAction}>
             <input type="hidden" name="itemId" value={item.id} />
-            <label className="flex items-center gap-1">
+            <label className="flex items-center gap-2 text-ink-80">
               <input
                 type="checkbox"
                 name="visible"
@@ -125,7 +128,7 @@ function ItemRow({
           </form>
           <form action={deleteAction}>
             <input type="hidden" name="itemId" value={item.id} />
-            <button type="submit" className="text-muted underline hover:no-underline">
+            <button type="submit" className="text-[#d70015] hover:underline">
               Xóa
             </button>
           </form>

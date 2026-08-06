@@ -14,14 +14,14 @@ const FALLBACK: Item[] = [
 export function Nav({ items }: { items?: Item[] } = {}) {
   const list = items && items.length > 0 ? items : FALLBACK;
   return (
-    <nav aria-label="Chính" className="flex items-center gap-6 text-sm">
+    <nav aria-label="Chính" className="flex items-center gap-7 text-[12px] text-ink-dim">
       {list.map((it) => (
         <Link
           key={it.href}
           href={it.href}
           target={it.openInNew ? '_blank' : undefined}
           rel={it.openInNew ? 'noopener noreferrer' : undefined}
-          className="hover:text-muted"
+          className="transition-colors hover:text-white"
         >
           {it.label}
         </Link>

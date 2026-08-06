@@ -39,36 +39,38 @@ export function UploadForm() {
   }
 
   return (
-    <form onSubmit={submit} className="space-y-3 max-w-prose border-b border-line pb-6">
+    <form onSubmit={submit} className="max-w-prose space-y-4 border-b border-hairline pb-6">
       <div>
-        <label className="mb-1 block text-sm">Ảnh (JPEG / PNG / WebP / GIF, ≤ 10 MB)</label>
+        <label className="mb-1 block text-[13px] text-ink-80">
+          Ảnh (JPEG / PNG / WebP / GIF, ≤ 10 MB)
+        </label>
         <input
           ref={inputRef}
           type="file"
           accept="image/jpeg,image/png,image/webp,image/gif"
           required
-          className="block w-full text-sm"
+          className="block w-full text-[13px]"
         />
       </div>
       <div>
-        <label className="mb-1 block text-sm">Alt text (a11y + SEO)</label>
+        <label className="mb-1 block text-[13px] text-ink-80">Alt text (a11y + SEO)</label>
         <input
           name="altText"
           maxLength={255}
-          className="w-full border border-line bg-bg px-3 py-2 text-sm"
+          className="h-11 w-full rounded-11 bg-canvas-parchment px-4 text-[15px] text-ink border border-transparent outline-none focus:border-primary-focus focus:bg-canvas"
         />
       </div>
       <div className="flex items-center gap-3">
-        <Button disabled={busy} size="sm">
+        <Button type="submit" variant="primary-pill" size="sm" disabled={busy}>
           {busy ? 'Đang upload...' : 'Upload'}
         </Button>
         {err && (
-          <span role="alert" className="text-sm text-muted">
+          <span role="alert" className="text-[13px] text-[#d70015]">
             {err}
           </span>
         )}
         {ok && (
-          <span role="status" className="text-sm text-muted">
+          <span role="status" className="text-[13px] text-primary">
             {ok}
           </span>
         )}

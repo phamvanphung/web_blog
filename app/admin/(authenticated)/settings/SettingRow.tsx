@@ -4,6 +4,9 @@ import { useActionState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { updateSettingAction, type SettingFormState } from './actions';
 
+const inputClass =
+  'h-11 w-full rounded-11 bg-canvas-parchment px-4 text-[15px] text-ink border border-transparent outline-none focus:border-primary-focus focus:bg-canvas';
+
 export function SettingRow({
   keyName,
   value,
@@ -24,29 +27,28 @@ export function SettingRow({
     <form
       key={updatedAt}
       action={formAction}
-      className="space-y-1 border-b border-line pb-4"
+      className="space-y-2 border-b border-hairline pb-5"
     >
-      <label className="block text-xs uppercase tracking-wider text-muted" htmlFor={`k-${keyName}`}>
+      <label
+        className="block text-[12px] uppercase tracking-[0.08em] text-ink-48"
+        htmlFor={`k-${keyName}`}
+      >
         {keyName}
       </label>
       <input id={`k-${keyName}`} type="hidden" name="key" value={keyName} />
-      <input
-        name="value"
-        defaultValue={value}
-        className="w-full border border-line bg-bg px-3 py-2 text-sm"
-      />
-      <p className="text-xs text-muted">Cập nhật: {updatedAt}</p>
+      <input name="value" defaultValue={value} className={inputClass} />
+      <p className="text-[12px] text-ink-48">Cập nhật: {updatedAt}</p>
       {state?.ok === false && (
-        <p role="alert" className="text-xs text-red-700">
+        <p role="alert" className="text-[12px] text-[#d70015]">
           {state.error}
         </p>
       )}
       {state?.ok === true && (
-        <p role="status" className="text-xs text-accent">
+        <p role="status" className="text-[12px] text-primary">
           ✓ Đã lưu.
         </p>
       )}
-      <Button disabled={pending} size="sm">
+      <Button type="submit" variant="primary-pill" size="sm" disabled={pending}>
         {pending ? 'Đang lưu...' : 'Lưu'}
       </Button>
     </form>

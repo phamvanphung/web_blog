@@ -31,20 +31,4 @@
   /* Set by next/font (app/layout.tsx): --font-inter */
   --font-sans: var(--font-inter), Inter, system-ui, -apple-system,
     'SF Pro Display', 'SF Pro Text', sans-serif;
-
-  /* ---- Legacy aliases ----
-   * Existing JSX in 44 files references bg / fg / muted / accent / line
-   * and font-heading / font-ui. Re-pointed to the Apple palette below.
-   * Removed in the final cleanup pass.
-   */
-  --color-bg: var(--color-canvas);
-  --color-fg: var(--color-ink);
-  --color-muted: var(--color-ink-muted-48);
-  --color-accent: var(--color-primary);
-  --color-line: var(--color-hairline);
-  --font-heading: var(--font-sans);
-  --font-ui: var(--font-sans);
-
-  /* Spacing marker (kept for back-compat; unused after cleanup) */
-  --space-rhythm: 1.5rem;
 }

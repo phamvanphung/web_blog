@@ -5,13 +5,6 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Legacy aliases — kept until the cleanup pass. Resolved via CSS vars.
-        bg: 'var(--color-bg)',
-        fg: 'var(--color-fg)',
-        muted: 'var(--color-muted)',
-        accent: 'var(--color-accent)',
-        line: 'var(--color-line)',
-
         // Apple system palette
         primary: {
           DEFAULT: 'var(--color-primary)',

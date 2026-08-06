@@ -92,17 +92,17 @@ export function Tiptap({
           setDirty(true);
         }}
         placeholder="Tiêu đề bài viết…"
-        className="w-full border-b border-line bg-bg px-2 py-3 text-3xl font-heading focus:outline-none"
+        className="w-full border-b border-hairline bg-canvas px-2 py-3 text-d-sm font-semibold focus:outline-none"
       />
       <div
-        className="border border-line bg-bg px-3 py-3"
+        className="min-h-[420px] rounded-11 border border-hairline bg-canvas px-4 py-4 prose"
         onInput={() => setDirty(true)}
       >
         <EditorContent editor={editor} />
       </div>
 
-      <div className="flex items-center justify-between border-t border-line pt-3">
-        <p className="text-xs text-muted">
+      <div className="flex items-center justify-between border-t border-hairline pt-3">
+        <p className="text-[12px] text-ink-48">
           {status === 'saving' && 'Đang lưu…'}
           {status === 'saved' && '✓ Đã lưu.'}
           {status === 'error' && <span className="text-red-700">✗ {error}</span>}

@@ -16,6 +16,9 @@ type Props = {
   recentMedia: Media[];
 };
 
+const checkboxLabel =
+  'flex cursor-pointer items-center gap-2 rounded-8 px-2 py-1 text-[14px] text-ink-80 hover:bg-canvas-parchment';
+
 /**
  * Sidebar for picking categories/tags + featured media. State is mirrored to
  * `window.__postTaxonomy` so the Tiptap editor can read it on save
@@ -51,16 +54,18 @@ export function PostTaxonomyPanel({
   }
 
   return (
-    <aside className="space-y-6 border-l border-line pl-6">
+    <aside className="space-y-6 rounded-18 border border-hairline bg-canvas-parchment p-5">
       <div>
-        <h3 className="mb-2 text-sm font-semibold">Chủ đề</h3>
+        <h3 className="mb-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-ink-48">
+          Chủ đề
+        </h3>
         {categories.length === 0 ? (
-          <p className="text-xs text-muted">Chưa có category. Tạo ở /admin/categories.</p>
+          <p className="text-[12px] text-ink-48">Chưa có category. Tạo ở /admin/categories.</p>
         ) : (
-          <ul className="space-y-1 text-sm">
+          <ul className="space-y-1">
             {categories.map((c) => (
               <li key={c.id}>
-                <label className="flex cursor-pointer items-center gap-2">
+                <label className={checkboxLabel}>
                   <input
                     type="checkbox"
                     checked={categoryIds.includes(c.id)}
@@ -75,14 +80,16 @@ export function PostTaxonomyPanel({
       </div>
 
       <div>
-        <h3 className="mb-2 text-sm font-semibold">Tags</h3>
+        <h3 className="mb-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-ink-48">
+          Tags
+        </h3>
         {tags.length === 0 ? (
-          <p className="text-xs text-muted">Chưa có tag. Tạo ở /admin/tags.</p>
+          <p className="text-[12px] text-ink-48">Chưa có tag. Tạo ở /admin/tags.</p>
         ) : (
-          <ul className="space-y-1 text-sm">
+          <ul className="space-y-1">
             {tags.map((t) => (
               <li key={t.id}>
-                <label className="flex cursor-pointer items-center gap-2">
+                <label className={checkboxLabel}>
                   <input
                     type="checkbox"
                     checked={tagIds.includes(t.id)}
@@ -97,28 +104,34 @@ export function PostTaxonomyPanel({
       </div>
 
       <div>
-        <h3 className="mb-2 text-sm font-semibold">Ảnh đại diện</h3>
+        <h3 className="mb-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-ink-48">
+          Ảnh đại diện
+        </h3>
         {recentMedia.length === 0 ? (
-          <p className="text-xs text-muted">Chưa có media. Upload ở /admin/media.</p>
+          <p className="text-[12px] text-ink-48">Chưa có media. Upload ở /admin/media.</p>
         ) : (
           <div className="grid grid-cols-3 gap-2">
             <button
               type="button"
               onClick={() => setFeaturedMediaId(null)}
-              className={`flex aspect-square items-center justify-center border ${
-                featuredMediaId === null ? 'border-accent' : 'border-line'
+              className={`flex aspect-square items-center justify-center rounded-8 border-2 transition-colors ${
+                featuredMediaId === null
+                  ? 'border-primary'
+                  : 'border-transparent bg-canvas hover:border-hairline'
               }`}
               title="Không có ảnh đại diện"
             >
-              <span className="text-xs text-muted">∅</span>
+              <span className="text-[12px] text-ink-48">∅</span>
             </button>
             {recentMedia.map((m) => (
               <button
                 key={m.id}
                 type="button"
                 onClick={() => setFeaturedMediaId(m.id)}
-                className={`aspect-square overflow-hidden border ${
-                  featuredMediaId === m.id ? 'border-accent' : 'border-line'
+                className={`aspect-square overflow-hidden rounded-8 border-2 transition-colors ${
+                  featuredMediaId === m.id
+                    ? 'border-primary'
+                    : 'border-transparent bg-canvas hover:border-hairline'
                 }`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -130,8 +143,8 @@ export function PostTaxonomyPanel({
       </div>
 
       {postId && (
-        <p className="border-t border-line pt-4 text-xs text-muted">
-          Taxonomy sẽ được lưu khi bạn click <strong>Lưu nháp</strong>.
+        <p className="border-t border-hairline pt-4 text-[12px] text-ink-48">
+          Taxonomy sẽ được lưu khi bạn click <strong className="text-ink">Lưu nháp</strong>.
         </p>
       )}
     </aside>
