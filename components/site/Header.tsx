@@ -1,7 +1,5 @@
 // components/site/Header.tsx
-import Link from 'next/link';
-import { Container } from '@/components/ui/Container';
-import { Logo } from './Logo';
+import { GlobalNav } from './GlobalNav';
 import { Nav } from './Nav';
 import { getMenuByLocation } from '@/modules/menus/server/public';
 
@@ -12,14 +10,17 @@ export async function Header() {
     label: n.label,
     openInNew: n.openInNew
   }));
+  // Use menu items if present; otherwise fall back to Nav's static list.
+  if (items.length > 0) return <GlobalNav items={items} />;
+  // Fallback: render Nav list inline at the same level GlobalNav would.
   return (
-    <header className="border-b border-line">
-      <Container className="flex items-center justify-between py-6">
-        <Link href="/" aria-label="9ent — Trang chủ">
-          <Logo />
-        </Link>
-        <Nav items={items} />
-      </Container>
+    <header className="sticky top-0 z-50 bg-tile-black">
+      <nav
+        aria-label="Chính"
+        className="mx-auto flex h-nav max-w-wide items-center px-6"
+      >
+        <Nav items={[]} />
+      </nav>
     </header>
   );
 }
