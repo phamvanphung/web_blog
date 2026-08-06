@@ -101,7 +101,7 @@ pnpm db:studio          # Prisma Studio GUI
 - [x] **P1. Auth & Settings** — session cookie `sid`, Argon2id password hash, role-based admin (ADMIN/EDITOR), audit log, settings module
 - [x] **P2. Media & Categories/Tags** — Sharp pipeline (4 WebP variants), upload via Server Action, media library, categories tree, tags CRUD.
 - [x] **P3. Posts & Tiptap** — Tiptap editor (autosave + revisions), draft/publish flow, slug uniqueness + 301 redirect on rename.
-- [ ] P4. Pages & Menus
+- [x] **P4. Pages & Menus** — static Pages CRUD (text + status), hierarchical Menus + MenuItems, slug uniqueness + 301 redirect.
 - [ ] P5. Public site
 - [ ] P6. SEO & Polish
 - [ ] P7. Deploy (VPS Ubuntu + Nginx + PM2)
@@ -172,6 +172,12 @@ Admin pages:
 - `/admin/posts` — list + status filter (`?status=PUBLISHED|TRASHED`)
 - `/admin/posts/new` — empty editor, autosave tạo draft
 - `/admin/posts/[id]/edit` — load title + content, nút Publish + Xóa
+
+## Pages & Menus
+
+**Pages** (`/admin/pages`): static pages với plain-text content (không có Tiptap). 3 trạng thái: `DRAFT` / `PUBLISHED` / `HIDDEN`. Slug tự sinh từ title + unique qua `ensureUniquePageSlug`. Đổi slug → insert row `Redirect` (status 301).
+
+**Menus** (`/admin/menus`): quản lý menu đa cấp. Mỗi menu có nhiều `MenuItem` với `parentId` self-relation (cây tự do), `sortOrder` (render order), `targetType` enum (PAGE/POST/CATEGORY/EXTERNAL) + optional `targetId` + optional `externalUrl`. Public site (P5) load menu qua `getMenu(id)` rồi `buildMenuTree(items)` để render nested `<ul>`.
 
 ## Note về local DB
 
