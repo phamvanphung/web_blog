@@ -55,11 +55,17 @@ export async function uploadMediaAction(
   const root = getUploadRoot();
   const variantRecords: VariantRecord[] = [];
 
+  // Single UUID per upload → all variants share the same prefix so the
+  // deleter can derive siblings deterministically.
+  // Previously: randomUUID() was called inside the loop → 4 distinct UUIDs
+  // → deleting the DB record only removed 1 of 4 files on disk (orphan bug).
+  const uploadId = randomUUID();
+
   for (const variantName of Object.keys(processed.variants) as Array<
     keyof typeof processed.variants
   >) {
     const v = processed.variants[variantName];
-    const storedName = `${randomUUID()}-${variantName}.webp`;
+    const storedName = `${uploadId}-${variantName}.webp`;
     const relPath = pathForUpload(storedName);
     const absPath = join(root, relPath);
     await mkdir(dirname(absPath), { recursive: true });
