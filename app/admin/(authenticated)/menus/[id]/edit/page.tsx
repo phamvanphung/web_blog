@@ -9,7 +9,7 @@ import {
   deleteMenuItem,
   updateMenuItem
 } from '@/modules/menus/server';
-import { MenuEditor } from '../../../MenuEditor';
+import { MenuEditor } from '../../MenuEditor';
 
 export const dynamic = 'force-dynamic';
 

@@ -37,3 +37,42 @@ export function createLimiter(opts: LimiterOpts): Limiter {
     }
   };
 }
+
+/**
+ * Bucket-keyed sliding-window rate limit. One limiter per bucket is cached
+ * for the lifetime of the process — windowMs is taken from the first call
+ * for that bucket (subsequent calls must use the same window).
+ *
+ * Returns ok=false + retryAfterSec when the bucket is over its limit.
+ */
+const BUCKET_LIMITERS = new Map<string, Limiter>();
+
+export type RateLimitOpts = {
+  bucket: string;
+  key: string;
+  limit: number;
+  windowSec: number;
+};
+
+export type RateLimitResult = { ok: true } | { ok: false; retryAfterSec: number };
+
+export function rateLimit(opts: RateLimitOpts): RateLimitResult {
+  const { bucket, key, limit, windowSec } = opts;
+  let limiter = BUCKET_LIMITERS.get(bucket);
+  if (!limiter) {
+    limiter = createLimiter({ max: limit, windowMs: windowSec * 1000 });
+    BUCKET_LIMITERS.set(bucket, limiter);
+  }
+  const compositeKey = `${bucket}:${key}`;
+  if (!limiter.check(compositeKey)) {
+    return { ok: false, retryAfterSec: windowSec };
+  }
+  limiter.record(compositeKey);
+  return { ok: true };
+}
+
+/** Test helper: clear all bucket state. */
+export function resetAllLimiters(): void {
+  for (const l of BUCKET_LIMITERS.values()) l.reset();
+  BUCKET_LIMITERS.clear();
+}

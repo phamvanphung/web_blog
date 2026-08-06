@@ -7,8 +7,8 @@ export type SeoMeta = {
   noindex?: boolean;
 };
 
-export type JsonLd =
-  | { '@context': 'https://schema.org'; '@type': 'Article'; [k: string]: unknown }
-  | { '@context': 'https://schema.org'; '@type': 'Organization'; [k: string]: unknown }
-  | { '@context': 'https://schema.org'; '@type': 'BreadcrumbList'; [k: string]: unknown }
-  | { '@context': 'https://schema.org'; '@type': 'WebSite'; [k: string]: unknown };
+export type JsonLd = {
+  '@context': string;
+  '@type': string;
+  [k: string]: unknown;
+};

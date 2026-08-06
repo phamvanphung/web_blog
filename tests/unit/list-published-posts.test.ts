@@ -20,11 +20,11 @@ describe('public posts', () => {
     (db.post.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([]);
     (db.post.count as ReturnType<typeof vi.fn>).mockResolvedValue(0);
     await listPublishedPosts({ page: 1, pageSize: 12 });
-    const call = (db.post.findMany as ReturnType<typeof vi.fn>).mock.calls[0][0];
-    expect(call.where.status).toBe('PUBLISHED');
-    expect(call.where.deletedAt).toBeNull();
-    expect(call.skip).toBe(0);
-    expect(call.take).toBe(12);
+    const call = (db.post.findMany as ReturnType<typeof vi.fn>).mock.calls[0]?.[0];
+    expect(call?.where.status).toBe('PUBLISHED');
+    expect(call?.where.deletedAt).toBeNull();
+    expect(call?.skip).toBe(0);
+    expect(call?.take).toBe(12);
   });
 
   it('getPublishedPostBySlug returns null for DRAFT', async () => {

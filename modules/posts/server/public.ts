@@ -17,6 +17,8 @@ const PUBLIC_SELECT = {
   canonicalUrl: true,
   viewsCount: true,
   featuredMediaId: true,
+  status: true,
+  deletedAt: true,
   featuredMedia: {
     select: { id: true, url: true, altText: true, width: true, height: true }
   },

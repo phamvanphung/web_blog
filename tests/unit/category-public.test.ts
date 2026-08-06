@@ -23,9 +23,9 @@ describe('public categories', () => {
       { id: 'c1', slug: 'a', name: 'A', description: null, _count: { posts: 5 } }
     ]);
     const rows = await listCategoriesWithCounts();
-    expect(rows[0].count).toBe(5);
-    const call = (db.category.findMany as ReturnType<typeof vi.fn>).mock.calls[0][0];
-    expect(call.include._count.select.posts.where).toMatchObject({
+    expect(rows[0]?.count).toBe(5);
+    const call = (db.category.findMany as ReturnType<typeof vi.fn>).mock.calls[0]?.[0];
+    expect(call?.include._count.select.posts.where).toMatchObject({
       post: { status: 'PUBLISHED', deletedAt: null }
     });
   });

@@ -21,8 +21,8 @@ describe('searchPosts', () => {
     (db.post.count as ReturnType<typeof vi.fn>).mockResolvedValue(0);
     await searchPosts({ q: 'ab' });
     expect(db.post.findMany).toHaveBeenCalled();
-    const where = (db.post.findMany as ReturnType<typeof vi.fn>).mock.calls[0][0].where;
-    expect(where.OR).toBeDefined();
+    const where = (db.post.findMany as ReturnType<typeof vi.fn>).mock.calls[0]?.[0].where;
+    expect(where?.OR).toBeDefined();
   });
 
   it('returns empty for empty q', async () => {
