@@ -10,7 +10,7 @@ const WIDTH: Record<Width, string> = {
   prose: 'container-prose',
   narrow: 'container-narrow',
   wide: 'container-wide',
-  xl: 'mx-auto max-w-[88rem] px-6',
+  xl: 'w-full px-6',
   full: 'w-full px-0' // full-bleed: no max-width, no inline gutter
 };
 
