@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { PrismaClient, UserRole } from '@prisma/client';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 import { hash } from '@node-rs/argon2';
