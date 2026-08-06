@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { siblingPathsFor } from '@/modules/media/server/delete';
+import { siblingPathsFor } from '@/modules/media/server/paths';
 
 describe('siblingPathsFor', () => {
   it('returns 4 sibling paths sharing the same upload UUID', () => {

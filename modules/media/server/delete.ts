@@ -8,38 +8,17 @@ import { audit, hashIp } from '@/lib/audit';
 import { headers } from 'next/headers';
 import { db } from '@/lib/db';
 import { getUploadRoot } from '@/lib/storage';
-import { MEDIA_VARIANTS, type MediaVariant } from '@/modules/media/types';
+import { siblingPathsFor } from './paths';
 import { logger } from '@/lib/logger';
 
 /**
- * Derive the disk paths of every variant that belongs to the same upload
- * as `originalPath`. Expects the naming convention produced by `upload.ts`:
- * `YYYY/MM/<uuid>-<variant>.webp`.
- *
- * Returns posix-relative paths — same format used elsewhere in storage.
- * Cross-platform safe (joined to OS-native on disk via node:path).
- */
-export function siblingPathsFor(originalPath: string): string[] {
-  const sepIdx = originalPath.lastIndexOf('/');
-  const baseStart = sepIdx >= 0 ? sepIdx + 1 : 0;
-  const base = originalPath.slice(baseStart); // "<uuid>-<variant>.webp"
-  const lastDash = base.lastIndexOf('-');
-  if (lastDash <= 0) return [originalPath];
-  const uuid = base.slice(0, lastDash);
-  const relDir = sepIdx >= 0 ? originalPath.slice(0, sepIdx + 1) : '';
-  return (Object.keys(MEDIA_VARIANTS) as MediaVariant[]).map((v) =>
-    `${relDir}${uuid}-${v}.webp`
-  );
-}
-
-/**
- * Delete every disk variant for `originalPath` then remove the Media DB row.
- * Tolerates missing files (idempotent — safe to call twice, no DB-only orphans).
+ * Delete every disk variant for `originalPath`, then remove the Media DB row.
+ * Tolerates missing files (idempotent — safe to call twice).
  *
  * Backward-compat: media uploaded before the variant-naming fix
- * (randomUUID-per-variant) may not have siblings on disk — those rows
- * fall back to deleting whatever matches. `rm({ force: true })` swallows
- * ENOENT so the call stays safe.
+ * (randomUUID-per-variant) may not have siblings on disk — those rows fall
+ * back to deleting whatever matches the recorded path. `rm({ force: true })`
+ * swallows ENOENT so the call stays safe.
  */
 export async function deleteMediaAction(id: string): Promise<void> {
   const me = await requireRole('ADMIN');
