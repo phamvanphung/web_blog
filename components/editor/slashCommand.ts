@@ -19,7 +19,13 @@ export function defaultSlashFilter(query: string): SlashItem[] {
 }
 
 function positionPopup(popup: HTMLElement, rect: DOMRect | null) {
-  if (!popup || !rect) return;
+  if (!popup) return;
+  if (!rect) {
+    // No clientRect (rare — Suggestion passes one on every keystroke).
+    // Leave the popup where ensurePopup placed it so we never flash
+    // at the wrong spot. The next onUpdate will reposition correctly.
+    return;
+  }
   popup.style.top = `${window.scrollY + rect.bottom + 4}px`;
   popup.style.left = `${window.scrollX + rect.left}px`;
 }
@@ -69,6 +75,12 @@ export function renderSlashMenu() {
       // ReactRenderer appends its element to document.body during construction.
       // Move it into our positioned popup so we control z-index and visibility.
       popup!.appendChild(renderer.element);
+      // CRITICAL: anchor the popup to the cursor now. Without this call the
+      // popup sits at top:0, left:0 (ensurePopup's defaults) and the menu
+      // appears — if at all — at the page origin, invisible behind the title
+      // input. onUpdate keeps it anchored as the user keeps typing.
+      const rect = props.clientRect?.() ?? null;
+      positionPopup(popup!, rect);
     },
 
     onUpdate(props: SlashMenuRenderProps) {

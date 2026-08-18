@@ -74,40 +74,28 @@ export function PostEditor({
     }
   }
 
+  // Editor column: wider (860px) than the spec's 720 so it feels like a real
+  // writing canvas, and tall (min-h-[80vh]) so the empty document fills the
+  // screen rather than looking like a thin card at the top of the page.
+  const columnClass = 'mx-auto max-w-[860px]';
+
   return (
     <div className="space-y-3">
-      <input
-        value={title}
-        onChange={(e) => {
-          setTitle(e.target.value);
-          setDirty(true);
-        }}
-        placeholder="Tiêu đề bài viết…"
-        className="w-full border-b border-hairline bg-canvas px-2 py-3 text-[36px] font-semibold focus:outline-none"
-      />
-      <div
-        className="mx-auto max-w-[720px] rounded-11 border border-hairline bg-canvas px-6 py-4 prose"
-        onInput={() => setDirty(true)}
-      >
-        <EditorCanvas
-          initialContent={initialContent}
-          onChange={(json) => {
-            setContent(json);
-            setDirty(true);
-          }}
-        />
-      </div>
-
-      <div className="flex items-center justify-between border-t border-hairline pt-3">
-        <p className="text-[12px] text-ink-48">
+      {/* TOP TOOLBAR — status + save button moved up from the bottom so the
+          primary action is reachable without scrolling. */}
+      <div className={`${columnClass} flex items-center justify-between gap-3 rounded-11 border border-hairline bg-canvas px-4 py-2`}>
+        <p className="flex flex-wrap items-center gap-2 text-[12px] text-ink-48">
           {status === 'saving' && 'Đang lưu…'}
-          {status === 'saved' && '✓ Đã lưu.'}
+          {status === 'saved' && <span className="text-[#1f7a3a]">✓ Đã lưu.</span>}
           {status === 'error' && <span className="text-[#d70015]">✗ {error}</span>}
           {status === 'idle' && (dirty ? 'Có thay đổi chưa lưu.' : 'Chưa có thay đổi.')}
           {initialStatus && (
-            <span className="ml-3">
-              Trạng thái: <strong>{initialStatus}</strong>
-            </span>
+            <>
+              <span className="text-ink-30">·</span>
+              <span>
+                Trạng thái: <strong>{initialStatus}</strong>
+              </span>
+            </>
           )}
         </p>
         <div className="flex gap-2">
@@ -115,10 +103,40 @@ export function PostEditor({
             type="button"
             onClick={saveDraft}
             disabled={status === 'saving'}
-            className="rounded-8 bg-primary px-3 py-1.5 text-[14px] text-white disabled:opacity-50"
+            className="rounded-8 bg-primary px-4 py-1.5 text-[14px] font-medium text-white shadow-sm transition-opacity disabled:opacity-50"
           >
             {status === 'saving' ? 'Đang lưu…' : 'Lưu nháp'}
           </button>
+        </div>
+      </div>
+
+      {/* TITLE — same width as the editor, sits directly above the canvas. */}
+      <div className={columnClass}>
+        <input
+          value={title}
+          onChange={(e) => {
+            setTitle(e.target.value);
+            setDirty(true);
+          }}
+          placeholder="Tiêu đề bài viết…"
+          className="w-full border-b border-hairline bg-transparent px-2 py-3 text-[36px] font-semibold focus:outline-none"
+        />
+      </div>
+
+      {/* EDITOR — the writing area. min-h-[80vh] makes the empty canvas
+          fill most of the viewport so it doesn't feel cramped. */}
+      <div className={columnClass}>
+        <div
+          className="rounded-11 border border-hairline bg-canvas px-6 py-4 prose min-h-[80vh]"
+          onInput={() => setDirty(true)}
+        >
+          <EditorCanvas
+            initialContent={initialContent}
+            onChange={(json) => {
+              setContent(json);
+              setDirty(true);
+            }}
+          />
         </div>
       </div>
     </div>
