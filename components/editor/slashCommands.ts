@@ -4,6 +4,11 @@
 
 import type { Editor, Range } from '@tiptap/core';
 
+/** Escape `&` and `"` for use inside a double-quoted HTML attribute. */
+function escapeAttr(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+}
+
 export type SlashCommandMap = Record<string, () => void>;
 
 function requestModal(editor: Editor, kind: 'image' | 'video') {
@@ -62,11 +67,22 @@ export function getSlashCommands(editor: Editor, range: Range): SlashCommandMap 
     embed: () => {
       const url = window.prompt('Dán URL embed (iframe)…');
       if (!url) return;
+      let parsed: URL;
+      try {
+        parsed = new URL(url);
+      } catch {
+        window.alert('Chỉ hỗ trợ URL http(s).');
+        return;
+      }
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        window.alert('Chỉ hỗ trợ URL http(s).');
+        return;
+      }
       // Try inserting as an iframe node if that node type exists in the bundle;
       // otherwise fall back to plain HTML insertion (safe fallback that works
       // with StarterKit's default HTML parsing).
       deleteTrigger()
-        .insertContent(`<iframe src="${url}" allowfullscreen></iframe>`)
+        .insertContent(`<iframe src="${escapeAttr(url)}" allowfullscreen></iframe>`)
         .run();
     },
   };
