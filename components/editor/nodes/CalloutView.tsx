@@ -9,7 +9,7 @@
 
 import { NodeViewContent, NodeViewWrapper, type NodeViewProps } from '@tiptap/react';
 
-export function CalloutView({ node }: NodeViewProps) {
+export function CalloutView({ node, editor }: NodeViewProps) {
   const tone = (node.attrs.tone as 'info' | 'warn') ?? 'info';
   const icon = tone === 'warn' ? '⚠' : 'ℹ';
   return (
@@ -17,6 +17,8 @@ export function CalloutView({ node }: NodeViewProps) {
       as="aside"
       data-callout=""
       data-tone={tone}
+      contentEditable={editor.isEditable}
+      suppressContentEditableWarning
       className={`callout callout-${tone}`}
     >
       <span className="callout-icon" aria-hidden="true">
