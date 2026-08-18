@@ -77,7 +77,7 @@
 
   /* Sticky frosted sub-nav (Apple blur). Used on SubNavFrosted. */
   .frosted {
-    background: rgba(245, 245, 247, 0.8);
+    background: rgba(255, 247, 247, 0.8);
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
   }
@@ -99,4 +99,72 @@
     margin-inline: auto;
     padding-inline: 1.5rem;
   }
+
+  /* ---- Notion-like editor: callout + divider ---- */
+  .callout {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    border-radius: 0.75rem;
+    padding: 1rem 1.25rem;
+    margin: 1rem 0;
+    border-left: 4px solid;
+  }
+  .callout .callout-body { flex: 1; min-width: 0; }
+  .callout .callout-icon { flex: 0 0 1.25rem; font-size: 1.1rem; line-height: 1.4; }
+
+  /* Admin editor — class-based tone markers (from CalloutView.tsx) */
+  .callout-info {
+    background: rgba(148, 163, 184, 0.12);
+    border-left-color: rgb(100, 116, 139);
+    color: rgb(51, 65, 85);
+  }
+  .callout-warn {
+    background: rgba(245, 158, 11, 0.12);
+    border-left-color: rgb(217, 119, 6);
+    color: rgb(120, 53, 15);
+  }
+
+  /* Public-rendered callouts — data-tone attribute (T13 generateHTML output) */
+  .callout[data-tone="info"] {
+    background: rgba(148, 163, 184, 0.12);
+    border-left-color: rgb(100, 116, 139);
+    color: rgb(51, 65, 85);
+  }
+  .callout[data-tone="warn"] {
+    background: rgba(245, 158, 11, 0.12);
+    border-left-color: rgb(217, 119, 6);
+    color: rgb(120, 53, 15);
+  }
+
+  /* Public render: synthesize icon via CSS pseudo-element (HTML omits the icon span) */
+  .callout[data-tone="info"]::before {
+    content: "ℹ";
+    flex: 0 0 1.25rem;
+    font-size: 1.1rem;
+    line-height: 1.4;
+  }
+  .callout[data-tone="warn"]::before {
+    content: "⚠";
+    flex: 0 0 1.25rem;
+    font-size: 1.1rem;
+    line-height: 1.4;
+  }
+
+  .prose hr {
+    border: none;
+    border-top: 1px solid var(--color-hairline);
+    margin: 2rem auto;
+    width: 33%;
+  }
+
+  /* Slash menu visual alignment with brand */
+  .slash-menu { font-family: inherit; }
+  .slash-menu button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; }
+
+  /* Drag handle gutter padding so blocks don't crash into the left edge */
+  .editor-canvas .ProseMirror { padding-left: 2.5rem; }
+
+  /* Bubble menu brand alignment */
+  .bubble-menu button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; }
 }
