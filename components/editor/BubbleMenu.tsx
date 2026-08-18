@@ -3,9 +3,53 @@
 import { BubbleMenu as TiptapBubbleMenu } from '@tiptap/react/menus';
 import type { Editor } from '@tiptap/core';
 
+type CommandSpec =
+  | { kind: 'toggle'; name: 'bold' | 'italic' | 'underline' | 'strike' | 'code' }
+  | { kind: 'fn'; run: () => void };
+
+function runCommand(editor: Editor, spec: CommandSpec) {
+  if (spec.kind === 'fn') {
+    spec.run();
+    return;
+  }
+  switch (spec.name) {
+    case 'bold':
+      editor.chain().focus().toggleBold().run();
+      return;
+    case 'italic':
+      editor.chain().focus().toggleItalic().run();
+      return;
+    case 'underline':
+      editor.chain().focus().toggleUnderline().run();
+      return;
+    case 'strike':
+      editor.chain().focus().toggleStrike().run();
+      return;
+    case 'code':
+      editor.chain().focus().toggleCode().run();
+      return;
+  }
+}
+
+function isActiveFor(editor: Editor, spec: CommandSpec): boolean {
+  if (spec.kind !== 'toggle') return false;
+  switch (spec.name) {
+    case 'bold':
+      return editor.isActive('bold');
+    case 'italic':
+      return editor.isActive('italic');
+    case 'underline':
+      return editor.isActive('underline');
+    case 'strike':
+      return editor.isActive('strike');
+    case 'code':
+      return editor.isActive('code');
+  }
+}
+
 interface BtnProps {
   editor: Editor;
-  cmd: string;
+  spec: CommandSpec;
   label: string;
   title: string;
   italic?: boolean;
@@ -14,37 +58,13 @@ interface BtnProps {
   mono?: boolean;
 }
 
-function markName(cmd: string): string {
-  switch (cmd) {
-    case 'toggleBold':
-      return 'bold';
-    case 'toggleItalic':
-      return 'italic';
-    case 'toggleStrike':
-      return 'strike';
-    case 'toggleCode':
-      return 'code';
-    case 'toggleUnderline':
-      return 'underline';
-    default:
-      return '';
-  }
-}
-
-function Btn({ editor, cmd, label, title, italic, underline, strike, mono }: BtnProps) {
-  const name = markName(cmd);
-  const isActive = name ? editor.isActive(name) : false;
-  const handler =
-    typeof editor[cmd as keyof Editor] === 'function'
-      ? () => (editor.chain().focus() as any)[cmd]().run()
-      : undefined;
+function Btn({ editor, spec, label, title, italic, underline, strike, mono }: BtnProps) {
+  const active = isActiveFor(editor, spec);
 
   const style = [
     'px-2 py-1 rounded text-sm transition-colors',
     'font-[500] leading-none',
-    isActive
-      ? 'bg-canvas-parchment text-ink'
-      : 'text-ink-80 hover:bg-canvas-parchment',
+    active ? 'bg-canvas-parchment text-ink' : 'text-ink-80 hover:bg-canvas-parchment',
     italic ? 'italic' : '',
     underline ? 'underline' : '',
     strike ? 'line-through' : '',
@@ -54,7 +74,7 @@ function Btn({ editor, cmd, label, title, italic, underline, strike, mono }: Btn
     .join(' ');
 
   return (
-    <button type="button" title={title} onClick={handler} className={style}>
+    <button type="button" title={title} onClick={() => runCommand(editor, spec)} className={style}>
       {label}
     </button>
   );
@@ -106,31 +126,31 @@ export function BubbleMenu({ editor }: { editor: Editor | null }) {
       editor={editor}
       className="bubble-menu flex items-center gap-1 rounded-11 border border-hairline bg-canvas px-1 py-1 shadow-md"
     >
-      <Btn editor={editor} cmd="toggleBold" label="B" title="Bold (⌘B)" />
+      <Btn editor={editor} spec={{ kind: 'toggle', name: 'bold' }} label="B" title="Bold (⌘B)" />
       <Btn
         editor={editor}
-        cmd="toggleItalic"
+        spec={{ kind: 'toggle', name: 'italic' }}
         label="I"
         title="Italic (⌘I)"
         italic
       />
       <Btn
         editor={editor}
-        cmd="toggleUnderline"
+        spec={{ kind: 'toggle', name: 'underline' }}
         label="U"
         title="Underline (⌘U)"
         underline
       />
       <Btn
         editor={editor}
-        cmd="toggleStrike"
+        spec={{ kind: 'toggle', name: 'strike' }}
         label="S"
         title="Strikethrough"
         strike
       />
       <Btn
         editor={editor}
-        cmd="toggleCode"
+        spec={{ kind: 'toggle', name: 'code' }}
         label="</>"
         title="Inline code"
         mono
