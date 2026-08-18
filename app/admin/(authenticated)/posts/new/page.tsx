@@ -23,10 +23,11 @@ export default async function NewPostPage() {
       <p className="mb-6 text-[13px] text-ink-48">
         Soạn nội dung, click <strong>Lưu nháp</strong> khi xong. Sau khi lưu, có thể publish.
       </p>
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+      <div className="flex flex-col gap-6 xl:flex-row xl:items-start">
+        <div className="min-w-0 flex-1">
           <PostEditor initialContent={empty} postId={null} />
         </div>
+        <div className="xl:w-[280px] xl:flex-shrink-0">
         <PostTaxonomyPanel
           postId={null}
           initialCategoryIds={[]}
@@ -40,6 +41,7 @@ export default async function NewPostPage() {
             altText: m.altText
           }))}
         />
+        </div>
       </div>
     </div>
   );

@@ -74,10 +74,10 @@ export function PostEditor({
     }
   }
 
-  // Editor column: wider (860px) than the spec's 720 so it feels like a real
-  // writing canvas, and tall (min-h-[80vh]) so the empty document fills the
-  // screen rather than looking like a thin card at the top of the page.
-  const columnClass = 'mx-auto max-w-[860px]';
+  // Editor column: 1120px (+30% from the previous 860) so the writing canvas
+  // fills the page. Combined with min-h-[80vh] the empty document feels like
+  // a real page rather than a card on a page.
+  const columnClass = 'mx-auto max-w-[1120px]';
 
   return (
     <div className="space-y-3">

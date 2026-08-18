@@ -1,8 +1,15 @@
 // components/editor/slashCommand.ts
-// Suggestion renderer factory — mounts a ReactRenderer portal into document.body.
+// Suggestion renderer factory.
+//
+// Tiptap v3's @tiptap/suggestion ships a managed `props.mount(element)` (built on
+// @floating-ui/dom) that handles positioning, scroll/resize re-anchoring, and
+// outside-click dismissal. We use it instead of managing our own popup div + CSS
+// coordinates — earlier hand-rolled positioning left the menu parked at body
+// origin and invisible behind the title input.
 
 import { ReactRenderer } from '@tiptap/react';
 import type { Editor, Range } from '@tiptap/core';
+import type { SuggestionProps } from '@tiptap/suggestion';
 import type { SlashItem } from './slashItems';
 import { filterSlashItems, SLASH_ITEMS } from './slashItems';
 import { getSlashCommands } from './slashCommands';
@@ -16,18 +23,6 @@ export type { SlashMenuRenderProps };
  */
 export function defaultSlashFilter(query: string): SlashItem[] {
   return filterSlashItems(SLASH_ITEMS, query, 8);
-}
-
-function positionPopup(popup: HTMLElement, rect: DOMRect | null) {
-  if (!popup) return;
-  if (!rect) {
-    // No clientRect (rare — Suggestion passes one on every keystroke).
-    // Leave the popup where ensurePopup placed it so we never flash
-    // at the wrong spot. The next onUpdate will reposition correctly.
-    return;
-  }
-  popup.style.top = `${window.scrollY + rect.bottom + 4}px`;
-  popup.style.left = `${window.scrollX + rect.left}px`;
 }
 
 /**
@@ -48,48 +43,37 @@ export function buildSlashCommand(editor: Editor, range: Range) {
   };
 }
 
+// Minimal lifecycle-handler prop type — SuggestionProps carries a lot we don't
+// use (placement, offset, floatingUi config, …). We only need editor + items
+// + command + mount; clientRect is kept optional for future debug hooks.
+type LifecycleProps = Pick<
+  SuggestionProps<SlashItem, { item: SlashItem }>,
+  'editor' | 'items' | 'command' | 'mount' | 'clientRect'
+>;
+
 /**
  * Factory returning the Suggestion render hook object.
- * Creates a ReactRenderer portal for SlashMenu and wires all four lifecycle
- * callbacks (`onStart`, `onUpdate`, `onKeyDown`, `onExit`).
+ * Creates a ReactRenderer for SlashMenu and hands the element to
+ * `props.mount()` so Tiptap owns positioning + teardown.
  */
 export function renderSlashMenu() {
   let renderer: ReactRenderer<SlashMenuRef, SlashMenuRenderProps> | undefined;
-  let popup: HTMLDivElement | undefined;
-
-  function ensurePopup() {
-    if (popup) return;
-    popup = document.createElement('div');
-    popup.style.position = 'absolute';
-    popup.style.zIndex = '50';
-    document.body.appendChild(popup);
-  }
+  let unmount: (() => void) | undefined;
 
   return {
-    onStart(props: SlashMenuRenderProps) {
-      ensurePopup();
+    onStart(props: LifecycleProps) {
       renderer = new ReactRenderer(SlashMenu, {
-        editor: props as unknown as Editor,
-        props,
+        editor: props.editor,
+        props: { items: props.items, command: props.command },
       });
-      // ReactRenderer appends its element to document.body during construction.
-      // Move it into our positioned popup so we control z-index and visibility.
-      popup!.appendChild(renderer.element);
-      // CRITICAL: anchor the popup to the cursor now. Without this call the
-      // popup sits at top:0, left:0 (ensurePopup's defaults) and the menu
-      // appears — if at all — at the page origin, invisible behind the title
-      // input. onUpdate keeps it anchored as the user keeps typing.
-      const rect = props.clientRect?.() ?? null;
-      positionPopup(popup!, rect);
+      // props.mount appends to document.body (default container), anchors to
+      // the cursor via Floating UI, and returns a teardown fn we must call in
+      // onExit. No manual position math, no z-index dance.
+      unmount = props.mount(renderer.element);
     },
 
-    onUpdate(props: SlashMenuRenderProps) {
-      if (!renderer) return;
-      // Reposition popup to stay anchored to the cursor.
-      const rect = props.clientRect?.() ?? null;
-      positionPopup(popup!, rect);
-      // Svelte/Tiptap pattern: updateProps re-renders without full destroy.
-      renderer.updateProps?.(props);
+    onUpdate(props: LifecycleProps) {
+      renderer?.updateProps?.({ items: props.items, command: props.command });
     },
 
     onKeyDown({ event }: { event: KeyboardEvent }) {
@@ -98,11 +82,10 @@ export function renderSlashMenu() {
     },
 
     onExit() {
-      if (!renderer) return;
-      renderer.destroy();
+      unmount?.();
+      renderer?.destroy();
       renderer = undefined;
-      popup?.remove();
-      popup = undefined;
+      unmount = undefined;
     },
   };
 }
