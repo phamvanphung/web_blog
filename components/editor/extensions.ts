@@ -11,27 +11,37 @@ import BubbleMenu from '@tiptap/extension-bubble-menu';
 import { Suggestion } from '@tiptap/suggestion';
 import GlobalDragHandle from 'tiptap-extension-global-drag-handle';
 import { PluginKey } from '@tiptap/pm/state';
-import type { AnyExtension } from '@tiptap/core';
+import { Extension, type AnyExtension } from '@tiptap/core';
+
 import { Callout } from './nodes/Callout';
 import { renderSlashMenu } from './slashCommand';
 import { generateHTML } from '@tiptap/html';
 
 export const slashPluginKey = new PluginKey('slashCommand');
 
-// NOTE: The plan's verbatim code used `Suggestion.configure({...})` and
-// `@tiptap/pm/model`.Range, but Tiptap v3's @tiptap/suggestion exports
-// `Suggestion` as a *function* (returns a Plugin) — not an Extension with
-// `.configure()`. The full wire-up (the right render hook + command shape)
-// lands in Task 5; for now we cast to silence the type mismatch and keep
-// `pnpm typecheck` green. GlobalDragHandle is also a default-exported
-// `Extension` (no `.configure()`), so we apply the same `as never` escape.
-const slashSuggestion = Suggestion({
-  char: '/',
-  pluginKey: slashPluginKey,
-  command: () => {
-    // Real implementation wired in Task 5 via buildSlashCommand(editor, range).
+// NOTE: Tiptap v3's @tiptap/suggestion exports `Suggestion` as a *function*
+// (returns a ProseMirror `Plugin`) — not a Tiptap `Extension`. Suggestion is
+// wrapped in an Extension that exposes it via `addProseMirrorPlugins`
+// (Suggestion itself returns a raw Plugin, which `splitExtensions()` would
+// otherwise filter out). The full wire-up (the right render hook + command
+// shape) lands in Task 5; for now we just satisfy the Suggestion config shape
+// and keep `pnpm typecheck` green. GlobalDragHandle is a default-exported
+// `Extension` (no `.configure()`), so we cast it to `AnyExtension`.
+const SlashCommandExtension = Extension.create({
+  name: 'suggestion', // matches Task 10's `editor.extensionManager.extensions.find((e) => e.name === 'suggestion')`
+  addProseMirrorPlugins() {
+    return [
+      Suggestion({
+        editor: this.editor,
+        char: '/',
+        pluginKey: slashPluginKey,
+        // Real command wiring lands in Task 5 (slashCommand.ts -> buildSlashCommand).
+        // For now we just satisfy the Suggestion config shape.
+        command: () => undefined,
+      }),
+    ];
   },
-} as never);
+});
 
 export const extensionBundle: AnyExtension[] = [
   StarterKit.configure({ codeBlock: { HTMLAttributes: { class: 'language-plain' } } }),
@@ -43,7 +53,7 @@ export const extensionBundle: AnyExtension[] = [
   Callout,
   BubbleMenu,
   GlobalDragHandle as unknown as AnyExtension,
-  slashSuggestion as unknown as AnyExtension,
+  SlashCommandExtension,
 ];
 
 // Re-export renderSlashMenu so EditorCanvas can mount <SlashMenu> when wiring
