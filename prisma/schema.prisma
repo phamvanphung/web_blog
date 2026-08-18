@@ -39,7 +39,6 @@ model User {
   auditLogs         AuditLog[]
   contactActions    ContactSubmission[] @relation("ContactAssignedTo")
 
-  @@index([email])
   @@index([role])
 }
 
@@ -100,9 +99,10 @@ model Post {
   redirects         Redirect[]  @relation("RedirectToPost")
 
   @@index([status, publishedAt])
-  @@index([slug])
   @@index([authorId])
   @@index([deletedAt])
+  @@index([deletedAt, status, publishedAt])
+  @@index([status, updatedAt])
   @@index([isFeatured, status, publishedAt])
   @@fulltext([title, excerpt, contentText])
 }
@@ -142,7 +142,7 @@ model Page {
   redirects       Redirect[] @relation("RedirectToPage")
 
   @@index([status])
-  @@index([slug])
+  @@index([status, updatedAt])
 }
 
 // ============================================================
@@ -168,7 +168,6 @@ model Category {
   posts          PostCategory[]
 
   @@index([parentId])
-  @@index([slug])
 }
 
 model PostCategory {
@@ -189,8 +188,6 @@ model Tag {
   updatedAt DateTime @updatedAt
 
   posts     PostTag[]
-
-  @@index([slug])
 }
 
 model PostTag {
@@ -242,6 +239,8 @@ model Menu {
   updatedAt DateTime @updatedAt
 
   items     MenuItem[]
+
+  @@index([location])
 }
 
 enum MenuItemType {
@@ -296,8 +295,6 @@ model Redirect {
   page        Page?    @relation("RedirectToPage", fields: [pageId], references: [id], onDelete: SetNull)
   statusCode  Int      @default(301)
   createdAt   DateTime @default(now())
-
-  @@index([fromPath])
 }
 
 // ============================================================

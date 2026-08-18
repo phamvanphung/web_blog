@@ -2,6 +2,7 @@
 // Public-facing menu API: pull by location, resolve each item's href from
 // targetType + targetId (joined to Page/Post/Category slug where needed).
 
+import { unstable_cache } from 'next/cache';
 import { db } from '@/lib/db';
 import { buildMenuTree, type FlatMenuItem, type MenuItemNode } from './tree';
 
@@ -59,7 +60,9 @@ function decorateWithHref(
 }
 
 /** Fetch the menu `location` (e.g. 'primary'), resolve each item to its href, return visible tree. */
-export async function getMenuByLocation(location: string): Promise<(MenuItemNode & { href: string })[]> {
+async function getMenuByLocationUncached(
+  location: string
+): Promise<(MenuItemNode & { href: string })[]> {
   const menu = await db.menu.findFirst({
     where: { location },
     include: { items: { orderBy: { sortOrder: 'asc' } } }
@@ -101,4 +104,19 @@ export async function getMenuByLocation(location: string): Promise<(MenuItemNode
 
   const tree = buildMenuTree(flat);
   return tree.map((n) => decorateWithHref(n, pageMap, postMap, categoryMap));
+}
+
+/**
+ * Cached variant of `getMenuByLocation`. Persists across requests keyed by
+ * `location` so the 4-query waterfall only fires once per 5 minutes (or
+ * until invalidated via `revalidateTag('menu:<location>')` from admin mutations).
+ */
+export function getMenuByLocation(
+  location: string
+): Promise<(MenuItemNode & { href: string })[]> {
+  return unstable_cache(
+    () => getMenuByLocationUncached(location),
+    ['menu', location],
+    { tags: [`menu:${location}`], revalidate: 300 }
+  )();
 }

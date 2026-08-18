@@ -1,11 +1,19 @@
 // modules/categories/server/public.ts
+import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
 import { db } from '@/lib/db';
 
-export async function getCategoryBySlug(slug: string) {
-  return db.category.findUnique({ where: { slug } });
-}
+// Outer `cache` (per-request dedup for generateMetadata + body).
+// Inner `unstable_cache` (cross-request persistence, tagged `categories:detail:<slug>`).
+export const getCategoryBySlug = cache((slug: string) =>
+  unstable_cache(
+    async () => db.category.findUnique({ where: { slug } }),
+    ['category:detail', slug],
+    { tags: [`categories:detail:${slug}`], revalidate: 300 }
+  )()
+);
 
-export async function listCategoriesWithCounts() {
+async function listCategoriesWithCountsUncached() {
   const rows = await db.category.findMany({
     orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
     include: {
@@ -25,4 +33,13 @@ export async function listCategoriesWithCounts() {
     description: c.description,
     count: c._count.posts
   }));
+}
+
+/** Cached category list with post counts. Tag `categories:list`. */
+export function listCategoriesWithCounts() {
+  return unstable_cache(
+    () => listCategoriesWithCountsUncached(),
+    ['categories:list'],
+    { tags: ['categories:list'], revalidate: 300 }
+  )();
 }

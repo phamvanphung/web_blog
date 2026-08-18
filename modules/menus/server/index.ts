@@ -6,12 +6,29 @@
 // We map between the two at the boundary.
 
 import { z } from 'zod';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { requireRole } from '@/lib/auth';
 import { audit, hashIp } from '@/lib/audit';
 import { headers } from 'next/headers';
 import { db } from '@/lib/db';
 import { buildMenuTree, type FlatMenuItem } from './tree';
+
+// Revalidate the menu in `menu:<location>` form. If the menu's location is
+// null at write-time we invalidate the two default slots ('primary',
+// 'footer') — covers all common cases for a single-instance deploy.
+async function revalidateMenu(menuId: string) {
+  const m = await db.menu.findUnique({
+    where: { id: menuId },
+    select: { location: true }
+  });
+  const loc = m?.location;
+  if (loc) {
+    revalidateTag(`menu:${loc}`);
+  } else {
+    revalidateTag('menu:primary');
+    revalidateTag('menu:footer');
+  }
+}
 
 /* ---------- Read queries ---------- */
 
@@ -91,11 +108,14 @@ export async function createMenu(input: {
     ipHash: await hashIp(await clientIp())
   });
   revalidatePath('/admin/menus');
+  if (menu.location) revalidateTag(`menu:${menu.location}`);
   return menu.id;
 }
 
 export async function deleteMenu(id: string): Promise<void> {
   const me = await requireRole('ADMIN');
+  // Capture location BEFORE delete so we can invalidate the public tag.
+  const before = await db.menu.findUnique({ where: { id }, select: { location: true } });
   await db.menu.delete({ where: { id } });
   await audit({
     userId: me.id,
@@ -105,6 +125,7 @@ export async function deleteMenu(id: string): Promise<void> {
     ipHash: await hashIp(await clientIp())
   });
   revalidatePath('/admin/menus');
+  if (before?.location) revalidateTag(`menu:${before.location}`);
 }
 
 export async function setMenuLocation(id: string, location: string | null): Promise<void> {
@@ -122,6 +143,7 @@ export async function setMenuLocation(id: string, location: string | null): Prom
   });
   revalidatePath('/admin/menus');
   revalidatePath(`/admin/menus/${id}/edit`);
+  await revalidateMenu(id);
 }
 
 export async function addMenuItem(
@@ -167,6 +189,7 @@ export async function addMenuItem(
     ipHash: await hashIp(await clientIp())
   });
   revalidatePath(`/admin/menus/${menuId}/edit`);
+  await revalidateMenu(menuId);
   return item.id;
 }
 
@@ -197,7 +220,10 @@ export async function updateMenuItem(
     ipHash: await hashIp(await clientIp())
   });
   const item = await db.menuItem.findUnique({ where: { id } });
-  if (item) revalidatePath(`/admin/menus/${item.menuId}/edit`);
+  if (item) {
+    revalidatePath(`/admin/menus/${item.menuId}/edit`);
+    await revalidateMenu(item.menuId);
+  }
 }
 
 export async function deleteMenuItem(id: string): Promise<void> {
@@ -213,4 +239,5 @@ export async function deleteMenuItem(id: string): Promise<void> {
     ipHash: await hashIp(await clientIp())
   });
   revalidatePath(`/admin/menus/${item.menuId}/edit`);
+  await revalidateMenu(item.menuId);
 }

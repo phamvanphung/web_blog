@@ -3,12 +3,17 @@
 // Admin-only CRUD; status enum DRAFT/PUBLISHED/HIDDEN (subset of PostStatus).
 
 import { z } from 'zod';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache';
 import { requireRole } from '@/lib/auth';
 import { audit, hashIp } from '@/lib/audit';
 import { headers } from 'next/headers';
 import { db } from '@/lib/db';
 import { slugify } from '@/lib/slug';
+
+// Tag constants referenced by every mutation below.
+const ADMIN_LIST_TAG = 'pages:admin-list';
+const PUBLIC_LIST_TAG = 'pages:list';
+const detailTag = (slug: string) => `pages:detail:${slug}`;
 
 /** Title → slug. Falls back to 'page' for empty result. */
 export function pageSlugFromTitle(title: string): string {
@@ -41,14 +46,22 @@ export async function listPages(
   } = {}
 ) {
   const { status, take = 50, skip = 0 } = opts;
-  return db.page.findMany({
-    where: { ...(status ? { status } : {}) },
-    orderBy: { updatedAt: 'desc' },
-    take,
-    skip,
-    select: { id: true, title: true, slug: true, status: true, updatedAt: true }
-  });
+  const key = `pages:admin:${JSON.stringify({ status: status ?? null, take, skip })}`;
+  return unstable_cache(
+    () =>
+      db.page.findMany({
+        where: { ...(status ? { status } : {}) },
+        orderBy: { updatedAt: 'desc' },
+        take,
+        skip,
+        select: { id: true, title: true, slug: true, status: true, updatedAt: true }
+      }),
+    [key],
+    { tags: [ADMIN_LIST_TAG], revalidate: 30 }
+  )();
 }
+
+export { ADMIN_LIST_TAG, PUBLIC_LIST_TAG, detailTag };
 
 export async function getPage(idOrSlug: string) {
   const byId = await db.page.findUnique({ where: { id: idOrSlug } });
@@ -105,6 +118,8 @@ export async function createPage(input: { title: string; content: string }): Pro
   });
 
   revalidatePath('/admin/pages');
+  revalidateTag(ADMIN_LIST_TAG);
+  revalidateTag(PUBLIC_LIST_TAG);
   return page.id;
 }
 
@@ -169,6 +184,9 @@ export async function updatePage(input: {
 
   revalidatePath('/admin/pages');
   revalidatePath(`/admin/pages/${parsed.data.id}/edit`);
+  revalidateTag(ADMIN_LIST_TAG);
+  revalidateTag(PUBLIC_LIST_TAG);
+  if (titleChanged && existing.slug) revalidateTag(detailTag(existing.slug));
 }
 
 /** Delete a Page (hard delete). */
@@ -187,4 +205,6 @@ export async function deletePage(id: string): Promise<void> {
   });
 
   revalidatePath('/admin/pages');
+  revalidateTag(ADMIN_LIST_TAG);
+  revalidateTag(PUBLIC_LIST_TAG);
 }

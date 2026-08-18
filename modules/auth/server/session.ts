@@ -3,6 +3,7 @@
 // the Session table.
 
 import { randomBytes, createHash } from 'node:crypto';
+import { cache } from 'react';
 import { cookies } from 'next/headers';
 import { db } from '@/lib/db';
 import type { SessionUser } from '@/lib/auth';
@@ -61,32 +62,45 @@ export async function createSession(args: {
  * Look up the active session from the request cookie. Returns null if no
  * cookie, no row, or row is expired. Updates `lastLoginAt` lazily? No — kept
  * for the explicit login flow to avoid touching the DB on every request.
+ *
+ * Wrapped in `react.cache` so the admin layout + page (which both call this
+ * via requireAuth/requireRole) share a single DB hit per request. Also
+ * `select`s only the user columns we actually use — avoids leaking
+ * `passwordHash` into the layout's RSC payload.
  */
-export async function readSession(): Promise<{ sid: string; user: SessionUser } | null> {
-  const jar = await cookies();
-  const sid = jar.get(COOKIE_NAME)?.value;
-  if (!sid) return null;
-  const row = await db.session.findUnique({
-    where: { id: sid },
-    include: { user: true }
-  });
-  if (!row) return null;
-  if (row.expiresAt.getTime() <= Date.now()) {
-    // expired — clean up
-    await db.session.delete({ where: { id: sid } }).catch(() => {});
-    return null;
-  }
-  if (row.user.status !== 'ACTIVE') return null;
-  return {
-    sid,
-    user: {
-      id: row.user.id,
-      email: row.user.email,
-      name: row.user.name,
-      role: row.user.role
+export const readSession = cache(
+  async (): Promise<{ sid: string; user: SessionUser } | null> => {
+    const jar = await cookies();
+    const sid = jar.get(COOKIE_NAME)?.value;
+    if (!sid) return null;
+    const row = await db.session.findUnique({
+      where: { id: sid },
+      select: {
+        id: true,
+        expiresAt: true,
+        user: {
+          select: { id: true, email: true, name: true, role: true, status: true }
+        }
+      }
+    });
+    if (!row) return null;
+    if (row.expiresAt.getTime() <= Date.now()) {
+      // expired — clean up
+      await db.session.delete({ where: { id: sid } }).catch(() => {});
+      return null;
     }
-  };
-}
+    if (row.user.status !== 'ACTIVE') return null;
+    return {
+      sid,
+      user: {
+        id: row.user.id,
+        email: row.user.email,
+        name: row.user.name,
+        role: row.user.role
+      }
+    };
+  }
+);
 
 /** Destroy a session row + clear the cookie. */
 export async function destroySession(sid: string): Promise<void> {

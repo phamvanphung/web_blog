@@ -1,5 +1,6 @@
 // app/(site)/blog/[slug]/page.tsx
 import type { Metadata } from 'next';
+import { after } from 'next/server';
 import { notFound, redirect } from 'next/navigation';
 import { Container } from '@/components/ui/Container';
 import { Tile } from '@/components/ui/Tile';
@@ -48,8 +49,12 @@ export default async function PostDetailPage({
   const post = await getPublishedPostBySlug(slug);
   if (!post) notFound();
 
-  // Fire-and-forget view increment.
-  void incrementViews(post.id);
+  // Fire-and-forget view increment — runs after the response is sent so the
+  // single UPDATE doesn't block the article TTFB. `unstable_after` survives
+  // client disconnects; `incrementViews` already swallows errors.
+  after(async () => {
+    await incrementViews(post.id);
+  });
 
   const APP_URL = process.env.APP_URL ?? 'http://localhost:3000';
   const url = `${APP_URL}${path}`;

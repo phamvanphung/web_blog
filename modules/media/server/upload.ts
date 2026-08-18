@@ -1,6 +1,6 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { requireRole } from '@/lib/auth';
 import { audit, hashIp } from '@/lib/audit';
 import { headers } from 'next/headers';
@@ -111,6 +111,9 @@ export async function uploadMediaAction(
   });
 
   revalidatePath('/admin/media');
+  // Media may be referenced as a category cover image — invalidate that
+  // cached list so newly uploaded covers appear in `/chu-de` immediately.
+  revalidateTag('categories:list');
   logger.info('media.upload', { id: record.id, userId: me.id });
   return { ok: true, id: record.id };
 }

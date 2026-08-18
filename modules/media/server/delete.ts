@@ -2,7 +2,7 @@
 
 import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { requireRole } from '@/lib/auth';
 import { audit, hashIp } from '@/lib/audit';
 import { headers } from 'next/headers';
@@ -50,4 +50,6 @@ export async function deleteMediaAction(id: string): Promise<void> {
   });
 
   revalidatePath('/admin/media');
+  // Mirror upload — category-cover images must refresh after media deletes.
+  revalidateTag('categories:list');
 }

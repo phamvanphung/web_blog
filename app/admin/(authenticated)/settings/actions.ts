@@ -1,11 +1,11 @@
 'use server';
 
 import { z } from 'zod';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { audit, hashIp } from '@/lib/audit';
 import { headers } from 'next/headers';
 import { requireRole } from '@/lib/auth';
-import { upsertSetting } from '@/modules/settings/server';
+import { upsertSetting, BRAND_TAG, settingsTag } from '@/modules/settings/server';
 
 const SettingUpdate = z.object({
   key: z.string().min(1).max(80),
@@ -41,5 +41,10 @@ export async function updateSettingAction(
   });
 
   revalidatePath('/admin/settings');
+  // Brand keys ('site.*') drive header/footer; invalidate `settings:brand`
+  // alongside the per-key tag so both the bundled brand cache and any
+  // individual getSetting cached reads refresh.
+  revalidateTag(settingsTag(parsed.data.key));
+  if (parsed.data.key.startsWith('site.')) revalidateTag(BRAND_TAG);
   return { ok: true };
 }

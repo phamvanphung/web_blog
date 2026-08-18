@@ -2,13 +2,19 @@
 // Posts module: queries, slug helpers, CRUD.
 
 import { z } from 'zod';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache';
 import { headers } from 'next/headers';
 import { db } from '@/lib/db';
 import { slugify } from '@/lib/slug';
 import { requireRole } from '@/lib/auth';
 import { audit, hashIp } from '@/lib/audit';
 import { jsonToHtml, jsonToText } from './render';
+
+// Tag constant — referenced by every cache wrapper + every mutation below.
+const ADMIN_LIST_TAG = 'posts:admin-list';
+const PUBLIC_LIST_TAG = 'posts:list';
+const FEATURED_TAG = 'posts:featured';
+const detailTag = (slug: string) => `posts:detail:${slug}`;
 
 /** Title → slug. Falls back to 'post' if slugify yields empty. */
 export function postSlugFromTitle(title: string): string {
@@ -41,21 +47,29 @@ export async function listPosts(
   } = {}
 ) {
   const { status, take = 20, skip = 0 } = opts;
-  return db.post.findMany({
-    where: { ...(status ? { status } : {}), deletedAt: null },
-    orderBy: [{ status: 'asc' }, { updatedAt: 'desc' }],
-    take,
-    skip,
-    select: {
-      id: true,
-      title: true,
-      slug: true,
-      status: true,
-      publishedAt: true,
-      updatedAt: true
-    }
-  });
+  const key = `posts:admin:${JSON.stringify({ status: status ?? null, take, skip })}`;
+  return unstable_cache(
+    () =>
+      db.post.findMany({
+        where: { ...(status ? { status } : {}), deletedAt: null },
+        orderBy: [{ status: 'asc' }, { updatedAt: 'desc' }],
+        take,
+        skip,
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          status: true,
+          publishedAt: true,
+          updatedAt: true
+        }
+      }),
+    [key],
+    { tags: [ADMIN_LIST_TAG], revalidate: 30 }
+  )();
 }
+
+export { ADMIN_LIST_TAG, PUBLIC_LIST_TAG, FEATURED_TAG, detailTag };
 
 export async function getPost(idOrSlug: string) {
   // Lookup by id first, then slug.
@@ -118,6 +132,8 @@ export async function createDraft(input: { title: string; contentJson: unknown }
   });
 
   revalidatePath('/admin/posts');
+  revalidateTag(ADMIN_LIST_TAG);
+  revalidateTag(PUBLIC_LIST_TAG);
   return post.id;
 }
 
@@ -186,6 +202,9 @@ export async function updateDraft(input: {
 
   revalidatePath('/admin/posts');
   revalidatePath(`/admin/posts/${parsed.data.id}/edit`);
+  revalidateTag(ADMIN_LIST_TAG);
+  revalidateTag(PUBLIC_LIST_TAG);
+  if (titleChanged && existing.slug) revalidateTag(detailTag(existing.slug));
 }
 
 export async function publishPost(id: string): Promise<void> {
@@ -218,6 +237,10 @@ export async function publishPost(id: string): Promise<void> {
   });
 
   revalidatePath('/admin/posts');
+  revalidateTag(ADMIN_LIST_TAG);
+  revalidateTag(PUBLIC_LIST_TAG);
+  revalidateTag(FEATURED_TAG);
+  revalidateTag(detailTag(existing.slug));
 }
 
 export async function deletePost(id: string): Promise<void> {
@@ -238,6 +261,8 @@ export async function deletePost(id: string): Promise<void> {
   });
 
   revalidatePath('/admin/posts');
+  revalidateTag(ADMIN_LIST_TAG);
+  revalidateTag(PUBLIC_LIST_TAG);
 }
 
 /* ---------- Taxonomy (admin) ---------- */
@@ -267,6 +292,8 @@ export async function setPostCategories(postId: string, categoryIds: string[]): 
     ipHash: await hashIp(ip)
   });
   revalidatePath('/admin/posts');
+  revalidateTag(ADMIN_LIST_TAG);
+  revalidateTag('categories:list');
 }
 
 export async function setPostTags(postId: string, tagIds: string[]): Promise<void> {
@@ -294,6 +321,8 @@ export async function setPostTags(postId: string, tagIds: string[]): Promise<voi
     ipHash: await hashIp(ip)
   });
   revalidatePath('/admin/posts');
+  revalidateTag(ADMIN_LIST_TAG);
+  revalidateTag('tags:list');
 }
 
 export async function setFeaturedMedia(postId: string, mediaId: string | null): Promise<void> {
@@ -312,4 +341,7 @@ export async function setFeaturedMedia(postId: string, mediaId: string | null): 
     ipHash: await hashIp(ip)
   });
   revalidatePath('/admin/posts');
+  revalidateTag(ADMIN_LIST_TAG);
+  revalidateTag(PUBLIC_LIST_TAG);
+  revalidateTag(FEATURED_TAG);
 }

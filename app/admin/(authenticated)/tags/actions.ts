@@ -1,7 +1,7 @@
 'use server';
 
 import { z } from 'zod';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { requireRole } from '@/lib/auth';
 import { audit, hashIp } from '@/lib/audit';
 import { headers } from 'next/headers';
@@ -30,6 +30,7 @@ export async function createTagAction(
     ipHash: await hashIp(ip)
   });
   revalidatePath('/admin/tags');
+  revalidateTag('tags:list');
   return { ok: true };
 }
 
@@ -48,4 +49,5 @@ export async function deleteTagAction(formData: FormData): Promise<void> {
     ipHash: await hashIp(ip)
   });
   revalidatePath('/admin/tags');
+  revalidateTag('tags:list');
 }

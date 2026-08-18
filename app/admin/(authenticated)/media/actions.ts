@@ -1,6 +1,6 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { deleteMediaAction } from '@/modules/media/server/delete';
 
 export async function deleteMediaFormAction(formData: FormData): Promise<void> {
@@ -8,4 +8,6 @@ export async function deleteMediaFormAction(formData: FormData): Promise<void> {
   if (!id) return;
   await deleteMediaAction(id);
   revalidatePath('/admin/media');
+  // Media images appear in the category card via `categories:list` cache.
+  revalidateTag('categories:list');
 }
