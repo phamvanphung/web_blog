@@ -15,7 +15,9 @@ import { PluginKey } from '@tiptap/pm/state';
 import { Extension, type AnyExtension } from '@tiptap/core';
 
 import { Callout } from './nodes/Callout';
-import { renderSlashMenu } from './slashCommand';
+import { renderSlashMenu, defaultSlashFilter, buildSlashCommand } from './slashCommand';
+import type { SlashItem } from './slashItems';
+import type { Editor, Range } from '@tiptap/core';
 import { generateHTML } from '@tiptap/html';
 
 export const slashPluginKey = new PluginKey('slashCommand');
@@ -36,9 +38,11 @@ const SlashCommandExtension = Extension.create({
         editor: this.editor,
         char: '/',
         pluginKey: slashPluginKey,
-        // Real command wiring lands in Task 5 (slashCommand.ts -> buildSlashCommand).
-        // For now we just satisfy the Suggestion config shape.
-        command: () => undefined,
+        items: ({ query }: { query: string }) => defaultSlashFilter(query),
+        render: renderSlashMenu,
+        command: ({ editor, range, props }: { editor: Editor; range: Range; props: { item: SlashItem } }) => {
+          buildSlashCommand(editor, range)(props.item);
+        },
       }),
     ];
   },

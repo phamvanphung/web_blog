@@ -9,8 +9,8 @@ export type SlashMenuRef = {
 
 export type SlashMenuRenderProps = {
   items: SlashItem[];
-  command: (item: SlashItem) => void;
-  clientRect: (() => DOMRect | null) | null;
+  command: (props: { item: SlashItem }) => void;
+  clientRect?: (() => DOMRect | null) | null;
 };
 
 const GROUP_LABELS: Record<SlashItem['group'], string> = {
@@ -45,7 +45,7 @@ const SlashMenu = forwardRef<SlashMenuRef, SlashMenuRenderProps>(
         if (event.key === 'Enter') {
           event.preventDefault();
           const item = items[active];
-          if (item) command(item);
+          if (item) command({ item });
           return true;
         }
         return false;
@@ -73,7 +73,7 @@ const SlashMenu = forwardRef<SlashMenuRef, SlashMenuRenderProps>(
                   <button
                     key={item.id}
                     onMouseEnter={() => setActive(myIdx)}
-                    onClick={() => command(item)}
+                    onClick={() => command({ item })}
                     className={`flex w-full items-center gap-3 px-3 py-2 text-sm transition-colors ${
                       isActive
                         ? 'bg-canvas-parchment text-ink'

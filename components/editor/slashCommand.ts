@@ -4,11 +4,19 @@
 import { ReactRenderer } from '@tiptap/react';
 import type { Editor, Range } from '@tiptap/core';
 import type { SlashItem } from './slashItems';
+import { filterSlashItems, SLASH_ITEMS } from './slashItems';
 import { getSlashCommands } from './slashCommands';
 import SlashMenu from './SlashMenu';
 import type { SlashMenuRef, SlashMenuRenderProps } from './SlashMenu';
 
 export type { SlashMenuRenderProps };
+
+/**
+ * Default filter: fuzzy-matches SLASH_ITEMS against query, returns up to 8 results.
+ */
+export function defaultSlashFilter(query: string): SlashItem[] {
+  return filterSlashItems(SLASH_ITEMS, query, 8);
+}
 
 function positionPopup(popup: HTMLElement, rect: DOMRect | null) {
   if (!popup || !rect) return;
