@@ -1,5 +1,5 @@
 // app/admin/(authenticated)/posts/new/page.tsx
-import { Tiptap } from '@/components/editor/Tiptap';
+import { PostEditor } from '@/components/editor/PostEditor';
 import { PostTaxonomyPanel } from '@/components/editor/PostTaxonomyPanel';
 import { AdminBreadcrumb } from '@/components/admin/AdminBreadcrumb';
 import { listCategories } from '@/modules/categories/server';
@@ -25,7 +25,7 @@ export default async function NewPostPage() {
       </p>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <Tiptap initialContent={empty} postId={null} />
+          <PostEditor initialContent={empty} postId={null} />
         </div>
         <PostTaxonomyPanel
           postId={null}

@@ -6,7 +6,7 @@ import { getPost, publishPost, deletePost } from '@/modules/posts/server';
 import { listCategories } from '@/modules/categories/server';
 import { listTags } from '@/modules/tags/server';
 import { listMedia } from '@/modules/media/server';
-import { Tiptap } from '@/components/editor/Tiptap';
+import { PostEditor } from '@/components/editor/PostEditor';
 import { PostTaxonomyPanel } from '@/components/editor/PostTaxonomyPanel';
 import { AdminBreadcrumb } from '@/components/admin/AdminBreadcrumb';
 import { Button } from '@/components/ui/Button';
@@ -83,8 +83,8 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <Tiptap
-            initialContent={initialContent as never}
+          <PostEditor
+            initialContent={initialContent}
             initialTitle={post.title}
             postId={post.id}
             initialStatus={post.status}
