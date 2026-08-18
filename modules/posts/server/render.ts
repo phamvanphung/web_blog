@@ -9,6 +9,7 @@ import Image from '@tiptap/extension-image';
 import Youtube from '@tiptap/extension-youtube';
 import { TableKit } from '@tiptap/extension-table';
 import DOMPurify from 'isomorphic-dompurify';
+import { Callout } from '../../../components/editor/nodes/Callout';
 
 // Server-side extension bundle — same shape as client, but no Placeholder.
 const SERVER_EXTENSIONS = [
@@ -16,7 +17,8 @@ const SERVER_EXTENSIONS = [
   Link.configure({ openOnClick: false }),
   Image.configure({ inline: false }),
   Youtube.configure({}),
-  TableKit.configure({ table: {} })
+  TableKit.configure({ table: {} }),
+  Callout
 ];
 
 const PURIFY_CONFIG = {
@@ -49,7 +51,9 @@ const PURIFY_CONFIG = {
     'tr',
     'th',
     'td',
-    'iframe'
+    'iframe',
+    'aside',
+    'span'
   ],
   ALLOWED_ATTR: [
     'href',
@@ -63,7 +67,9 @@ const PURIFY_CONFIG = {
     'height',
     'allow',
     'allowfullscreen',
-    'frameborder'
+    'frameborder',
+    'data-callout',
+    'data-tone'
   ]
 };
 
