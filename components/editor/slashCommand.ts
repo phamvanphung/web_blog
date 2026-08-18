@@ -13,7 +13,7 @@ export type { SlashMenuRenderProps };
 function positionPopup(popup: HTMLElement, rect: DOMRect | null) {
   if (!popup || !rect) return;
   popup.style.top = `${window.scrollY + rect.bottom + 4}px`;
-  popup.style.left = `${window.scrollY + rect.left}px`;
+  popup.style.left = `${window.scrollX + rect.left}px`;
 }
 
 /**

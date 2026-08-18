@@ -54,21 +54,6 @@ const SlashMenu = forwardRef<SlashMenuRef, SlashMenuRenderProps>(
 
     const groups: SlashItem['group'][] = ['Text', 'Media', 'Layout', 'Advanced'];
 
-    // Build a flat list with group-start markers so the active index maps
-    // correctly across the whole menu.
-    type FlatEntry =
-      | { kind: 'item'; item: SlashItem; index: number }
-      | { kind: 'group'; label: string };
-    const flat: FlatEntry[] = [];
-    for (const group of groups) {
-      const groupItems = items.filter((it) => it.group === group);
-      if (!groupItems.length) continue;
-      flat.push({ kind: 'group', label: GROUP_LABELS[group] });
-      groupItems.forEach((item) => {
-        flat.push({ kind: 'item', item, index: flat.filter((e) => e.kind === 'item').length });
-      });
-    }
-
     let cursor = 0;
     return (
       <div className="slash-menu w-[280px] rounded-11 border border-hairline bg-canvas shadow-lg">
