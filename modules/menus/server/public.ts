@@ -5,6 +5,7 @@
 import { unstable_cache } from 'next/cache';
 import { db } from '@/lib/db';
 import { buildMenuTree, type FlatMenuItem, type MenuItemNode } from './tree';
+import { reviveDates } from '@/lib/cache/revive';
 
 export type MenuHrefInput = {
   type: 'PAGE' | 'POST' | 'CATEGORY' | 'EXTERNAL';
@@ -115,8 +116,8 @@ export function getMenuByLocation(
   location: string
 ): Promise<(MenuItemNode & { href: string })[]> {
   return unstable_cache(
-    () => getMenuByLocationUncached(location),
+    async () => getMenuByLocationUncached(location),
     ['menu', location],
     { tags: [`menu:${location}`], revalidate: 300 }
-  )();
+  )().then((data) => reviveDates(data));
 }

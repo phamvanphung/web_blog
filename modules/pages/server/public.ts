@@ -2,8 +2,11 @@
 import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
 import { db } from '@/lib/db';
+import { reviveDates } from '@/lib/cache/revive';
 
 // Outer `cache` (per-request dedup) + inner `unstable_cache` (persistence, tag `pages:detail:<slug>`).
+// `reviveDates` runs on the unwrapped result so cache hits — which deserialise
+// ISO strings without restoring `Date` prototypes — are restored to real Dates.
 export const getPublishedPageBySlug = cache((slug: string) =>
   unstable_cache(
     async () => {
@@ -13,7 +16,7 @@ export const getPublishedPageBySlug = cache((slug: string) =>
     },
     ['page:detail', slug],
     { tags: [`pages:detail:${slug}`], revalidate: 300 }
-  )()
+  )().then((data) => reviveDates(data))
 );
 
 async function listPublishedPagesUncached() {
@@ -27,8 +30,8 @@ async function listPublishedPagesUncached() {
 /** Cached page list. Tag `pages:list`. */
 export function listPublishedPages() {
   return unstable_cache(
-    () => listPublishedPagesUncached(),
+    async () => listPublishedPagesUncached(),
     ['pages:list'],
     { tags: ['pages:list'], revalidate: 300 }
-  )();
+  )().then((data) => reviveDates(data));
 }

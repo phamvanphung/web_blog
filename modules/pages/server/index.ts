@@ -9,6 +9,7 @@ import { audit, hashIp } from '@/lib/audit';
 import { headers } from 'next/headers';
 import { db } from '@/lib/db';
 import { slugify } from '@/lib/slug';
+import { reviveDates } from '@/lib/cache/revive';
 
 // Tag constants referenced by every mutation below.
 const ADMIN_LIST_TAG = 'pages:admin-list';
@@ -48,7 +49,7 @@ export async function listPages(
   const { status, take = 50, skip = 0 } = opts;
   const key = `pages:admin:${JSON.stringify({ status: status ?? null, take, skip })}`;
   return unstable_cache(
-    () =>
+    async () =>
       db.page.findMany({
         where: { ...(status ? { status } : {}) },
         orderBy: { updatedAt: 'desc' },
@@ -58,7 +59,7 @@ export async function listPages(
       }),
     [key],
     { tags: [ADMIN_LIST_TAG], revalidate: 30 }
-  )();
+  )().then((rows) => reviveDates(rows));
 }
 
 export { ADMIN_LIST_TAG, PUBLIC_LIST_TAG, detailTag };

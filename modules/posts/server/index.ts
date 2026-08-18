@@ -8,6 +8,7 @@ import { db } from '@/lib/db';
 import { slugify } from '@/lib/slug';
 import { requireRole } from '@/lib/auth';
 import { audit, hashIp } from '@/lib/audit';
+import { reviveDates } from '@/lib/cache/revive';
 import { jsonToHtml, jsonToText } from './render';
 
 // Tag constant — referenced by every cache wrapper + every mutation below.
@@ -49,7 +50,7 @@ export async function listPosts(
   const { status, take = 20, skip = 0 } = opts;
   const key = `posts:admin:${JSON.stringify({ status: status ?? null, take, skip })}`;
   return unstable_cache(
-    () =>
+    async () =>
       db.post.findMany({
         where: { ...(status ? { status } : {}), deletedAt: null },
         orderBy: [{ status: 'asc' }, { updatedAt: 'desc' }],
@@ -66,7 +67,7 @@ export async function listPosts(
       }),
     [key],
     { tags: [ADMIN_LIST_TAG], revalidate: 30 }
-  )();
+  )().then((rows) => reviveDates(rows));
 }
 
 export { ADMIN_LIST_TAG, PUBLIC_LIST_TAG, FEATURED_TAG, detailTag };

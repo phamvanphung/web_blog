@@ -4,6 +4,7 @@
 import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
 import { db } from '@/lib/db';
+import { reviveDates } from '@/lib/cache/revive';
 
 const PUBLIC_SELECT = {
   id: true,
@@ -107,14 +108,16 @@ export function listPublishedPosts(opts: ListOpts = {}): Promise<ListResult> {
     featured: opts.featured ?? false
   })}`;
   return unstable_cache(
-    () => listPublishedPostsUncached(opts),
+    async () => listPublishedPostsUncached(opts),
     [key],
     { tags: ['posts:list'], revalidate: 60 }
-  )();
+  )().then((data) => reviveDates(data));
 }
 
 // Inner `unstable_cache` (cross-request persistence, tagged `posts:detail:<slug>`)
 // wrapped by outer `react.cache` (per-request dedup so generateMetadata + body share).
+// `reviveDates` runs on every result — cache hits deserialise ISO strings without
+// restoring `Date` prototypes, so we restore them here.
 export const getPublishedPostBySlug = cache((slug: string) =>
   unstable_cache(
     async () => {
@@ -127,7 +130,7 @@ export const getPublishedPostBySlug = cache((slug: string) =>
     },
     ['posts:detail', slug],
     { tags: [`posts:detail:${slug}`], revalidate: 300 }
-  )()
+  )().then((data) => reviveDates(data))
 );
 
 async function listFeaturedPostsUncached(limit: number) {
@@ -142,10 +145,10 @@ async function listFeaturedPostsUncached(limit: number) {
 /** Cached featured-posts helper. Tag `posts:featured`. */
 export function listFeaturedPosts(limit = 3) {
   return unstable_cache(
-    () => listFeaturedPostsUncached(limit),
+    async () => listFeaturedPostsUncached(limit),
     ['posts:featured', String(limit)],
     { tags: ['posts:featured'], revalidate: 60 }
-  )();
+  )().then((data) => reviveDates(data));
 }
 
 async function listRelatedPostsUncached(postId: string, categoryIds: string[], limit: number) {
@@ -165,10 +168,10 @@ async function listRelatedPostsUncached(postId: string, categoryIds: string[], l
 /** Cached related-posts helper. Tag includes the source postId. */
 export function listRelatedPosts(postId: string, categoryIds: string[], limit = 3) {
   return unstable_cache(
-    () => listRelatedPostsUncached(postId, categoryIds, limit),
+    async () => listRelatedPostsUncached(postId, categoryIds, limit),
     ['posts:related', postId, String(limit)],
     { tags: [`posts:related:${postId}`], revalidate: 120 }
-  )();
+  )().then((data) => reviveDates(data));
 }
 
 export async function incrementViews(postId: string): Promise<void> {

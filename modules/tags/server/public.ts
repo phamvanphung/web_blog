@@ -2,14 +2,17 @@
 import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
 import { db } from '@/lib/db';
+import { reviveDates } from '@/lib/cache/revive';
 
 // Outer `cache` (per-request dedup) + inner `unstable_cache` (persistence, tag `tags:detail:<slug>`).
+// `reviveDates` runs on the unwrapped result so cache hits — which deserialise
+// ISO strings without restoring `Date` prototypes — are restored to real Dates.
 export const getTagBySlug = cache((slug: string) =>
   unstable_cache(
     async () => db.tag.findUnique({ where: { slug } }),
     ['tag:detail', slug],
     { tags: [`tags:detail:${slug}`], revalidate: 300 }
-  )()
+  )().then((data) => reviveDates(data))
 );
 
 async function listTagsWithCountsUncached() {
@@ -33,8 +36,8 @@ async function listTagsWithCountsUncached() {
 /** Cached tag list with post counts (>0). Tag `tags:list`. */
 export function listTagsWithCounts() {
   return unstable_cache(
-    () => listTagsWithCountsUncached(),
+    async () => listTagsWithCountsUncached(),
     ['tags:list'],
     { tags: ['tags:list'], revalidate: 300 }
-  )();
+  )().then((data) => reviveDates(data));
 }
