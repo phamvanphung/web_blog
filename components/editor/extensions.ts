@@ -54,7 +54,7 @@ export const extensionBundle: AnyExtension[] = [
   Placeholder.configure({ placeholder: 'Bắt đầu viết, hoặc gõ / để chèn block…' }),
   Callout,
   BubbleMenu,
-  GlobalDragHandle as unknown as AnyExtension,
+  (GlobalDragHandle as unknown as AnyExtension).configure({ dragHandleWidth: 24 }),
   SlashCommandExtension,
 ];
 
