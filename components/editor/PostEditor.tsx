@@ -74,10 +74,11 @@ export function PostEditor({
     }
   }
 
-  // Editor column: 1120px (+30% from the previous 860) so the writing canvas
-  // fills the page. Combined with min-h-[80vh] the empty document feels like
-  // a real page rather than a card on a page.
-  const columnClass = 'mx-auto max-w-[1120px]';
+  // Editor column: 1280px so the writing canvas fills the page on most viewports.
+// Combined with min-h-[80vh] the empty document feels like a real page rather
+// than a card. The parent layout defers the right sidebar to 2xl (1536+) so
+// the editor gets the full main-column width on typical laptop screens.
+  const columnClass = 'mx-auto max-w-[1280px]';
 
   return (
     <div className="space-y-3">

@@ -81,7 +81,7 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
         </div>
       </header>
 
-      <div className="flex flex-col gap-6 xl:flex-row xl:items-start">
+      <div className="flex flex-col gap-6 2xl:flex-row 2xl:items-start">
         <div className="min-w-0 flex-1">
           <PostEditor
             initialContent={initialContent}
@@ -90,7 +90,7 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
             initialStatus={post.status}
           />
         </div>
-        <div className="xl:w-[280px] xl:flex-shrink-0">
+        <div className="2xl:w-[340px] 2xl:flex-shrink-0">
         <PostTaxonomyPanel
           postId={post.id}
           initialCategoryIds={initialCategoryIds}
