@@ -3,6 +3,7 @@
 
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
+import Underline from '@tiptap/extension-underline';
 import Image from '@tiptap/extension-image';
 import Youtube from '@tiptap/extension-youtube';
 import { TableKit } from '@tiptap/extension-table';
@@ -46,6 +47,7 @@ const SlashCommandExtension = Extension.create({
 export const extensionBundle: AnyExtension[] = [
   StarterKit.configure({ codeBlock: { HTMLAttributes: { class: 'language-plain' } } }),
   Link.configure({ openOnClick: false, autolink: true, linkOnPaste: true }),
+  Underline,
   Image.configure({ inline: false, allowBase64: false }),
   Youtube.configure({ controls: true, nocookie: true, modestBranding: true }),
   TableKit.configure({ table: { resizable: true } }),
