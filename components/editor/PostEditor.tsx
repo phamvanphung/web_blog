@@ -1,13 +1,11 @@
 'use client';
 
-import { useEditor, EditorContent } from '@tiptap/react';
 import { useState } from 'react';
-import { extensionBundle } from './extensions';
-import { Button } from '@/components/ui/Button';
+import { EditorCanvas } from './EditorCanvas';
 
-type PostStatus = 'DRAFT' | 'PUBLISHED' | 'HIDDEN' | 'TRASHED' | 'PENDING' | 'SCHEDULED';
+export type PostStatus = 'DRAFT' | 'PUBLISHED' | 'HIDDEN' | 'TRASHED' | 'PENDING' | 'SCHEDULED';
 
-export type TiptapTaxonomy = {
+export type PostTaxonomy = {
   categoryIds: string[];
   tagIds: string[];
   featuredMediaId: string | null;
@@ -21,37 +19,30 @@ type Props = {
   onSaved?: (id: string) => void;
 };
 
-const noopTaxonomy: TiptapTaxonomy = { categoryIds: [], tagIds: [], featuredMediaId: null };
+const noopTaxonomy: PostTaxonomy = { categoryIds: [], tagIds: [], featuredMediaId: null };
 
-export function Tiptap({
+export function PostEditor({
   initialContent,
   initialTitle = '',
   postId: initialPostId,
   initialStatus,
-  onSaved
+  onSaved,
 }: Props) {
-  const editor = useEditor({
-    extensions: extensionBundle,
-    content: initialContent as never,
-    immediatelyRender: false,
-    editorProps: { attributes: { class: 'prose max-w-prose focus:outline-none min-h-[300px]' } }
-  });
-
   const [title, setTitle] = useState<string>(initialTitle);
   const [postId, setPostId] = useState<string | null>(initialPostId);
+  const [content, setContent] = useState<unknown>(initialContent);
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
 
-  function readTaxonomy(): TiptapTaxonomy {
+  function readTaxonomy(): PostTaxonomy {
     if (typeof window === 'undefined') return noopTaxonomy;
     return (
-      (window as unknown as { __postTaxonomy?: TiptapTaxonomy }).__postTaxonomy ?? noopTaxonomy
+      (window as unknown as { __postTaxonomy?: PostTaxonomy }).__postTaxonomy ?? noopTaxonomy
     );
   }
 
   async function saveDraft() {
-    if (!editor) return;
     setStatus('saving');
     setError(null);
     try {
@@ -62,11 +53,11 @@ export function Tiptap({
         body: JSON.stringify({
           id: postId,
           title: title || 'Untitled',
-          contentJson: editor.getJSON(),
+          contentJson: content,
           categoryIds: tax.categoryIds,
           tagIds: tax.tagIds,
-          featuredMediaId: tax.featuredMediaId
-        })
+          featuredMediaId: tax.featuredMediaId,
+        }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -92,20 +83,26 @@ export function Tiptap({
           setDirty(true);
         }}
         placeholder="Tiêu đề bài viết…"
-        className="w-full border-b border-hairline bg-canvas px-2 py-3 text-d-sm font-semibold focus:outline-none"
+        className="w-full border-b border-hairline bg-canvas px-2 py-3 text-[36px] font-semibold focus:outline-none"
       />
       <div
-        className="min-h-[420px] rounded-11 border border-hairline bg-canvas px-4 py-4 prose"
+        className="mx-auto max-w-[720px] rounded-11 border border-hairline bg-canvas px-6 py-4 prose"
         onInput={() => setDirty(true)}
       >
-        <EditorContent editor={editor} />
+        <EditorCanvas
+          initialContent={initialContent}
+          onChange={(json) => {
+            setContent(json);
+            setDirty(true);
+          }}
+        />
       </div>
 
       <div className="flex items-center justify-between border-t border-hairline pt-3">
         <p className="text-[12px] text-ink-48">
           {status === 'saving' && 'Đang lưu…'}
           {status === 'saved' && '✓ Đã lưu.'}
-          {status === 'error' && <span className="text-red-700">✗ {error}</span>}
+          {status === 'error' && <span className="text-[#d70015]">✗ {error}</span>}
           {status === 'idle' && (dirty ? 'Có thay đổi chưa lưu.' : 'Chưa có thay đổi.')}
           {initialStatus && (
             <span className="ml-3">
@@ -114,9 +111,14 @@ export function Tiptap({
           )}
         </p>
         <div className="flex gap-2">
-          <Button onClick={saveDraft} disabled={status === 'saving'} size="sm">
+          <button
+            type="button"
+            onClick={saveDraft}
+            disabled={status === 'saving'}
+            className="rounded-8 bg-primary px-3 py-1.5 text-[14px] text-white disabled:opacity-50"
+          >
             {status === 'saving' ? 'Đang lưu…' : 'Lưu nháp'}
-          </Button>
+          </button>
         </div>
       </div>
     </div>
