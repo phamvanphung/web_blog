@@ -70,11 +70,13 @@ export function filterSlashItems(items: SlashItem[], query: string, limit: numbe
   // Whitespace-only query is treated the same as empty — no item can score
   // positive, and "   " should not slip past as a falsy-but-meaningful string.
   if (!query.trim()) {
-    // Even on an empty query, run items through a stable GROUP_ORDER sort so
-    // the menu is predictable rather than dependent on declaration order.
-    return [...items]
-      .sort((a, b) => GROUP_ORDER.indexOf(a.group) - GROUP_ORDER.indexOf(b.group))
-      .slice(0, limit);
+    // On an empty query the user has just typed `/` and has no idea how many
+    // blocks exist — return every item (across all groups), sorted by
+    // GROUP_ORDER for a stable menu. The `limit` argument is intentionally
+    // ignored here; it only applies to filtered results below.
+    return [...items].sort(
+      (a, b) => GROUP_ORDER.indexOf(a.group) - GROUP_ORDER.indexOf(b.group)
+    );
   }
   const scored = items
     .map((it) => ({ it, s: score(it, query) }))

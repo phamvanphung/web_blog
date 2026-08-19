@@ -24,6 +24,13 @@ describe('filterSlashItems', () => {
     expect(out.find((i) => i.id === 'divider')).toBeDefined();
   });
 
+  it('returns all items on empty query regardless of limit (limit only applies to filtered results)', () => {
+    // Empty query is the "I just typed /, show me everything" state — slicing
+    // would hide entire groups the user doesn't know exist.
+    const out = filterSlashItems(sample, '', 2);
+    expect(out).toHaveLength(sample.length);
+  });
+
   it('treats whitespace-only query the same as empty query', () => {
     const empty = filterSlashItems(sample, '', 8);
     const blank = filterSlashItems(sample, '   ', 8);
@@ -52,13 +59,15 @@ describe('filterSlashItems', () => {
     expect(out.map((i) => i.id)).toContain('video');
   });
 
-  it('respects the limit', () => {
-    const out = filterSlashItems(sample, '', 2);
+  it('respects the limit when query is non-empty', () => {
+    const out = filterSlashItems(sample, 'i', 2);
     expect(out).toHaveLength(2);
   });
 
-  it('returns empty array when limit is 0', () => {
-    const out = filterSlashItems(sample, '', 0);
+  it('returns empty array when limit is 0 (filtered results only)', () => {
+    // Limit 0 only applies once the user has typed something to filter by —
+    // empty query is the "show me everything" state and ignores the limit.
+    const out = filterSlashItems(sample, 'h', 0);
     expect(out).toEqual([]);
   });
 
