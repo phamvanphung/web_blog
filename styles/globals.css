@@ -47,7 +47,7 @@
   .prose {
     max-width: 68ch;
   }
-  .prose p { margin-block: 1.2em; }
+  .prose p { margin-block: 0.5em; }
   .prose h2 { font-size: 28px; line-height: 1.14; letter-spacing: -0.019em; margin-block: 1.6em 0.5em; }
   .prose h3 { font-size: 22px; line-height: 1.2; margin-block: 1.4em 0.4em; }
   .prose a { color: var(--color-primary); }
