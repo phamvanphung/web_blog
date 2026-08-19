@@ -17,6 +17,7 @@ import { PluginKey } from '@tiptap/pm/state';
 import { Extension, type AnyExtension } from '@tiptap/core';
 
 import { Callout } from './nodes/Callout';
+import { Embed } from './nodes/Embed';
 import { renderSlashMenu, defaultSlashFilter, buildSlashCommand } from './slashCommand';
 import type { SlashItem } from './slashItems';
 import type { Editor, Range } from '@tiptap/core';
@@ -61,6 +62,7 @@ export const extensionBundle: AnyExtension[] = [
   TaskItem.configure({ nested: true }),
   Placeholder.configure({ placeholder: 'Bắt đầu viết, hoặc gõ / để chèn block…' }),
   Callout,
+  Embed,
   BubbleMenu,
   (GlobalDragHandle as unknown as AnyExtension).configure({ dragHandleWidth: 24 }),
   SlashCommandExtension,

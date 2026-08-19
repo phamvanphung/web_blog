@@ -12,6 +12,7 @@ import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import DOMPurify from 'isomorphic-dompurify';
 import { Callout } from '../../../components/editor/nodes/Callout';
+import { Embed } from '../../../components/editor/nodes/Embed';
 
 // Server-side extension bundle — same shape as client, but no Placeholder.
 const SERVER_EXTENSIONS = [
@@ -22,7 +23,8 @@ const SERVER_EXTENSIONS = [
   TableKit.configure({ table: {} }),
   TaskList,
   TaskItem.configure({ nested: true }),
-  Callout
+  Callout,
+  Embed
 ];
 
 const PURIFY_CONFIG = {
@@ -73,6 +75,7 @@ const PURIFY_CONFIG = {
     'allow',
     'allowfullscreen',
     'frameborder',
+    'loading',
     'data-callout',
     'data-tone',
     'data-type',

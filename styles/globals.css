@@ -122,7 +122,7 @@
     padding-inline: 1.5rem;
   }
 
-  /* ---- Notion-like editor: callout + divider ---- */
+  /* ---- Notion-like editor: callout + divider + embed placeholder ---- */
   .callout {
     display: flex;
     align-items: flex-start;
@@ -178,6 +178,92 @@
     border-top: 1px solid var(--color-hairline);
     margin: 2rem auto;
     width: 33%;
+  }
+
+  /* Embed node placeholder (editor only). The public render emits a real
+     iframe via Embed.renderHTML, so this card never appears on /blog/[slug].
+     The card mirrors the callout's visual rhythm so blocks don't jolt when
+     authors toggle between the two. */
+  .embed-block {
+    display: flex;
+    align-items: stretch;
+    gap: 0.875rem;
+    border: 1px solid var(--color-hairline);
+    border-radius: 0.75rem;
+    padding: 0.75rem 0.875rem;
+    margin: 1rem 0;
+    background: rgba(148, 163, 184, 0.06);
+    user-select: none;
+  }
+  .embed-block-frame {
+    flex: 0 0 2.25rem;
+    height: 2.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    background: rgba(148, 163, 184, 0.18);
+    color: rgb(71, 85, 105);
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+  .embed-block-body {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  .embed-block-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-ink-muted-80);
+    font-weight: 600;
+  }
+  .embed-block-host {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--color-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .embed-block-link {
+    font-size: 0.8rem;
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+  .embed-block-link:hover { text-decoration: underline; }
+  .embed-block-link--empty {
+    color: rgb(217, 119, 6);
+    font-style: italic;
+  }
+  .embed-block-remove {
+    flex: 0 0 auto;
+    width: 1.75rem;
+    height: 1.75rem;
+    border: none;
+    background: transparent;
+    border-radius: 0.375rem;
+    color: var(--color-ink-muted-80);
+    font-size: 0.95rem;
+    cursor: pointer;
+    align-self: flex-start;
+  }
+  .embed-block-remove:hover {
+    background: rgba(148, 163, 184, 0.18);
+    color: rgb(217, 119, 6);
+  }
+
+  /* Public render: bare iframe gets the standard responsive wrapper. */
+  .prose iframe {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: 0;
+    border-radius: 0.75rem;
+    margin-block: 1.4em;
+    background: var(--color-canvas-parchment);
   }
 
   /* Slash menu visual alignment with brand */

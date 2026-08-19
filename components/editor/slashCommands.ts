@@ -4,11 +4,6 @@
 
 import type { Editor, Range } from '@tiptap/core';
 
-/** Escape `&` and `"` for use inside a double-quoted HTML attribute. */
-function escapeAttr(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
-}
-
 export type SlashCommandMap = Record<string, () => void>;
 
 function requestModal(editor: Editor, kind: 'image' | 'video') {
@@ -78,11 +73,14 @@ export function getSlashCommands(editor: Editor, range: Range): SlashCommandMap 
         window.alert('Chỉ hỗ trợ URL http(s).');
         return;
       }
-      // Try inserting as an iframe node if that node type exists in the bundle;
-      // otherwise fall back to plain HTML insertion (safe fallback that works
-      // with StarterKit's default HTML parsing).
+      // Insert as a custom `embed` node (see components/editor/nodes/Embed.ts)
+      // rather than raw `<iframe>` HTML. Tiptap's schema doesn't recognize
+      // `<iframe>` — `insertContent` with an HTML string falls back to text
+      // parsing and the literal `<iframe …>` ends up escaped into the
+      // paragraph as text. The custom node serialises to a real iframe in
+      // public HTML via `renderHTML`.
       deleteTrigger()
-        .insertContent(`<iframe src="${escapeAttr(url)}" allowfullscreen></iframe>`)
+        .setEmbed({ src: parsed.toString() })
         .run();
     },
   };
