@@ -144,7 +144,7 @@ export function PostTaxonomyPanel({
 
       {postId && (
         <p className="border-t border-hairline pt-4 text-[12px] text-ink-48">
-          Taxonomy sẽ được lưu khi bạn click <strong className="text-ink">Lưu nháp</strong>.
+          Taxonomy sẽ được lưu khi bạn click <strong className="text-ink">Lưu</strong>.
         </p>
       )}
     </aside>

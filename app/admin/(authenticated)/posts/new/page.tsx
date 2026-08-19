@@ -21,7 +21,7 @@ export default async function NewPostPage() {
       <AdminBreadcrumb items={[{ href: '/admin/posts', label: 'Bài viết' }, { label: 'Mới' }]} />
       <h1 className="mb-2 text-d-sm">Bài viết mới</h1>
       <p className="mb-6 text-[13px] text-ink-48">
-        Soạn nội dung, click <strong>Lưu nháp</strong> khi xong. Sau khi lưu, có thể publish.
+        Soạn nội dung, click <strong>Lưu</strong> khi xong. Sau khi lưu, có thể publish.
       </p>
       <div className="flex flex-col gap-6 2xl:flex-row 2xl:items-start">
         <div className="min-w-0 flex-1">

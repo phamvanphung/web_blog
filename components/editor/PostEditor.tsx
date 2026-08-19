@@ -106,7 +106,7 @@ export function PostEditor({
             disabled={status === 'saving'}
             className="rounded-8 bg-primary px-4 py-1.5 text-[14px] font-medium text-white shadow-sm transition-opacity disabled:opacity-50"
           >
-            {status === 'saving' ? 'Đang lưu…' : 'Lưu nháp'}
+            {status === 'saving' ? 'Đang lưu…' : 'Lưu'}
           </button>
         </div>
       </div>
