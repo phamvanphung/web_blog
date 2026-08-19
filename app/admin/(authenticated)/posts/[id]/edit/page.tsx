@@ -90,7 +90,7 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
             initialStatus={post.status}
           />
         </div>
-        <div className="2xl:w-[340px] 2xl:flex-shrink-0">
+        <div className="2xl:w-[400px] 2xl:flex-shrink-0">
         <PostTaxonomyPanel
           postId={post.id}
           initialCategoryIds={initialCategoryIds}

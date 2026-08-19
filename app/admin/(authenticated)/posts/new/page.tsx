@@ -27,7 +27,7 @@ export default async function NewPostPage() {
         <div className="min-w-0 flex-1">
           <PostEditor initialContent={empty} postId={null} />
         </div>
-        <div className="2xl:w-[340px] 2xl:flex-shrink-0">
+        <div className="2xl:w-[400px] 2xl:flex-shrink-0">
         <PostTaxonomyPanel
           postId={null}
           initialCategoryIds={[]}
