@@ -128,7 +128,7 @@ export function PostEditor({
           fill most of the viewport so it doesn't feel cramped. */}
       <div className={columnClass}>
         <div
-          className="min-h-[80vh] prose prose-notion focus:outline-none"
+          className="min-h-[80vh] focus:outline-none"
           onInput={() => setDirty(true)}
         >
           <EditorCanvas
