@@ -7,6 +7,8 @@ import Underline from '@tiptap/extension-underline';
 import Image from '@tiptap/extension-image';
 import Youtube from '@tiptap/extension-youtube';
 import { TableKit } from '@tiptap/extension-table';
+import TaskList from '@tiptap/extension-task-list';
+import TaskItem from '@tiptap/extension-task-item';
 import Placeholder from '@tiptap/extension-placeholder';
 import BubbleMenu from '@tiptap/extension-bubble-menu';
 import { Suggestion } from '@tiptap/suggestion';
@@ -55,6 +57,8 @@ export const extensionBundle: AnyExtension[] = [
   Image.configure({ inline: false, allowBase64: false }),
   Youtube.configure({ controls: true, nocookie: true, modestBranding: true }),
   TableKit.configure({ table: { resizable: true } }),
+  TaskList,
+  TaskItem.configure({ nested: true }),
   Placeholder.configure({ placeholder: 'Bắt đầu viết, hoặc gõ / để chèn block…' }),
   Callout,
   BubbleMenu,

@@ -8,6 +8,8 @@ import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
 import Youtube from '@tiptap/extension-youtube';
 import { TableKit } from '@tiptap/extension-table';
+import TaskList from '@tiptap/extension-task-list';
+import TaskItem from '@tiptap/extension-task-item';
 import DOMPurify from 'isomorphic-dompurify';
 import { Callout } from '../../../components/editor/nodes/Callout';
 
@@ -18,6 +20,8 @@ const SERVER_EXTENSIONS = [
   Image.configure({ inline: false }),
   Youtube.configure({}),
   TableKit.configure({ table: {} }),
+  TaskList,
+  TaskItem.configure({ nested: true }),
   Callout
 ];
 
@@ -53,7 +57,8 @@ const PURIFY_CONFIG = {
     'td',
     'iframe',
     'aside',
-    'span'
+    'span',
+    'input'
   ],
   ALLOWED_ATTR: [
     'href',
@@ -69,7 +74,11 @@ const PURIFY_CONFIG = {
     'allowfullscreen',
     'frameborder',
     'data-callout',
-    'data-tone'
+    'data-tone',
+    'data-type',
+    'checked',
+    'type',
+    'disabled'
   ]
 };
 

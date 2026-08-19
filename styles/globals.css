@@ -59,6 +59,28 @@
     padding-left: 1em;
     color: var(--color-ink-muted-80);
   }
+  .prose ul[data-type="taskList"] {
+    list-style: none;
+    padding-left: 0.4em;
+  }
+  .prose ul[data-type="taskList"] li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5em;
+  }
+  .prose ul[data-type="taskList"] li > label {
+    margin-top: 0.32em;
+    flex: 0 0 auto;
+  }
+  .prose ul[data-type="taskList"] li > div {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .prose ul[data-type="taskList"] input[type="checkbox"] {
+    width: 1em;
+    height: 1em;
+    accent-color: var(--color-primary);
+  }
   .prose img { border-radius: 11px; margin-block: 1.6em; }
   .prose pre {
     background: var(--color-canvas-parchment);
