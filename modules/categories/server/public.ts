@@ -16,51 +16,41 @@ export const getCategoryBySlug = cache((slug: string) =>
   )().then((data) => reviveDates(data))
 );
 
-export type PublicCategory = {
+type PublicCategory = {
   id: string;
   name: string;
   slug: string;
   description: string | null;
 };
 
-/**
- * List visible (hidden=false) categories belonging to a group (by slug).
- * Special case: `slug === 'default'` also matches categories with
- * `groupId IS NULL` (legacy data) — they are conceptually in the default group.
- * Returns [] if the group slug doesn't exist (caller can decide to render null).
- *
- * Args are primitive (not object) so React's per-request `cache()` can dedup
- * calls by reference identity — matching the `getCategoryBySlug` pattern.
- */
-export const listCategoriesByGroupSlug = cache(
-  (groupSlug: string, limit: number, orderBy: 'sortOrder' | 'name') =>
-    unstable_cache(
-      async () => {
-        const group = await db.categoryGroup.findUnique({ where: { slug: groupSlug } });
-        const groupId = group?.id ?? null;
+export async function listCategoriesByGroupSlug(
+  groupSlug: string,
+  limit: number,
+  orderBy: 'sortOrder' | 'name'
+): Promise<PublicCategory[]> {
+  const group = await db.categoryGroup.findUnique({
+    where: { slug: groupSlug },
+    select: { id: true }
+  });
+  if (!group) return [];
 
-        const where =
-          groupSlug === 'default'
-            ? { hidden: false, OR: [{ groupId: null }, ...(groupId ? [{ groupId }] : [])] }
-            : groupId
-              ? { hidden: false, groupId }
-              : { hidden: false, groupId: '__no_match__' };
+  const where =
+    groupSlug === 'default'
+      ? { hidden: false, OR: [{ groupId: group.id }, { groupId: null }] }
+      : { groupId: group.id, hidden: false };
 
-        const rows = await db.category.findMany({
-          where,
-          orderBy:
-            orderBy === 'name'
-              ? [{ name: 'asc' }]
-              : [{ sortOrder: 'asc' }, { name: 'asc' }],
-          take: limit,
-          select: { id: true, name: true, slug: true, description: true }
-        });
-        return rows;
-      },
-      ['categories:by-group', groupSlug, String(limit), orderBy],
-      { tags: [`categories:by-group:${groupSlug}`], revalidate: 300 }
-    )().then((data) => reviveDates(data))
-);
+  const orderByClause: Array<{ name: 'asc' | 'desc' } | { sortOrder: 'asc' | 'desc' }> =
+    orderBy === 'name'
+      ? [{ name: 'asc' }, { sortOrder: 'asc' }]
+      : [{ sortOrder: 'asc' }, { name: 'asc' }];
+
+  return db.category.findMany({
+    where,
+    orderBy: orderByClause,
+    take: limit,
+    select: { id: true, name: true, slug: true, description: true }
+  });
+}
 
 async function listCategoriesWithCountsUncached() {
   const rows = await db.category.findMany({

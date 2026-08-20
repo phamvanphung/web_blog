@@ -85,7 +85,8 @@ describe('listCategoriesByGroupSlug', () => {
       { id: 'c2', name: 'Cat Two', slug: 'cat-two', description: null }
     ]);
     expect(findUnique).toHaveBeenCalledWith({
-      where: { slug: 'company' }
+      where: { slug: 'company' },
+      select: { id: true }
     });
     expect(findMany).toHaveBeenCalledWith({
       where: { groupId: 'grp1', hidden: false },
@@ -108,9 +109,9 @@ describe('listCategoriesByGroupSlug', () => {
     expect(findMany).toHaveBeenCalledWith({
       where: {
         hidden: false,
-        OR: [{ groupId: null }, { groupId: 'grp_default' }]
+        OR: [{ groupId: 'grp_default' }, { groupId: null }]
       },
-      orderBy: [{ name: 'asc' }],
+      orderBy: [{ name: 'asc' }, { sortOrder: 'asc' }],
       take: 5,
       select: { id: true, name: true, slug: true, description: true }
     });
@@ -121,18 +122,15 @@ describe('listCategoriesByGroupSlug', () => {
     const findUnique = db.categoryGroup.findUnique as unknown as ReturnType<typeof vi.fn>;
     const findMany = db.category.findMany as unknown as ReturnType<typeof vi.fn>;
 
+    // Clear accumulated call history from previous tests in the suite.
+    findMany.mockClear();
     findUnique.mockResolvedValueOnce(null);
-    findMany.mockResolvedValueOnce([]);
 
     const result = await listCategoriesByGroupSlug('nonexistent', 12, 'sortOrder');
 
     expect(result).toEqual([]);
-    expect(findMany).toHaveBeenCalledWith({
-      where: { hidden: false, groupId: '__no_match__' },
-      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
-      take: 12,
-      select: { id: true, name: true, slug: true, description: true }
-    });
+    // findMany should not be called when the group does not exist (returns early).
+    expect(findMany).not.toHaveBeenCalled();
   });
 
   it('maps orderBy "name" to ascending name, "sortOrder" to ascending sortOrder', async () => {
@@ -144,10 +142,29 @@ describe('listCategoriesByGroupSlug', () => {
     findMany.mockResolvedValueOnce([]);
 
     await listCategoriesByGroupSlug('company', 20, 'name');
-    expect(findMany).toHaveBeenLastCalledWith(expect.objectContaining({ orderBy: [{ name: 'asc' }] }));
+    expect(findMany).toHaveBeenLastCalledWith(expect.objectContaining({ orderBy: [{ name: 'asc' }, { sortOrder: 'asc' }] }));
 
     findUnique.mockResolvedValueOnce({ id: 'grp1' });
     await listCategoriesByGroupSlug('company', 20, 'sortOrder');
     expect(findMany).toHaveBeenLastCalledWith(expect.objectContaining({ orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] }));
+  });
+
+  it('returns empty array when group exists but has no visible categories', async () => {
+    const { listCategoriesByGroupSlug } = await import('@/modules/categories/server/public');
+    const findUnique = db.categoryGroup.findUnique as unknown as ReturnType<typeof vi.fn>;
+    const findMany = db.category.findMany as unknown as ReturnType<typeof vi.fn>;
+
+    findUnique.mockResolvedValueOnce({ id: 'grp1' });
+    findMany.mockResolvedValueOnce([]);
+
+    const result = await listCategoriesByGroupSlug('company', 12, 'sortOrder');
+
+    expect(result).toEqual([]);
+    expect(findMany).toHaveBeenCalledWith({
+      where: { groupId: 'grp1', hidden: false },
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+      take: 12,
+      select: { id: true, name: true, slug: true, description: true }
+    });
   });
 });
