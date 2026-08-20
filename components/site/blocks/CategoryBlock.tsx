@@ -31,28 +31,25 @@ export async function CategoryBlock(props: Props) {
         {props.body && (
           <p className="mt-md text-center text-[17px] text-ink-muted-80">{props.body}</p>
         )}
-        <div className={`mt-lg grid grid-cols-1 ${cols} gap-4`}>
+        <ul className={`mt-lg grid grid-cols-1 ${cols} gap-4`}>
           {cats.map((c) => (
-            <Link
+            <li
               key={c.id}
-              href={`/chu-de/${c.slug}`}
-              className="group flex flex-col rounded-11 border border-hairline bg-canvas p-5 transition-all hover:-translate-y-0.5 hover:shadow-md"
+              className="rounded-18 bg-canvas-parchment p-6 transition-colors hover:bg-chip"
             >
-              <span className="mb-3 inline-flex h-7 w-7 items-center justify-center rounded-full bg-canvas-parchment text-[12px] text-ink-muted-80">
-                ●
-              </span>
-              <span className="text-[15px] font-medium text-ink">{c.name}</span>
-              {c.description && (
-                <span className="mt-1 line-clamp-2 text-[13px] text-ink-muted-80">
-                  {c.description}
+              <Link href={`/chu-de/${c.slug}`} className="block">
+                <span className="block text-[21px] font-semibold tracking-tight text-ink hover:text-primary">
+                  {c.name}
                 </span>
-              )}
-              <span className="mt-auto pt-3 text-[13px] text-primary group-hover:underline">
-                Xem chi tiết →
-              </span>
-            </Link>
+                {c.description && (
+                  <p className="mt-3 text-[15px] leading-snug text-ink-80 line-clamp-3">
+                    {c.description}
+                  </p>
+                )}
+              </Link>
+            </li>
           ))}
-        </div>
+        </ul>
         {props.showAll && cats.length >= props.limit && (
           <div className="mt-lg text-center">
             <Link
