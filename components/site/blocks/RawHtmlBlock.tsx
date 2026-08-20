@@ -57,6 +57,19 @@ function isFullDocument(h: string): boolean {
  *    12000ms after load to catch late-loading assets (Unsplash
  *    images, Google Fonts, async scripts).
  *
+ *    **Feedback-loop guard.** Pasting landing pages is common and
+ *    they often contain `min-height: 100vh` on hero sections. If we
+ *    set the wrapper to body.scrollHeight, the iframe viewport grows,
+ *    100vh grows proportionally, the hero's height grows, body grows
+ *    past our measurement, we measure again, set the wrapper even
+ *    bigger, and so on until the layout engine caps body height at
+ *    2^25 (= 33 554 432 px). Before measuring we walk every element
+ *    in the inner document; anything whose computed `min-height`
+ *    (or `height`) ends in `vh` we convert to a fixed `px` value
+ *    pinned to the *initial* iframe viewport. That locks hero
+ *    sections at their natural rendered size so subsequent viewport
+ *    expansion does not feed back into body height.
+ *
  *    Race condition guard: if the iframe has *already* finished
  *    loading by the time our `useEffect` runs (common in React 19
  *    dev with Strict Mode — the effect runs after commit but
@@ -89,6 +102,50 @@ export function RawHtmlBlock({ html }: Props) {
     let setupDone = false;
     let observer: ResizeObserver | null = null;
     const timeouts: ReturnType<typeof setTimeout>[] = [];
+
+    /**
+     * Walk every element inside the iframe and convert any
+     * `vh`-based `min-height` (or `height`) to a fixed `px` value
+     * pinned to the iframe's *current* viewport height.
+     *
+     * Why: pasted landing pages routinely contain
+     * `.hero { min-height: 100vh }`. If we set the wrapper height
+     * to body.scrollHeight, the iframe viewport grows → 100vh
+     * grows → hero grows → body.scrollHeight grows → we grow the
+     * wrapper → … until Chromium caps body height at 2^25
+     * (= 33 554 432 px). Pinning vh to px at the initial
+     * viewport breaks the loop: the hero settles at its natural
+     * rendered size and subsequent iframe expansion doesn't feed
+     * back into body height.
+     */
+    const lockVhMinHeights = () => {
+      try {
+        const doc = iframe.contentDocument;
+        if (!doc) return;
+        const win = doc.defaultView;
+        if (!win) return;
+
+        const vh = win.innerHeight;
+        if (!vh || vh <= 0) return;
+
+        const all = doc.querySelectorAll('*');
+        for (const el of Array.from(all)) {
+          const cs = win.getComputedStyle(el);
+          for (const prop of ['minHeight', 'height'] as const) {
+            const val = cs[prop];
+            if (typeof val === 'string') {
+              const match = val.match(/^(-?[\d.]+)vh$/);
+              if (match) {
+                const px = (parseFloat(match[1]) * vh) / 100;
+                el.style[prop] = `${px}px`;
+              }
+            }
+          }
+        }
+      } catch {
+        // ignore
+      }
+    };
 
     const measure = () => {
       try {
@@ -124,6 +181,13 @@ export function RawHtmlBlock({ html }: Props) {
     const setup = () => {
       if (setupDone) return;
       setupDone = true;
+
+      // Pin any `100vh` min-heights / heights to px at the initial
+      // viewport BEFORE measuring. Without this, expanding the wrapper
+      // would expand the iframe viewport → 100vh → hero height →
+      // body height → wrapper again, looping until body hits the
+      // Chromium 2^25 cap.
+      lockVhMinHeights();
 
       // Defer initial measure by 2 animation frames so the browser has
       // had time to fully lay out the iframe content.
