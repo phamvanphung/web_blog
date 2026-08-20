@@ -1,6 +1,8 @@
 // modules/seo/lib/jsonld.ts
 // JSON-LD builders — return plain objects safe to JSON.stringify in a <script> tag.
 
+import type { JsonLd } from '@/modules/seo/types';
+
 const APP_URL = process.env.APP_URL ?? 'http://localhost:3000';
 
 export function articleJsonLd(input: {
@@ -76,5 +78,24 @@ export function collectionPageJsonLd(input: {
     name: input.name,
     description: input.description ?? undefined,
     url: input.url
+  };
+}
+
+export type WebPageJsonLdInput = {
+  title: string;
+  description?: string | null;
+  slug: string;
+  siteUrl?: string;
+};
+
+export function webPageJsonLd(input: WebPageJsonLdInput): JsonLd {
+  const siteUrl = input.siteUrl ?? process.env.NEXT_PUBLIC_SITE_URL ?? 'https://example.com';
+  const url = `${siteUrl.replace(/\/$/, '')}/${input.slug.replace(/^\//, '')}`;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: input.title,
+    description: input.description ?? undefined,
+    url
   };
 }

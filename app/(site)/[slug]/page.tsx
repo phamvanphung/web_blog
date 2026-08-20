@@ -8,6 +8,8 @@ import { buildMetadata } from '@/lib/seo';
 import { getPublishedPageBySlug } from '@/modules/pages/server/public';
 import { findRedirectForPath } from '@/lib/redirects';
 import { BlockRenderer } from '@/components/site/BlockRenderer';
+import { JsonLd } from '@/components/site/JsonLd';
+import { webPageJsonLd } from '@/modules/seo/lib/jsonld';
 
 export const revalidate = 300;
 
@@ -56,7 +58,9 @@ export default async function StaticPage({
   if (!page) notFound();
 
   return (
-    <Tile tone="light">
+    <>
+      <JsonLd data={webPageJsonLd({ title: page.title, description: page.seoDescription, slug: page.slug })} />
+      <Tile tone="light">
       <Container width="prose" className="py-section">
         <h1 className="text-d-md">{page.title}</h1>
         <div className="mt-md">
@@ -64,5 +68,6 @@ export default async function StaticPage({
         </div>
       </Container>
     </Tile>
+    </>
   );
 }
