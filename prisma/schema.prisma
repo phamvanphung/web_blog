@@ -130,7 +130,8 @@ model Page {
   id              String     @id @default(cuid())
   title           String     @db.VarChar(255)
   slug            String     @unique @db.VarChar(255)
-  content         String     @db.LongText
+  content         String     @db.LongText    // deprecated — derived server-side from sections
+  sections        Json?                        // Section[] (see modules/pages/types.ts)
   status          PageStatus @default(DRAFT)
   seoTitle        String?    @db.VarChar(255)
   seoDescription  String?    @db.VarChar(500)
