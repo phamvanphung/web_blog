@@ -318,6 +318,19 @@ model AuditLog {
 }
 
 // ============================================================
+// NEWSLETTER
+// ============================================================
+
+model NewsletterSubscription {
+  id        String   @id @default(cuid())
+  email     String   @unique @db.VarChar(200)
+  ipHash    String?  @db.VarChar(64)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// ============================================================
 // CONTACT (defer comments)
 // ============================================================
 

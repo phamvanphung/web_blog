@@ -1,11 +1,13 @@
 // app/(site)/[slug]/page.tsx
 import type { Metadata } from 'next';
+import type { Section } from '@/modules/pages/types';
 import { notFound, redirect } from 'next/navigation';
 import { Container } from '@/components/ui/Container';
 import { Tile } from '@/components/ui/Tile';
 import { buildMetadata } from '@/lib/seo';
 import { getPublishedPageBySlug } from '@/modules/pages/server/public';
 import { findRedirectForPath } from '@/lib/redirects';
+import { BlockRenderer } from '@/components/site/BlockRenderer';
 
 export const revalidate = 300;
 
@@ -53,20 +55,12 @@ export default async function StaticPage({
   const page = await getPublishedPageBySlug(slug);
   if (!page) notFound();
 
-  // Plain-text content — render as paragraphs separated by blank lines.
-  const paragraphs = page.content
-    .split(/\n{2,}/)
-    .map((p) => p.trim())
-    .filter(Boolean);
-
   return (
     <Tile tone="light">
       <Container width="prose" className="py-section">
         <h1 className="text-d-md">{page.title}</h1>
-        <div className="prose mt-md">
-          {paragraphs.map((p, i) => (
-            <p key={i}>{p}</p>
-          ))}
+        <div className="mt-md">
+          <BlockRenderer sections={(page.sections ?? []) as Section[]} />
         </div>
       </Container>
     </Tile>
