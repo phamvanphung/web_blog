@@ -55,6 +55,13 @@ export function RawHtmlBlock({ html }: Props) {
           dangerouslySetInnerHTML={{ __html: css }}
         />
       ))}
+      {/*
+        Body MUST come BEFORE the <script> tags in the rendered output.
+        Browsers parse HTML top-to-bottom and execute each <script> as they
+        hit it — so scripts need the body DOM to be present when they run,
+        otherwise `document.getElementById('foo')` returns null.
+      */}
+      <div dangerouslySetInnerHTML={{ __html: body }} />
       {scripts.map((js, i) => (
         <script
           /* eslint-disable-next-line react/no-array-index-key */
@@ -62,7 +69,6 @@ export function RawHtmlBlock({ html }: Props) {
           dangerouslySetInnerHTML={{ __html: js }}
         />
       ))}
-      <div dangerouslySetInnerHTML={{ __html: body }} />
     </>
   );
 }
