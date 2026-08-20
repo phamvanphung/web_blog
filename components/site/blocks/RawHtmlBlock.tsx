@@ -20,25 +20,37 @@ function isFullDocument(h: string): boolean {
  *
  * 1. **Full HTML document** — admin pastes a complete page (e.g. a
  *    Claude-generated landing page) including `<!DOCTYPE>`, `<html>`,
- *    `<head>`, `<body>`. We render it via `<iframe srcdoc={html}>`.
- *    The browser parses the pasted HTML as a real document, so
- *    `<link rel="stylesheet">`, `<script src="…">`, `<style>`, and
- *    inline `<script>` all work without us extracting / re-injecting
- *    anything.
+ *    `<head>`, `<body>`. We render it inside a wrapper `<div>` with a
+ *    child `<iframe srcdoc={html}>`. The browser parses the pasted
+ *    HTML as a real document, so `<link rel="stylesheet">`,
+ *    `<script src="…">`, `<style>`, and inline `<script>` all work
+ *    without us extracting / re-injecting anything.
  *
- *    We auto-size the iframe's height to its inner body's scrollHeight
- *    so the iframe never develops an internal scrollbar — the parent
- *    page scrolls naturally over the iframe area, giving a single
- *    seamless scroll experience. Height is set via direct DOM mutation
- *    (`iframe.style.height = …`), NOT React state, so the parent tree
- *    never re-renders in response to size changes — which would
- *    otherwise retrigger the iframe's own `IntersectionObserver`s and
- *    stick `.reveal` elements at opacity 0.
+ *    We auto-size the wrapper's height to the inner document's
+ *    scrollHeight so the iframe never develops an internal scrollbar
+ *    — the parent page scrolls naturally over the iframe area, giving
+ *    a single seamless scroll experience.
+ *
+ *    Why a wrapper div rather than sizing the iframe directly?
+ *    React's style diffing removes inline `style` properties that are
+ *    absent from the next render's `style` prop. If we set the
+ *    iframe's height via DOM mutation but pass only `{width,
+ *    border, display}` as the iframe's React `style`, React will
+ *    wipe our height on the next render — back to the browser's
+ *    default iframe height (150px). Setting height on a wrapper
+ *    `<div>` with no React `style` prop dodges that: React never
+ *    touches the wrapper's style, our DOM mutations persist, and
+ *    the iframe inside inherits via `height: 100%`.
  *
  *    We measure on `load`, watch the inner body with `ResizeObserver`
  *    to catch layout shifts (images loading, fonts swapping, JS-driven
- *    layout), and also poll at 100/500/1500/3000ms after load to catch
- *    late-loading assets that don't trigger ResizeObserver.
+ *    layout), and also poll at 100/500/1500/3000ms after load to
+ *    catch late-loading assets.
+ *
+ *    Height is set via direct DOM mutation on the wrapper — never
+ *    through React state — so the parent tree never re-renders in
+ *    response to size changes (which would retrigger the iframe's
+ *    own IntersectionObservers and stick `.reveal` at opacity 0).
  *
  * 2. **Fragment** — render as-is via `dangerouslySetInnerHTML`. Note
  *    that `<script>` tags inside fragment HTML are inert by design
@@ -46,12 +58,14 @@ function isFullDocument(h: string): boolean {
  *    document for script support.
  */
 export function RawHtmlBlock({ html }: Props) {
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     if (!isFullDocument(html)) return;
+    const wrapper = wrapperRef.current;
     const iframe = iframeRef.current;
-    if (!iframe) return;
+    if (!wrapper || !iframe) return;
 
     let observer: ResizeObserver | null = null;
     const timeouts: ReturnType<typeof setTimeout>[] = [];
@@ -63,18 +77,18 @@ export function RawHtmlBlock({ html }: Props) {
         const body = doc.body;
         const docEl = doc.documentElement;
         if (!body) return;
-        // Use the largest of the body's and documentElement's sizes —
-        // some pages grow the html element past body (e.g. when body
-        // has overflow:hidden and a tall absolutely-positioned child).
+        // documentElement.scrollHeight is the most reliable — it
+        // includes everything in the document, even content that
+        // overflows <body>.
         const height = Math.max(
-          body.scrollHeight,
-          body.offsetHeight,
           docEl?.scrollHeight ?? 0,
-          docEl?.offsetHeight ?? 0
+          docEl?.offsetHeight ?? 0,
+          body.scrollHeight,
+          body.offsetHeight
         );
-        // Direct DOM write — bypass React state to keep the parent
-        // tree from re-rendering on every iframe resize.
-        iframe.style.height = `${height}px`;
+        if (height > 0) {
+          wrapper.style.height = `${height}px`;
+        }
       } catch {
         // Cross-origin (shouldn't happen for srcdoc, but guard anyway).
       }
@@ -112,15 +126,17 @@ export function RawHtmlBlock({ html }: Props) {
   }
 
   return (
-    <iframe
-      ref={iframeRef}
-      srcDoc={html}
-      title="Embedded page"
-      // No `height` in the style object — we control it imperatively via
-      // `iframe.style.height` inside the effect. Keeping it out of
-      // React's style prevents the parent tree from re-rendering when
-      // we adjust it (which would retrigger the iframe's own observers).
-      style={{ width: '100%', border: 'none', display: 'block' }}
-    />
+    // Wrapper has NO React `style` prop — we control its width and
+    // height imperatively via DOM mutation in the effect. React's
+    // style-diffing would otherwise wipe our height on the next
+    // render.
+    <div ref={wrapperRef} style={{ width: '100%' }}>
+      <iframe
+        ref={iframeRef}
+        srcDoc={html}
+        title="Embedded page"
+        style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+      />
+    </div>
   );
 }
