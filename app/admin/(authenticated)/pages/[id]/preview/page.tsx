@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation';
 import { Container } from '@/components/ui/Container';
 import { Tile } from '@/components/ui/Tile';
 import { BlockRenderer } from '@/components/site/BlockRenderer';
+import { JsonLd } from '@/components/site/JsonLd';
+import { webPageJsonLd } from '@/modules/seo/lib/jsonld';
 import { requireRole } from '@/lib/auth';
 import { getPage } from '@/modules/pages/server';
 import type { Section } from '@/modules/pages/types';
@@ -24,8 +26,15 @@ export default async function PagePreviewPage({
 
   return (
     <>
-      {/* Preview banner — visible only in admin preview, not on the public site. */}
-      <div className="bg-canvas-parchment border-b border-hairline">
+      {/* JSON-LD mirrors the public catch-all so preview SEO matches what
+          search engines actually see. */}
+      <JsonLd data={webPageJsonLd({ title: page.title, description: page.seoDescription, slug: page.slug })} />
+
+      {/* Preview banner — fixed overlay at top so the rendered page chrome
+          below is identical to the public catch-all (no extra banner
+          pushing content down, no different parent container that would
+          affect RawHtmlBlock's iframe height measurement). */}
+      <div className="fixed top-0 left-0 right-0 z-[100] border-b border-hairline bg-canvas-parchment shadow-sm">
         <Container width="prose" className="py-3">
           <div className="flex items-center justify-between gap-3 text-[13px]">
             <span className="text-ink-80">
@@ -51,7 +60,8 @@ export default async function PagePreviewPage({
         </Container>
       </div>
 
-      {/* Mirror the public catch-all chrome — single rawhtml = full bleed. */}
+      {/* Body — exactly the same wrapper structure as app/(site)/[slug]/page.tsx
+          so what the admin sees matches what visitors see. */}
       {isFullLanding ? (
         <BlockRenderer sections={sections} />
       ) : (
