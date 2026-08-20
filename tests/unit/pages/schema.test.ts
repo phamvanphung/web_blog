@@ -142,3 +142,86 @@ describe('SectionsArraySchema', () => {
     expect(result).toHaveLength(3);
   });
 });
+
+describe('CategoriesSection', () => {
+  it('parses a valid categories section with all fields', () => {
+    const input = {
+      kind: 'categories',
+      id: 'sec1',
+      data: {
+        groupSlug: 'company',
+        heading: 'Our categories',
+        body: 'Browse by topic',
+        layout: 'grid-3',
+        limit: 12,
+        showAll: false,
+        orderBy: 'name'
+      }
+    };
+    const parsed = SectionSchema.safeParse(input);
+    expect(parsed.success).toBe(true);
+  });
+
+  it('applies default values for optional fields', () => {
+    const input = {
+      kind: 'categories',
+      id: 'sec1',
+      data: { groupSlug: 'default' }
+    };
+    const parsed = SectionSchema.safeParse(input);
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      const s = parsed.data as Extract<typeof parsed.data, { kind: 'categories' }>;
+      expect(s.data.layout).toBe('grid-3');
+      expect(s.data.limit).toBe(12);
+      expect(s.data.showAll).toBe(false);
+      expect(s.data.orderBy).toBe('sortOrder');
+    }
+  });
+
+  it('rejects missing groupSlug', () => {
+    const input = {
+      kind: 'categories',
+      id: 'sec1',
+      data: { layout: 'grid-2' }
+    };
+    const parsed = SectionSchema.safeParse(input);
+    expect(parsed.success).toBe(false);
+  });
+
+  it('rejects invalid layout', () => {
+    const input = {
+      kind: 'categories',
+      id: 'sec1',
+      data: { groupSlug: 'default', layout: 'grid-5' }
+    };
+    const parsed = SectionSchema.safeParse(input);
+    expect(parsed.success).toBe(false);
+  });
+
+  it('rejects invalid orderBy', () => {
+    const input = {
+      kind: 'categories',
+      id: 'sec1',
+      data: { groupSlug: 'default', orderBy: 'invalid' }
+    };
+    const parsed = SectionSchema.safeParse(input);
+    expect(parsed.success).toBe(false);
+  });
+
+  it('rejects limit out of range', () => {
+    const tooBig = {
+      kind: 'categories',
+      id: 'sec1',
+      data: { groupSlug: 'default', limit: 49 }
+    };
+    expect(SectionSchema.safeParse(tooBig).success).toBe(false);
+
+    const tooSmall = {
+      kind: 'categories',
+      id: 'sec1',
+      data: { groupSlug: 'default', limit: 0 }
+    };
+    expect(SectionSchema.safeParse(tooSmall).success).toBe(false);
+  });
+});

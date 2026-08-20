@@ -67,6 +67,23 @@ export type DividerSection = {
   data: Record<string, never>;
 };
 
+export type CategoryLayout = 'grid-2' | 'grid-3' | 'grid-4';
+export type CategoryOrder = 'sortOrder' | 'name';
+
+export type CategoriesSection = {
+  kind: 'categories';
+  id: SectionId;
+  data: {
+    groupSlug: string;
+    heading?: string;
+    body?: string;
+    layout: CategoryLayout;
+    limit: number;
+    showAll: boolean;
+    orderBy: CategoryOrder;
+  };
+};
+
 export type Section =
   | RichTextSection
   | HeroSection
@@ -74,7 +91,8 @@ export type Section =
   | FormSection
   | MediaSection
   | RawHtmlSection
-  | DividerSection;
+  | DividerSection
+  | CategoriesSection;
 
 export type SectionKind = Section['kind'];
 

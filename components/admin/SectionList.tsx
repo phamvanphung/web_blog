@@ -24,6 +24,7 @@ const kindLabel: Record<SectionKind, string> = {
   media: 'Media',
   rawhtml: 'HTML thuần',
   divider: 'Phân cách',
+  categories: 'Danh mục',
 };
 
 function newSectionId(): string {
@@ -48,6 +49,8 @@ function defaultSection(kind: SectionKind): Section {
       return { kind: 'rawhtml', id, data: { html: '<p>Nhập HTML…</p>' } };
     case 'divider':
       return { kind: 'divider', id, data: {} };
+    case 'categories':
+      return { kind: 'categories', id, data: { groupSlug: 'default', layout: 'grid-3', limit: 12, showAll: false, orderBy: 'sortOrder' } };
   }
 }
 
@@ -83,6 +86,7 @@ export function SectionList({ value, onChange }: Props) {
       case 'media': return `Media (${s.data.layout})`;
       case 'rawhtml': return `${s.data.html.slice(0, 60)}…`;
       case 'divider': return '—';
+      case 'categories': return `Danh mục (${s.data.groupSlug})`;
     }
   }
 

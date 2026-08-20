@@ -72,6 +72,25 @@ const MediaData = z.object({
 });
 const DividerData = z.object({}).strict();
 
+const CategoryLayoutSchema = z.enum(['grid-2', 'grid-3', 'grid-4']);
+const CategoryOrderSchema = z.enum(['sortOrder', 'name']);
+
+const CategoriesData = z.object({
+  groupSlug: z.string().min(1),
+  heading: z.string().max(200).optional(),
+  body: z.string().max(2000).optional(),
+  layout: CategoryLayoutSchema.default('grid-3'),
+  limit: z.number().int().min(1).max(48).default(12),
+  showAll: z.boolean().default(false),
+  orderBy: CategoryOrderSchema.default('sortOrder')
+});
+
+const CategoriesSectionSchema = z.object({
+  kind: z.literal('categories'),
+  id: z.string(),
+  data: CategoriesData
+});
+
 export const SectionSchema: z.ZodType<Section> = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('richtext'), id: z.string(), data: RichTextData }),
   z.object({ kind: z.literal('hero'), id: z.string(), data: HeroData }),
@@ -80,10 +99,11 @@ export const SectionSchema: z.ZodType<Section> = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('media'), id: z.string(), data: MediaData }),
   z.object({ kind: z.literal('rawhtml'), id: z.string(), data: RawHtmlData }),
   z.object({ kind: z.literal('divider'), id: z.string(), data: DividerData }),
+  CategoriesSectionSchema,
 ]);
 
 export const SectionsArraySchema = z.array(SectionSchema).max(50);
 
 export const SECTION_KINDS: Section['kind'][] = [
-  'richtext', 'hero', 'cta', 'form', 'media', 'rawhtml', 'divider',
+  'richtext', 'hero', 'cta', 'form', 'media', 'rawhtml', 'divider', 'categories',
 ];
