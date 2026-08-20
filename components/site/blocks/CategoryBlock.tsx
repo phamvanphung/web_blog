@@ -23,7 +23,7 @@ export async function CategoryBlock(props: Props) {
   const cols = LAYOUT_CLASSES[props.layout];
 
   return (
-    <Tile tone="parchment">
+    <Tile tone="light">
       <Container width="comfortable" className="py-section">
         {props.heading && (
           <h2 className="text-center text-d-md">{props.heading}</h2>
@@ -35,7 +35,7 @@ export async function CategoryBlock(props: Props) {
           {cats.map((c) => (
             <li
               key={c.id}
-              className="rounded-18 bg-canvas-parchment p-6 transition-colors hover:bg-chip"
+              className="rounded-18 border border-hairline bg-canvas p-6 transition-colors hover:bg-canvas-parchment"
             >
               <Link href={`/chu-de/${c.slug}`} className="block">
                 <span className="block text-[21px] font-semibold tracking-tight text-ink hover:text-primary">
