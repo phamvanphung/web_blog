@@ -2,7 +2,14 @@ import { db } from '@/lib/db';
 import { ensureUniqueSlug, slugify } from '@/lib/slug';
 
 export async function listCategories() {
-  return db.category.findMany({ orderBy: { sortOrder: 'asc' } });
+  return db.category.findMany({
+    orderBy: { sortOrder: 'asc' },
+    include: { group: true }
+  });
+}
+
+export async function listCategoryGroupsForAdmin() {
+  return db.categoryGroup.findMany({ orderBy: { sortOrder: 'asc' } });
 }
 
 export async function getCategory(id: string) {
@@ -13,6 +20,8 @@ export async function createCategory(input: {
   name: string;
   parentId?: string | null;
   description?: string | null;
+  groupId?: string | null;
+  hidden?: boolean;
 }) {
   const base = slugify(input.name);
   const slug = await ensureUniqueSlug(
@@ -24,7 +33,9 @@ export async function createCategory(input: {
       name: input.name.slice(0, 120),
       slug,
       parentId: input.parentId ?? null,
-      description: input.description?.slice(0, 1000) ?? null
+      description: input.description?.slice(0, 1000) ?? null,
+      groupId: input.groupId ?? null,
+      hidden: input.hidden ?? false
     }
   });
 }
@@ -35,6 +46,8 @@ export async function updateCategory(
     name?: string;
     parentId?: string | null;
     description?: string | null;
+    groupId?: string | null;
+    hidden?: boolean;
   }
 ) {
   return db.category.update({
@@ -44,7 +57,9 @@ export async function updateCategory(
       ...(input.parentId !== undefined ? { parentId: input.parentId } : {}),
       ...(input.description !== undefined
         ? { description: input.description?.slice(0, 1000) ?? null }
-        : {})
+        : {}),
+      ...(input.groupId !== undefined ? { groupId: input.groupId } : {}),
+      ...(input.hidden !== undefined ? { hidden: input.hidden } : {})
     }
   });
 }

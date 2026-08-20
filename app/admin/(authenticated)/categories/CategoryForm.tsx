@@ -5,10 +5,18 @@ import { Button } from '@/components/ui/Button';
 import { createCategoryAction, type CategoryFormState } from './actions';
 
 const inputClass =
-  'h-11 w-full rounded-11 bg-canvas-parchment px-4 text-[15px] text-ink border border-transparent outline-none focus:border-primary-focus focus:bg-canvas';
+  'h-11 w-full rounded-11 bg-canvas-parchment px-4 text-[15px] text-ink border border-hairline outline-none focus:border-primary-focus focus:bg-canvas';
 const labelClass = 'mb-1 block text-[13px] text-ink-80';
 
-export function CategoryForm({ parents }: { parents: { id: string; name: string }[] }) {
+type Group = { id: string; name: string };
+
+export function CategoryForm({
+  parents,
+  groups
+}: {
+  parents: { id: string; name: string }[];
+  groups: Group[];
+}) {
   const [state, formAction, pending] = useActionState<CategoryFormState | undefined, FormData>(
     createCategoryAction,
     undefined
@@ -37,6 +45,33 @@ export function CategoryForm({ parents }: { parents: { id: string; name: string 
       <div>
         <label className={labelClass}>Mô tả (tùy chọn)</label>
         <textarea name="description" rows={3} className={inputClass} />
+      </div>
+      <div>
+        <label className={labelClass}>Group (tùy chọn — không chọn = Default)</label>
+        <select
+          name="groupId"
+          defaultValue=""
+          className={inputClass}
+        >
+          <option value="">— Default —</option>
+          {groups.map((g) => (
+            <option key={g.id} value={g.id}>
+              {g.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          name="hidden"
+          id="cat-hidden"
+          value="true"
+          className="h-4 w-4 rounded border-hairline"
+        />
+        <label htmlFor="cat-hidden" className="text-[13px] text-ink-80">
+          Ẩn khỏi trang public (grid widget + /chu-de)
+        </label>
       </div>
       {state?.ok === false && (
         <p role="alert" className="text-[13px] text-[#d70015]">

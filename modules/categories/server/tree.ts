@@ -6,6 +6,8 @@ export type FlatCategory = {
   name: string;
   slug: string;
   parentId: string | null;
+  groupName?: string | null;
+  hidden?: boolean;
 };
 
 export type CategoryNode = FlatCategory & {

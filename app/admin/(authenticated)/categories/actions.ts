@@ -10,14 +10,18 @@ import { createCategory, updateCategory, deleteCategory } from '@/modules/catego
 const CreateSchema = z.object({
   name: z.string().min(1).max(120),
   parentId: z.string().nullable().optional(),
-  description: z.string().max(1000).nullable().optional()
+  description: z.string().max(1000).nullable().optional(),
+  groupId: z.string().nullable().optional(),
+  hidden: z.boolean().optional()
 });
 
 const UpdateSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1).max(120).optional(),
   parentId: z.string().nullable().optional(),
-  description: z.string().max(1000).nullable().optional()
+  description: z.string().max(1000).nullable().optional(),
+  groupId: z.string().nullable().optional(),
+  hidden: z.boolean().optional()
 });
 
 export type CategoryFormState = { ok: true } | { ok: false; error: string };
@@ -30,7 +34,9 @@ export async function createCategoryAction(
   const parsed = CreateSchema.safeParse({
     name: String(formData.get('name') ?? ''),
     parentId: (formData.get('parentId') as string | null) || null,
-    description: (formData.get('description') as string | null) || null
+    description: (formData.get('description') as string | null) || null,
+    groupId: (formData.get('groupId') as string | null) || null,
+    hidden: formData.get('hidden') === 'true'
   });
   if (!parsed.success) return { ok: false, error: 'Tên + mô tả (nếu có) không hợp lệ.' };
 
@@ -62,11 +68,21 @@ export async function updateCategoryAction(
       : undefined,
     description: formData.has('description')
       ? (formData.get('description') as string | null) || null
-      : undefined
+      : undefined,
+    groupId: formData.has('groupId')
+      ? (formData.get('groupId') as string | null) || null
+      : undefined,
+    hidden: formData.has('hidden') ? formData.get('hidden') === 'true' : undefined
   });
   if (!parsed.success) return { ok: false, error: 'Dữ liệu không hợp lệ.' };
 
-  await updateCategory(parsed.data.id, parsed.data);
+  await updateCategory(parsed.data.id, {
+    name: parsed.data.name,
+    parentId: parsed.data.parentId,
+    description: parsed.data.description,
+    groupId: parsed.data.groupId,
+    hidden: parsed.data.hidden
+  });
   const h = await headers();
   const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? null;
   await audit({
