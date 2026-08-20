@@ -7,6 +7,22 @@ import { requireRole } from '@/lib/auth';
 import { audit, hashIp } from '@/lib/audit';
 import { headers } from 'next/headers';
 import { createPage, updatePage, deletePage } from '@/modules/pages/server';
+import type { Section } from '@/modules/pages/types';
+
+function contentToRichtextSection(content: string): Section {
+  return {
+    kind: 'richtext',
+    id: crypto.randomUUID(),
+    data: {
+      json: {
+        type: 'doc',
+        content: content
+          ? [{ type: 'paragraph', content: [{ type: 'text', text: content }] }]
+          : [{ type: 'paragraph' }]
+      }
+    }
+  };
+}
 
 const CreateSchema = z.object({
   title: z.string().min(1).max(255),
@@ -27,13 +43,15 @@ export async function createPageAction(
   formData: FormData
 ): Promise<PageFormState> {
   const me = await requireRole('ADMIN');
-  const parsed = CreateSchema.safeParse({
+  const { title, content } = {
     title: String(formData.get('title') ?? ''),
     content: String(formData.get('content') ?? '')
-  });
+  };
+  const parsed = CreateSchema.safeParse({ title, content });
   if (!parsed.success) return { ok: false, error: 'Tiêu đề + nội dung không hợp lệ.' };
 
-  const id = await createPage(parsed.data);
+  const sections: Section[] = [contentToRichtextSection(parsed.data.content)];
+  const id = await createPage({ title: parsed.data.title, sections });
   const h = await headers();
   const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? null;
   await audit({
@@ -62,7 +80,9 @@ export async function updatePageAction(
   });
   if (!parsed.success) return { ok: false, error: 'Dữ liệu không hợp lệ.' };
 
-  await updatePage(parsed.data);
+  const { id, title, content, status } = parsed.data;
+  const sections = content ? [contentToRichtextSection(content)] : undefined;
+  await updatePage({ id, title, sections, status });
   const h = await headers();
   const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? null;
   await audit({
