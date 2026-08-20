@@ -77,3 +77,12 @@ export type Section =
   | DividerSection;
 
 export type SectionKind = Section['kind'];
+
+// ---------------------------------------------------------------------------
+// Page with sections
+// ---------------------------------------------------------------------------
+import type { Page } from '@prisma/client';
+
+export type PageWithSections = Omit<Page, 'sections'> & {
+  sections: Section[];
+};

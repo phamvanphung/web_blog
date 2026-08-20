@@ -1,6 +1,6 @@
 // modules/pages/server/index.ts
-// Static pages (no Tiptap — plain text content).
-// Admin-only CRUD; status enum DRAFT/PUBLISHED/HIDDEN (subset of PostStatus).
+// Admin-only CRUD for Pages built from sections (Tiptap rich-text + structured blocks).
+// status enum DRAFT/PUBLISHED/HIDDEN (subset of PostStatus).
 
 import { z } from 'zod';
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache';
@@ -10,6 +10,9 @@ import { headers } from 'next/headers';
 import { db } from '@/lib/db';
 import { slugify } from '@/lib/slug';
 import { reviveDates } from '@/lib/cache/revive';
+import type { Section } from '../types';
+import { SectionsArraySchema } from '../schema';
+import { deriveContentFromSections } from './render';
 
 // Tag constants referenced by every mutation below.
 const ADMIN_LIST_TAG = 'pages:admin-list';
@@ -79,21 +82,24 @@ const StatusEnum = z.enum(['DRAFT', 'PUBLISHED', 'HIDDEN']);
 
 const CreateSchema = z.object({
   title: z.string().min(1).max(255),
-  content: z.string().max(50_000)
+  sections: SectionsArraySchema
 });
 
 const UpdateSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1).max(255).optional(),
-  content: z.string().max(50_000).optional(),
+  sections: SectionsArraySchema.optional(),
   status: StatusEnum.optional()
 });
 
 /** Create a new Page (initially DRAFT) + slug uniqueness check. */
-export async function createPage(input: { title: string; content: string }): Promise<string> {
+export async function createPage(input: { title: string; sections: Section[] }): Promise<string> {
   const me = await requireRole('ADMIN');
   const parsed = CreateSchema.safeParse(input);
   if (!parsed.success) throw new Error('Invalid input');
+
+  const sections = parsed.data.sections;
+  const content = deriveContentFromSections(sections);
 
   const baseSlug = pageSlugFromTitle(parsed.data.title);
   const slug = await ensureUniquePageSlug(baseSlug, (s) => pageSlugExists(s));
@@ -102,7 +108,8 @@ export async function createPage(input: { title: string; content: string }): Pro
     data: {
       title: parsed.data.title,
       slug,
-      content: parsed.data.content,
+      content,
+      sections,
       authorId: me.id,
       status: 'DRAFT'
     }
@@ -128,7 +135,7 @@ export async function createPage(input: { title: string; content: string }): Pro
 export async function updatePage(input: {
   id: string;
   title?: string;
-  content?: string;
+  sections?: Section[];
   status?: 'DRAFT' | 'PUBLISHED' | 'HIDDEN';
 }): Promise<void> {
   const me = await requireRole('ADMIN');
@@ -140,11 +147,15 @@ export async function updatePage(input: {
 
   const titleChanged = parsed.data.title !== undefined && parsed.data.title !== existing.title;
 
+  // Derive content from sections whenever sections are provided.
+  const sections = parsed.data.sections;
+  const content = sections !== undefined ? deriveContentFromSections(sections) : undefined;
+
   await db.page.update({
     where: { id: parsed.data.id },
     data: {
       ...(parsed.data.title !== undefined ? { title: parsed.data.title } : {}),
-      ...(parsed.data.content !== undefined ? { content: parsed.data.content } : {}),
+      ...(sections !== undefined ? { sections, content } : {}),
       ...(parsed.data.status !== undefined ? { status: parsed.data.status } : {})
     }
   });
