@@ -1,7 +1,3 @@
-'use client';
-
-import { useEffect } from 'react';
-
 type Props = {
   html: string;
 };
@@ -28,50 +24,47 @@ function extractBody(h: string): string {
 }
 
 /**
+ * Wrap a script body in an IIFE so top-level `const` / `let` declarations
+ * are local to that script's execution. Two scripts that both declare
+ * `const navbar = …` no longer collide across script tags.
+ *
+ * Caveat: `function` declarations and `var` declarations inside the IIFE
+ * are also scoped to it (not added to `window`), so cross-script refs
+ * that rely on implicit globals will break. The admin can opt in to
+ * shared globals with explicit `window.foo = …` assignments if needed.
+ *
+ * We also wrap each script in try/catch so one bad script can't kill
+ * the rest (which is what was happening before this fix — a redeclaration
+ * SyntaxError on script #2 aborted every later script on the page).
+ */
+function wrapScript(js: string, idx: number): string {
+  return `(function(){try{\n${js}\n}catch(e){console.error('[RawHtmlBlock script #${idx}]',e);}})();`;
+}
+
+/**
  * Raw HTML escape hatch for Page sections. Two shapes:
  *
  * 1. **Full HTML document** — admin pastes a complete page (e.g. a
- *    Claude-generated landing page) with `<!DOCTYPE>`, `<html>`, `<head>`,
- *    `<body>`. We:
- *    - Render `<style>` blocks via `<style dangerouslySetInnerHTML>` so
- *      CSS applies.
- *    - Render the body via `dangerouslySetInnerHTML` — Next.js still
- *      SSRs the body into the HTML response (no first-paint flicker).
- *    - Defer `<script>` execution to `useEffect` after hydration, with
- *      each script wrapped in an IIFE. This fixes three things:
- *        a) Scripts execute after the body is in the DOM, so
- *           `document.getElementById('year')` resolves.
- *        b) React 19 + Next.js Fast Refresh / Strict Mode re-runs
- *           effects in dev. Without an IIFE, two scripts both declaring
- *           `const navbar = …` would throw "Identifier 'navbar' has
- *           already been declared" on the second run. Each IIFE gets
- *           its own scope → no redeclaration collision.
- *        c) One bad script can't kill the rest — we try/catch per script.
+ *    Claude-generated landing page) with `<!DOCTYPE>`, `<html>`,
+ *    `<head>`, `<body>`. We extract `<style>` and `<script>` blocks
+ *    and render them as siblings (React + dangerouslySetInnerHTML) so
+ *    CSS applies and scripts execute in the right places.
  *
- * 2. **Fragment** — render as-is. Scripts inside fragment HTML never
- *    execute (the innerHTML parser skips them by design); admin must
- *    use a full document for script support.
+ * 2. **Fragment** — just a chunk of HTML. Render as-is.
+ *
+ * Script ordering: body MUST come BEFORE the `<script>` tags in the
+ * rendered output. Browsers parse HTML top-to-bottom and execute each
+ * `<script>` as they hit it — so scripts need the body DOM to be
+ * present when they run, otherwise `document.getElementById('foo')`
+ * returns null.
  */
 export function RawHtmlBlock({ html }: Props) {
-  useEffect(() => {
-    if (!isFullDocument(html)) return;
-    const scripts = extractBlocks(html, 'script');
-    scripts.forEach((js, i) => {
-      try {
-        // IIFE so top-level `const` / `let` are local to this run. Two
-        // scripts that both declare `const navbar = …` won't collide.
-        new Function(`(function(){\n${js}\n})();`)();
-      } catch (e) {
-        console.error(`[RawHtmlBlock] script #${i} failed:`, e);
-      }
-    });
-  }, [html]);
-
   if (!isFullDocument(html)) {
     return <div dangerouslySetInnerHTML={{ __html: html }} />;
   }
 
   const styles = extractBlocks(html, 'style');
+  const scripts = extractBlocks(html, 'script');
   const body = extractBody(html);
 
   return (
@@ -84,6 +77,13 @@ export function RawHtmlBlock({ html }: Props) {
         />
       ))}
       <div dangerouslySetInnerHTML={{ __html: body }} />
+      {scripts.map((js, i) => (
+        <script
+          /* eslint-disable-next-line react/no-array-index-key */
+          key={`rawscript-${i}`}
+          dangerouslySetInnerHTML={{ __html: wrapScript(js, i) }}
+        />
+      ))}
     </>
   );
 }
