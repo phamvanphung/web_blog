@@ -11,6 +11,7 @@ const NAV: { href: string; label: string; icon: IconName }[] = [
   { href: '/admin/posts', label: 'Bài viết', icon: 'post' },
   { href: '/admin/pages', label: 'Trang', icon: 'page' },
   { href: '/admin/categories', label: 'Danh mục', icon: 'category' },
+  { href: '/admin/category-groups', label: 'Nhóm danh mục', icon: 'category' },
   { href: '/admin/tags', label: 'Tag', icon: 'tag' },
   { href: '/admin/media', label: 'Media', icon: 'media' },
   { href: '/admin/menus', label: 'Menu', icon: 'menu' },
