@@ -51,20 +51,45 @@ describe('SectionSchema', () => {
     expect(result.kind).toBe('media');
   });
 
-  it('sanitises rawhtml — strips <script>', () => {
+  it('rawhtml — preserves <script> tags (admin escape hatch)', () => {
     const result = SectionSchema.parse({
       kind: 'rawhtml',
       id: 's6',
-      data: { html: '<h1>Hi</h1><script>alert(1)</script>' }
+      data: { html: '<h1>Hi</h1><script>console.log("ok")</script>' }
     });
     expect(result.kind).toBe('rawhtml');
     if (result.kind === 'rawhtml') {
-      expect(result.data.html).not.toContain('<script>');
       expect(result.data.html).toContain('<h1>Hi</h1>');
+      expect(result.data.html).toContain('<script>');
+      expect(result.data.html).toContain('console.log');
     }
   });
 
-  it('sanitises rawhtml — strips onclick', () => {
+  it('rawhtml — preserves inline <style> blocks', () => {
+    const result = SectionSchema.parse({
+      kind: 'rawhtml',
+      id: 's_st',
+      data: { html: '<style>.x { color: red }</style><div class="x">Hi</div>' }
+    });
+    if (result.kind === 'rawhtml') {
+      expect(result.data.html).toContain('<style>');
+      expect(result.data.html).toContain('.x { color: red }');
+    }
+  });
+
+  it('rawhtml — preserves external <link rel="stylesheet">', () => {
+    const result = SectionSchema.parse({
+      kind: 'rawhtml',
+      id: 's_lk',
+      data: { html: '<link rel="stylesheet" href="https://cdn.example.com/x.css">' }
+    });
+    if (result.kind === 'rawhtml') {
+      expect(result.data.html).toContain('<link');
+      expect(result.data.html).toContain('rel="stylesheet"');
+    }
+  });
+
+  it('rawhtml — strips inline event handlers (onclick)', () => {
     const result = SectionSchema.parse({
       kind: 'rawhtml',
       id: 's7',
@@ -73,6 +98,17 @@ describe('SectionSchema', () => {
     if (result.kind === 'rawhtml') {
       expect(result.data.html).not.toMatch(/onclick=/i);
       expect(result.data.html).toMatch(/href="x"/);
+    }
+  });
+
+  it('rawhtml — strips javascript: URLs', () => {
+    const result = SectionSchema.parse({
+      kind: 'rawhtml',
+      id: 's_j',
+      data: { html: '<a href="javascript:alert(1)">bad</a>' }
+    });
+    if (result.kind === 'rawhtml') {
+      expect(result.data.html).not.toMatch(/href="javascript:/i);
     }
   });
 

@@ -57,17 +57,26 @@ export default async function StaticPage({
   const page = await getPublishedPageBySlug(slug);
   if (!page) notFound();
 
+  const sections = (page.sections ?? []) as Section[];
+  // A page with a single rawhtml section is a self-contained landing page —
+  // skip our chrome (Tile/Container/title) so the pasted markup owns the layout.
+  const isFullLanding = sections.length === 1 && sections[0]?.kind === 'rawhtml';
+
   return (
     <>
       <JsonLd data={webPageJsonLd({ title: page.title, description: page.seoDescription, slug: page.slug })} />
-      <Tile tone="light">
-      <Container width="prose" className="py-section">
-        <h1 className="text-d-md">{page.title}</h1>
-        <div className="mt-md">
-          <BlockRenderer sections={(page.sections ?? []) as Section[]} />
-        </div>
-      </Container>
-    </Tile>
+      {isFullLanding ? (
+        <BlockRenderer sections={sections} />
+      ) : (
+        <Tile tone="light">
+          <Container width="prose" className="py-section">
+            <h1 className="text-d-md">{page.title}</h1>
+            <div className="mt-md">
+              <BlockRenderer sections={sections} />
+            </div>
+          </Container>
+        </Tile>
+      )}
     </>
   );
 }

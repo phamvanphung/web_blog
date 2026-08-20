@@ -19,6 +19,9 @@ export default async function PagePreviewPage({
   const page = await getPage(id);
   if (!page) notFound();
 
+  const sections = (page.sections ?? []) as Section[];
+  const isFullLanding = sections.length === 1 && sections[0]?.kind === 'rawhtml';
+
   return (
     <>
       {/* Preview banner — visible only in admin preview, not on the public site. */}
@@ -48,15 +51,19 @@ export default async function PagePreviewPage({
         </Container>
       </div>
 
-      {/* Mirror the public catch-all chrome exactly. */}
-      <Tile tone="light">
-        <Container width="prose" className="py-section">
-          <h1 className="text-d-md">{page.title}</h1>
-          <div className="mt-md">
-            <BlockRenderer sections={(page.sections ?? []) as Section[]} />
-          </div>
-        </Container>
-      </Tile>
+      {/* Mirror the public catch-all chrome — single rawhtml = full bleed. */}
+      {isFullLanding ? (
+        <BlockRenderer sections={sections} />
+      ) : (
+        <Tile tone="light">
+          <Container width="prose" className="py-section">
+            <h1 className="text-d-md">{page.title}</h1>
+            <div className="mt-md">
+              <BlockRenderer sections={sections} />
+            </div>
+          </Container>
+        </Tile>
+      )}
     </>
   );
 }

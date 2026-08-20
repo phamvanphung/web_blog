@@ -1,34 +1,47 @@
 import { z } from 'zod';
-import DOMPurify from 'isomorphic-dompurify';
 import type { Section } from './types';
 
-// Allow-list mirrors modules/posts/server/render.ts PURIFY_CONFIG but slightly more
-// permissive for landing pages (style attribute, data-* for section hooks).
-const PURIFY_CONFIG = {
-  ALLOWED_TAGS: [
-    'p', 'br', 'strong', 'em', 'u', 's', 'code', 'pre',
-    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-    'ul', 'ol', 'li',
-    'a', 'img', 'figure', 'figcaption', 'blockquote',
-    'table', 'thead', 'tbody', 'tr', 'th', 'td',
-    'iframe', 'aside', 'span', 'input',
-    'div', 'section', 'article', 'header', 'footer', 'main', 'nav',
-    'button', 'label', 'form', 'select', 'option', 'textarea',
-    'hr', 'small', 'sup', 'sub', 'mark', 'cite', 'q',
-  ],
-  ALLOWED_ATTR: [
-    'href', 'src', 'alt', 'title', 'class', 'id',
-    'target', 'rel', 'width', 'height',
-    'allow', 'allowfullscreen', 'frameborder', 'loading',
-    'data-*',
-    'type', 'name', 'value', 'placeholder', 'required',
-    'aria-*', 'role',
-    'style', // landing pages often inline minor styling
-  ],
-};
+// RawHTML is the admin escape hatch for landing pages. The trust context is
+// narrow: only site admins (role=ADMIN) can write RawHTML sections, and they
+// already have full DB + file-system access. So we trade DOMPurify's
+// "strip everything dangerous" posture for a minimal sanitiser that only
+// removes the XSS vectors we actually care about, while leaving CSS / JS
+// (which DOMPurify strips by default) intact.
+//
+// We keep DOMPurify available for the public-render path (server/render.ts)
+// where untrusted richtext needs strict sanitisation. Here in the schema we
+// use a small custom pass that's known-good for our needs.
+
+/**
+ * Minimal RawHTML sanitiser. Strips only the XSS vectors we care about:
+ *   - inline event handlers (`onclick`, `onerror`, `onload`, …)
+ *   - `javascript:` / `vbscript:` URLs in `href`, `src`, `xlink:href`,
+ *     `formaction`, `background`
+ *
+ * Does NOT strip `<style>`, `<link>`, `<script>`, `<iframe>`, `<svg>` —
+ * those are legitimate landing-page primitives the admin is using.
+ */
+function sanitizeRawHtml(input: string): string {
+  let safe = input;
+  // `on*="..."` / `on*='...'` / `on*=...` (unquoted)
+  safe = safe.replace(
+    /\s+on[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi,
+    ''
+  );
+  // `href="javascript:..."` / `src="javascript:..."` etc.
+  safe = safe.replace(
+    /(\s(?:href|src|xlink:href|formaction|background)\s*=\s*["']?)javascript:[^"'\s>]*/gi,
+    '$1#'
+  );
+  safe = safe.replace(
+    /(\s(?:href|src|xlink:href|formaction|background)\s*=\s*["']?)vbscript:[^"'\s>]*/gi,
+    '$1#'
+  );
+  return safe;
+}
 
 const RawHtmlData = z.object({
-  html: z.string().transform((s) => DOMPurify.sanitize(s, PURIFY_CONFIG)),
+  html: z.string().max(100_000).transform(sanitizeRawHtml),
 });
 
 const RichTextData = z.object({ json: z.any() });
