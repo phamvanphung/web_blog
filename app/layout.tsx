@@ -13,7 +13,7 @@ const inter = Inter({
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="vi" className={inter.variable}>
+    <html lang="vi" className={inter.variable} suppressHydrationWarning>
       <body className="bg-canvas text-ink antialiased">{children}</body>
     </html>
   );

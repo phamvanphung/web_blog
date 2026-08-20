@@ -47,8 +47,8 @@ export function GlobalNav({ items, siteName }: Props) {
         </Link>
 
         <ul className="flex items-center gap-7 text-[14px] text-ink-80">
-          {items.map((it) => (
-            <li key={it.href}>
+          {items.map((it, i) => (
+            <li key={`${i}-${it.href}`}>
               <Link
                 href={it.href}
                 target={it.openInNew ? '_blank' : undefined}
