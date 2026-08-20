@@ -82,7 +82,7 @@ export default async function PostDetailPage({
       />
 
       <Tile tone="parchment">
-        <Container width="prose" className="py-20 text-center">
+        <Container width="comfortable" className="py-20 text-center">
           {/* h1 stays dynamic — title asserted by tests/e2e/public-blog.spec */}
           <h1 className="text-d-md">{post.title}</h1>
           <div className="mt-6 flex justify-center">
@@ -97,7 +97,7 @@ export default async function PostDetailPage({
       </Tile>
 
       <Tile tone="light">
-        <Container width="prose" className="py-section">
+        <Container width="comfortable" className="py-section">
           <article>
             <PostContent html={post.contentHtml} />
           </article>

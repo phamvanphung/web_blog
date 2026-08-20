@@ -69,7 +69,7 @@ export default async function StaticPage({
         <BlockRenderer sections={sections} />
       ) : (
         <Tile tone="light">
-          <Container width="prose" className="py-section">
+          <Container width="comfortable" className="py-section">
             <BlockRenderer sections={sections} />
           </Container>
         </Tile>

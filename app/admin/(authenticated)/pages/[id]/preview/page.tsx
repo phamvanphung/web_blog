@@ -66,7 +66,7 @@ export default async function PagePreviewPage({
         <BlockRenderer sections={sections} />
       ) : (
         <Tile tone="light">
-          <Container width="prose" className="py-section">
+          <Container width="comfortable" className="py-section">
             <h1 className="text-d-md">{page.title}</h1>
             <div className="mt-md">
               <BlockRenderer sections={sections} />

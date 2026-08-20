@@ -121,6 +121,16 @@
     margin-inline: auto;
     padding-inline: 1.5rem;
   }
+  /* Spacious reading width — wider than prose (68ch ≈ 560px) but still
+     readable. Used for content pages (Page catch-all + Post detail) where
+     the previous prose width felt cramped relative to full-bleed rawhtml
+     sections that escape via .diag-full-bleed. ~90ch ≈ 720px at the
+     project's 17px base font. */
+  .container-comfortable {
+    max-width: 90ch;
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+  }
   .container-wide {
     max-width: 72rem;
     margin-inline: auto;
