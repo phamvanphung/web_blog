@@ -36,7 +36,7 @@ export async function createCategoryAction(
     parentId: (formData.get('parentId') as string | null) || null,
     description: (formData.get('description') as string | null) || null,
     groupId: (formData.get('groupId') as string | null) || null,
-    hidden: formData.get('hidden') === 'true'
+    hidden: (formData.getAll('hidden').at(-1) ?? 'false') === 'true'
   });
   if (!parsed.success) return { ok: false, error: 'Tên + mô tả (nếu có) không hợp lệ.' };
 
@@ -72,7 +72,7 @@ export async function updateCategoryAction(
     groupId: formData.has('groupId')
       ? (formData.get('groupId') as string | null) || null
       : undefined,
-    hidden: formData.has('hidden') ? formData.get('hidden') === 'true' : undefined
+    hidden: (formData.getAll('hidden').at(-1) ?? 'false') === 'true'
   });
   if (!parsed.success) return { ok: false, error: 'Dữ liệu không hợp lệ.' };
 

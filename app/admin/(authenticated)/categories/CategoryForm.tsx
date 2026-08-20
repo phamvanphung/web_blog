@@ -62,6 +62,9 @@ export function CategoryForm({
         </select>
       </div>
       <div className="flex items-center gap-2">
+        {/* Always-on hidden companion so the form always submits a `hidden` value,
+            even when the checkbox is unchecked. Without this, unchecking is a no-op. */}
+        <input type="hidden" name="hidden" value="false" />
         <input
           type="checkbox"
           name="hidden"
