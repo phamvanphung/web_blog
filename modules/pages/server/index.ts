@@ -198,12 +198,23 @@ export async function updatePage(input: {
   revalidatePath(`/admin/pages/${parsed.data.id}/edit`);
   revalidateTag(ADMIN_LIST_TAG);
   revalidateTag(PUBLIC_LIST_TAG);
-  if (titleChanged && existing.slug) revalidateTag(detailTag(existing.slug));
+  // Always bust the public detail cache for the current slug — sections/status
+  // edits without a title change still need to invalidate the cached HTML.
+  if (existing.slug) revalidateTag(detailTag(existing.slug));
+  // On title change, also bust the path for the new slug (path-level ISR).
+  if (titleChanged && existing.slug) {
+    const nextSlug = pageSlugFromTitle(parsed.data.title!);
+    revalidatePath(`/${nextSlug}`);
+  }
 }
 
 /** Delete a Page (hard delete). */
 export async function deletePage(id: string): Promise<void> {
   const me = await requireRole('ADMIN');
+  const existing = await db.page.findUnique({
+    where: { id },
+    select: { slug: true }
+  });
   await db.page.delete({ where: { id } });
 
   const h = await headers();
@@ -219,4 +230,10 @@ export async function deletePage(id: string): Promise<void> {
   revalidatePath('/admin/pages');
   revalidateTag(ADMIN_LIST_TAG);
   revalidateTag(PUBLIC_LIST_TAG);
+  // Bust the public detail cache for the slug (if any) so visitors don't
+  // see the deleted page for up to 5 min while the ISR cache lingers.
+  if (existing?.slug) {
+    revalidateTag(detailTag(existing.slug));
+    revalidatePath(`/${existing.slug}`);
+  }
 }
