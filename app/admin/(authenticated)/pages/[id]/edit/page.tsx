@@ -1,8 +1,9 @@
 import { notFound } from 'next/navigation';
 import { requireRole } from '@/lib/auth';
 import { getPage } from '@/modules/pages/server';
+import type { Section } from '@/modules/pages/types';
 import { PageForm } from '../../PageForm';
-import { updatePageAction, deletePageAction } from '../../actions';
+import { deletePageAction } from '../../actions';
 import { AdminBreadcrumb } from '@/components/admin/AdminBreadcrumb';
 
 export const dynamic = 'force-dynamic';
@@ -31,14 +32,12 @@ export default async function EditPagePage({ params }: { params: Promise<{ id: s
       </header>
 
       <PageForm
-        mode="edit"
-        pageId={page.id}
         initial={{
+          id: page.id,
           title: page.title,
-          content: page.content,
-          status: page.status as 'DRAFT' | 'PUBLISHED' | 'HIDDEN'
+          status: page.status as 'DRAFT' | 'PUBLISHED' | 'HIDDEN',
+          sections: (page.sections as Section[]) ?? []
         }}
-        action={updatePageAction}
       />
     </div>
   );

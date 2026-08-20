@@ -1,81 +1,85 @@
 'use client';
 
-import { useActionState } from 'react';
-import { Button } from '@/components/ui/Button';
-import type { PageFormState } from './actions';
+import { useState } from 'react';
+import { useFormState, useFormStatus } from 'react-dom';
+import { createPageAction, updatePageAction, type PageFormState } from './actions';
+import type { Section } from '@/modules/pages/types';
+import { SectionList } from '@/components/admin/SectionList';
 
 type Props = {
-  mode: 'create' | 'edit';
-  pageId?: string;
-  initial?: { title: string; content: string; status: 'DRAFT' | 'PUBLISHED' | 'HIDDEN' };
-  action: (prev: PageFormState | undefined, fd: FormData) => Promise<PageFormState>;
+  initial?: { id?: string; title?: string; status?: 'DRAFT' | 'PUBLISHED' | 'HIDDEN'; sections?: Section[] };
 };
 
-const inputClass =
-  'w-full rounded-11 bg-canvas-parchment px-4 py-3 text-[15px] text-ink border border-transparent outline-none focus:border-primary-focus focus:bg-canvas';
-const labelClass = 'mb-1 block text-[13px] text-ink-80';
+export function PageForm({ initial }: Props) {
+  const [title, setTitle] = useState(initial?.title ?? '');
+  const [status, setStatus] = useState<'DRAFT' | 'PUBLISHED' | 'HIDDEN'>(initial?.status ?? 'DRAFT');
+  const [sections, setSections] = useState<Section[]>(initial?.sections ?? []);
+  const isEdit = Boolean(initial?.id);
 
-export function PageForm({ mode, pageId, initial, action }: Props) {
-  const [state, formAction] = useActionState<PageFormState | undefined, FormData>(
-    action,
+  const [state, formAction] = useFormState<PageFormState | undefined, FormData>(
+    isEdit ? updatePageAction : createPageAction,
     undefined
   );
 
   return (
     <form action={formAction} className="max-w-prose space-y-5 border-b border-hairline pb-6">
-      {pageId && <input type="hidden" name="id" value={pageId} />}
+      {initial?.id && <input type="hidden" name="id" value={initial.id} />}
+      <input type="hidden" name="sections" value={JSON.stringify(sections)} />
 
       <div>
-        <label className={labelClass}>
+        <label className="mb-1 block text-[13px] text-ink-80">
           Tiêu đề (đổi title sẽ tạo slug mới + redirect 301)
         </label>
         <input
           name="title"
           required
-          defaultValue={initial?.title ?? ''}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
           className="h-11 w-full rounded-11 bg-canvas-parchment px-4 text-[15px] text-ink border border-transparent outline-none focus:border-primary-focus focus:bg-canvas"
         />
       </div>
 
-      <div>
-        <label className={labelClass}>Nội dung (plain text)</label>
-        <textarea
-          name="content"
-          rows={12}
-          defaultValue={initial?.content ?? ''}
-          className={inputClass}
-        />
-      </div>
+      <SectionList value={sections} onChange={setSections} />
 
-      {mode === 'edit' && (
-        <div>
-          <label className={labelClass}>Trạng thái</label>
-          <select
-            name="status"
-            defaultValue={initial?.status ?? 'DRAFT'}
-            className="h-11 w-full rounded-11 bg-canvas-parchment px-4 text-[15px] text-ink border border-transparent outline-none focus:border-primary-focus focus:bg-canvas"
-          >
-            <option value="DRAFT">Nháp</option>
-            <option value="PUBLISHED">Đã xuất bản</option>
-            <option value="HIDDEN">Đã ẩn</option>
-          </select>
-        </div>
-      )}
+      <div>
+        <label className="mb-1 block text-[13px] text-ink-80">Trạng thái</label>
+        <select
+          name="status"
+          value={status}
+          onChange={(e) => setStatus(e.target.value as typeof status)}
+          className="h-11 w-full rounded-11 bg-canvas-parchment px-4 text-[15px] text-ink border border-transparent outline-none focus:border-primary-focus focus:bg-canvas"
+        >
+          <option value="DRAFT">Nháp</option>
+          <option value="PUBLISHED">Đã xuất bản</option>
+          <option value="HIDDEN">Đã ẩn</option>
+        </select>
+      </div>
 
       {state?.ok === false && (
         <p role="alert" className="text-[13px] text-[#d70015]">
           {state.error}
         </p>
       )}
-      {state?.ok === true && mode === 'edit' && (
+      {state?.ok === true && isEdit && (
         <p role="status" className="text-[13px] text-primary">
           Đã lưu.
         </p>
       )}
 
-      <Button type="submit" variant="primary-pill" size="sm">
-        {mode === 'create' ? 'Tạo trang' : 'Lưu'}
-      </Button>
+      <SubmitButton isEdit={isEdit} />
     </form>
+  );
+}
+
+function SubmitButton({ isEdit }: { isEdit: boolean }) {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="rounded-8 bg-primary px-4 py-1.5 text-[14px] font-medium text-white shadow-sm transition-opacity disabled:opacity-50"
+    >
+      {pending ? 'Đang lưu…' : isEdit ? 'Lưu' : 'Tạo trang'}
+    </button>
   );
 }

@@ -7,32 +7,17 @@ import { requireRole } from '@/lib/auth';
 import { audit, hashIp } from '@/lib/audit';
 import { headers } from 'next/headers';
 import { createPage, updatePage, deletePage } from '@/modules/pages/server';
-import type { Section } from '@/modules/pages/types';
-
-function contentToRichtextSection(content: string): Section {
-  return {
-    kind: 'richtext',
-    id: crypto.randomUUID(),
-    data: {
-      json: {
-        type: 'doc',
-        content: content
-          ? [{ type: 'paragraph', content: [{ type: 'text', text: content }] }]
-          : [{ type: 'paragraph' }]
-      }
-    }
-  };
-}
+import { SectionsArraySchema } from '@/modules/pages/schema';
 
 const CreateSchema = z.object({
   title: z.string().min(1).max(255),
-  content: z.string().max(50_000)
+  sections: SectionsArraySchema
 });
 
 const UpdateSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1).max(255).optional(),
-  content: z.string().max(50_000).optional(),
+  sections: SectionsArraySchema.optional(),
   status: z.enum(['DRAFT', 'PUBLISHED', 'HIDDEN']).optional()
 });
 
@@ -43,15 +28,20 @@ export async function createPageAction(
   formData: FormData
 ): Promise<PageFormState> {
   const me = await requireRole('ADMIN');
-  const { title, content } = {
-    title: String(formData.get('title') ?? ''),
-    content: String(formData.get('content') ?? '')
-  };
-  const parsed = CreateSchema.safeParse({ title, content });
-  if (!parsed.success) return { ok: false, error: 'Tiêu đề + nội dung không hợp lệ.' };
+  const title = String(formData.get('title') ?? '');
+  const sectionsRaw = String(formData.get('sections') ?? '[]');
 
-  const sections: Section[] = [contentToRichtextSection(parsed.data.content)];
-  const id = await createPage({ title: parsed.data.title, sections });
+  let sections;
+  try {
+    sections = JSON.parse(sectionsRaw);
+  } catch {
+    return { ok: false, error: 'Sections JSON không hợp lệ.' };
+  }
+
+  const parsed = CreateSchema.safeParse({ title, sections });
+  if (!parsed.success) return { ok: false, error: 'Tiêu đề + sections không hợp lệ.' };
+
+  const id = await createPage({ title: parsed.data.title, sections: parsed.data.sections });
   const h = await headers();
   const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? null;
   await audit({
@@ -70,31 +60,41 @@ export async function updatePageAction(
   formData: FormData
 ): Promise<PageFormState> {
   const me = await requireRole('ADMIN');
+
+  let sections;
+  const sectionsRaw = String(formData.get('sections') ?? 'null');
+  if (sectionsRaw !== 'null') {
+    try {
+      sections = JSON.parse(sectionsRaw);
+    } catch {
+      return { ok: false, error: 'Sections JSON không hợp lệ.' };
+    }
+  }
+
   const parsed = UpdateSchema.safeParse({
     id: String(formData.get('id') ?? ''),
     title: formData.get('title') ? String(formData.get('title')) : undefined,
-    content: formData.get('content') ? String(formData.get('content')) : undefined,
+    sections,
     status: formData.get('status')
       ? (formData.get('status') as 'DRAFT' | 'PUBLISHED' | 'HIDDEN')
       : undefined
   });
   if (!parsed.success) return { ok: false, error: 'Dữ liệu không hợp lệ.' };
 
-  const { id, title, content, status } = parsed.data;
-  const sections = content ? [contentToRichtextSection(content)] : undefined;
-  await updatePage({ id, title, sections, status });
+  const { id, title, status } = parsed.data;
+  await updatePage({ id, title, sections: parsed.data.sections, status });
   const h = await headers();
   const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? null;
   await audit({
     userId: me.id,
     action: 'page.update',
     target: 'Page',
-    targetId: parsed.data.id,
+    targetId: id,
     ipHash: await hashIp(ip)
   });
   revalidatePath('/admin/pages');
-  revalidatePath(`/admin/pages/${parsed.data.id}/edit`);
-  return { ok: true, id: parsed.data.id };
+  revalidatePath(`/admin/pages/${id}/edit`);
+  return { ok: true, id };
 }
 
 export async function deletePageAction(formData: FormData): Promise<void> {

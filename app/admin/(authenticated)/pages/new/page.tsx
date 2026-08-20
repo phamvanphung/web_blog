@@ -1,5 +1,4 @@
 import { PageForm } from '../PageForm';
-import { createPageAction } from '../actions';
 import { AdminBreadcrumb } from '@/components/admin/AdminBreadcrumb';
 
 export default function NewPagePage() {
@@ -10,7 +9,7 @@ export default function NewPagePage() {
       <p className="mb-6 text-[13px] text-ink-48">
         Tạo trang tĩnh (plain text). Slug tự sinh từ tiêu đề.
       </p>
-      <PageForm mode="create" action={createPageAction} />
+      <PageForm />
     </div>
   );
 }
