@@ -12,7 +12,7 @@ type Props = {
 export function HeroBlock({ title, subtitle, ctaLabel, ctaHref, mediaId }: Props) {
   return (
     <Tile tone="parchment">
-      <Container width="full" className="py-section text-center">
+      <Container width="wide" className="py-section text-center">
         <h1 className="text-d-lg">{title}</h1>
         {subtitle && <p className="mt-md text-lg text-ink-muted-80">{subtitle}</p>}
         {ctaLabel && ctaHref && (

@@ -15,10 +15,18 @@ export function BlockRenderer({ sections }: { sections: Section[] }) {
       {sections.map((s) => {
         switch (s.kind) {
           case 'hero': {
-            return <HeroBlock key={s.id} {...s.data} />;
+            return (
+              <div className="diag-full-bleed">
+                <HeroBlock key={s.id} {...s.data} />
+              </div>
+            );
           }
           case 'cta': {
-            return <CtaBlock key={s.id} {...s.data} />;
+            return (
+              <div className="diag-full-bleed">
+                <CtaBlock key={s.id} {...s.data} />
+              </div>
+            );
           }
           case 'richtext': {
             const html = sectionToHtml(s);
