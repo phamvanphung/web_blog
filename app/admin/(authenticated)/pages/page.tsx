@@ -79,7 +79,14 @@ export default async function PagesPage({
                 <td className="py-3 text-ink">{p.title}</td>
                 <td className="py-3 text-ink-80">{STATUS_LABELS[p.status] ?? p.status}</td>
                 <td className="py-3 text-[12px] text-ink-48">{p.updatedAt.toISOString()}</td>
-                <td className="py-3 text-right">
+                <td className="py-3 text-right space-x-3">
+                  <Link
+                    href={`/admin/pages/${p.id}/preview`}
+                    target="_blank"
+                    className="text-ink-80 hover:underline"
+                  >
+                    Xem
+                  </Link>
                   <Link
                     href={`/admin/pages/${p.id}/edit`}
                     className="text-primary hover:underline"

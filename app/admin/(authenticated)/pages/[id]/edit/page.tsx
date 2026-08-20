@@ -5,6 +5,7 @@ import type { Section } from '@/modules/pages/types';
 import { PageForm } from '../../PageForm';
 import { deletePageAction } from '../../actions';
 import { AdminBreadcrumb } from '@/components/admin/AdminBreadcrumb';
+import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,12 +23,21 @@ export default async function EditPagePage({ params }: { params: Promise<{ id: s
         />
         <div className="flex items-center justify-between">
           <h1 className="text-d-sm">Sửa trang</h1>
-          <form action={deletePageAction}>
-            <input type="hidden" name="id" value={page.id} />
-            <button type="submit" className="text-[13px] text-[#d70015] hover:underline">
-              Xóa trang
-            </button>
-          </form>
+          <div className="flex items-center gap-3">
+            <Link
+              href={`/admin/pages/${page.id}/preview`}
+              target="_blank"
+              className="rounded-8 border border-hairline bg-canvas px-3 py-1.5 text-[13px] text-ink hover:bg-canvas-parchment"
+            >
+              Xem trước ↗
+            </Link>
+            <form action={deletePageAction}>
+              <input type="hidden" name="id" value={page.id} />
+              <button type="submit" className="text-[13px] text-[#d70015] hover:underline">
+                Xóa trang
+              </button>
+            </form>
+          </div>
         </div>
       </header>
 
