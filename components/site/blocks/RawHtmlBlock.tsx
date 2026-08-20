@@ -104,44 +104,73 @@ export function RawHtmlBlock({ html }: Props) {
     const timeouts: ReturnType<typeof setTimeout>[] = [];
 
     /**
-     * Walk every element inside the iframe and convert any
-     * `vh`-based `min-height` (or `height`) to a fixed `px` value
-     * pinned to the iframe's *current* viewport height.
+     * Walk every CSSStyleRule inside the iframe's stylesheets and
+     * neutralize any `vh`-based `min-height` / `height` declarations
+     * by setting them to `auto`. The element then renders at its
+     * natural content height regardless of iframe viewport.
      *
-     * Why: pasted landing pages routinely contain
-     * `.hero { min-height: 100vh }`. If we set the wrapper height
-     * to body.scrollHeight, the iframe viewport grows → 100vh
-     * grows → hero grows → body.scrollHeight grows → we grow the
+     * Why this rather than reading `getComputedStyle().minHeight`?
+     * Computed styles resolve viewport-relative units: at a 150 px
+     * iframe viewport `100vh` is reported as `"150px"`, so a regex
+     * on the resolved value never matches `vh`. CSSStyleRule.style
+     * on the other hand preserves the original authored text
+     * (`"100vh"`), which is what we need to find.
+     *
+     * Why we do this at all: pasted landing pages routinely contain
+     * `.hero { min-height: 100vh }`. If we set the wrapper to
+     * body.scrollHeight, the iframe viewport grows → 100vh grows →
+     * hero height grows → body.scrollHeight grows → we grow the
      * wrapper → … until Chromium caps body height at 2^25
-     * (= 33 554 432 px). Pinning vh to px at the initial
-     * viewport breaks the loop: the hero settles at its natural
-     * rendered size and subsequent iframe expansion doesn't feed
-     * back into body height.
+     * (= 33 554 432 px). Setting the rule to `auto` breaks the
+     * loop: hero settles at its natural rendered size and
+     * subsequent iframe expansion doesn't feed back into body
+     * height.
      */
-    const lockVhMinHeights = () => {
+    const overrideVhSizing = () => {
       try {
         const doc = iframe.contentDocument;
         if (!doc) return;
-        const win = doc.defaultView;
-        if (!win) return;
 
-        const vh = win.innerHeight;
-        if (!vh || vh <= 0) return;
+        for (const sheet of Array.from(doc.styleSheets)) {
+          let rules: CSSRuleList | null = null;
+          try {
+            rules = sheet.cssRules;
+          } catch {
+            // cross-origin stylesheet — skip
+            continue;
+          }
+          if (!rules) continue;
 
-        const all = doc.querySelectorAll('*');
-        for (const el of Array.from(all)) {
-          const cs = win.getComputedStyle(el);
-          for (const prop of ['minHeight', 'height'] as const) {
-            const val = cs[prop];
-            if (typeof val === 'string') {
-              const match = val.match(/^(-?[\d.]+)vh$/);
-              if (match) {
-                const px = (parseFloat(match[1]) * vh) / 100;
-                el.style[prop] = `${px}px`;
+          for (const rule of Array.from(rules)) {
+            // CSSStyleRule has a .style property; @media / @supports
+            // wrap rules and need to recurse one level.
+            const targets: CSSStyleDeclaration[] = [];
+            if ((rule as CSSStyleRule).style) {
+              targets.push((rule as CSSStyleRule).style);
+            }
+            const cssRules = (rule as { cssRules?: CSSRuleList }).cssRules;
+            if (cssRules) {
+              for (const inner of Array.from(cssRules)) {
+                if ((inner as CSSStyleRule).style) {
+                  targets.push((inner as CSSStyleRule).style);
+                }
+              }
+            }
+
+            for (const style of targets) {
+              for (const prop of ['minHeight', 'height'] as const) {
+                const val = style.getPropertyValue(prop === 'minHeight' ? 'min-height' : 'height');
+                if (typeof val === 'string' && /^\s*-?[\d.]+vh\s*$/.test(val)) {
+                  style.setProperty(prop === 'minHeight' ? 'min-height' : 'height', 'auto');
+                }
               }
             }
           }
         }
+
+        // Force a synchronous layout so subsequent measure() sees
+        // the updated box sizes.
+        if (doc.body) void doc.body.offsetHeight;
       } catch {
         // ignore
       }
@@ -182,12 +211,12 @@ export function RawHtmlBlock({ html }: Props) {
       if (setupDone) return;
       setupDone = true;
 
-      // Pin any `100vh` min-heights / heights to px at the initial
-      // viewport BEFORE measuring. Without this, expanding the wrapper
-      // would expand the iframe viewport → 100vh → hero height →
-      // body height → wrapper again, looping until body hits the
-      // Chromium 2^25 cap.
-      lockVhMinHeights();
+      // Neutralize any `vh`-based `min-height` / `height` rules in the
+      // iframe's stylesheets BEFORE measuring. Without this, expanding
+      // the wrapper would expand the iframe viewport → 100vh → hero
+      // height → body height → wrapper again, looping until body hits
+      // the Chromium 2^25 cap.
+      overrideVhSizing();
 
       // Defer initial measure by 2 animation frames so the browser has
       // had time to fully lay out the iframe content.
