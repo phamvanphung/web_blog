@@ -150,6 +150,20 @@ model Page {
 // TAXONOMY
 // ============================================================
 
+model CategoryGroup {
+  id          String   @id @default(cuid())
+  slug        String   @unique @db.VarChar(80)
+  name        String   @db.VarChar(120)
+  sortOrder   Int      @default(0)
+  isProtected Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  categories  Category[]
+
+  @@index([sortOrder])
+}
+
 model Category {
   id             String     @id @default(cuid())
   parentId       String?
@@ -163,12 +177,16 @@ model Category {
   sortOrder      Int        @default(0)
   seoTitle       String?    @db.VarChar(255)
   seoDescription String?    @db.VarChar(500)
+  groupId        String?
+  group          CategoryGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  hidden         Boolean        @default(false)
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 
   posts          PostCategory[]
 
   @@index([parentId])
+  @@index([groupId, hidden])
 }
 
 model PostCategory {
