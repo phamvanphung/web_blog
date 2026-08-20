@@ -10,10 +10,12 @@ import { MediaEditor } from './sections/MediaEditor';
 import { RichTextEditor } from './sections/RichTextEditor';
 import { RawHtmlEditor } from './sections/RawHtmlEditor';
 import { DividerEditor } from './sections/DividerEditor';
+import { CategoryEditor } from './sections/CategoryEditor';
 
 type Props = {
   value: Section[];
   onChange: (next: Section[]) => void;
+  groups: { slug: string; name: string }[];
 };
 
 const kindLabel: Record<SectionKind, string> = {
@@ -54,7 +56,7 @@ function defaultSection(kind: SectionKind): Section {
   }
 }
 
-export function SectionList({ value, onChange }: Props) {
+export function SectionList({ value, onChange, groups }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
 
@@ -123,6 +125,9 @@ export function SectionList({ value, onChange }: Props) {
               {s.kind === 'richtext' && <RichTextEditor section={s} onChange={(next) => update(s.id, next)} />}
               {s.kind === 'rawhtml' && <RawHtmlEditor section={s} onChange={(next) => update(s.id, next)} />}
               {s.kind === 'divider' && <DividerEditor />}
+              {s.kind === 'categories' && (
+                <CategoryEditor section={s} onChange={(next) => update(s.id, next)} groups={groups} />
+              )}
             </div>
           )}
         </div>

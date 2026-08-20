@@ -7,6 +7,7 @@ import { MediaBlock } from './blocks/MediaBlock';
 import { RawHtmlBlock } from './blocks/RawHtmlBlock';
 import { DividerBlock } from './blocks/DividerBlock';
 import { FormBlock } from './blocks/FormBlock';
+import { CategoryBlock } from './blocks/CategoryBlock';
 
 export function BlockRenderer({ sections }: { sections: Section[] }) {
   return (
@@ -47,6 +48,9 @@ export function BlockRenderer({ sections }: { sections: Section[] }) {
           }
           case 'divider': {
             return <DividerBlock key={s.id} />;
+          }
+          case 'categories': {
+            return <CategoryBlock key={s.id} {...s.data} />;
           }
         }
       })}
