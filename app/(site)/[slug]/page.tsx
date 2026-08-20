@@ -70,10 +70,7 @@ export default async function StaticPage({
       ) : (
         <Tile tone="light">
           <Container width="prose" className="py-section">
-            <h1 className="text-d-md">{page.title}</h1>
-            <div className="mt-md">
-              <BlockRenderer sections={sections} />
-            </div>
+            <BlockRenderer sections={sections} />
           </Container>
         </Tile>
       )}
