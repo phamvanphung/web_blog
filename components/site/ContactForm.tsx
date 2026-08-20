@@ -92,14 +92,14 @@ function Field({
           name={name}
           required={required}
           rows={rows}
-          className="w-full rounded-11 bg-canvas-parchment px-4 py-3 text-[15px] text-ink border border-transparent outline-none focus:border-primary-focus focus:bg-canvas"
+          className="w-full rounded-11 bg-canvas-parchment px-4 py-3 text-[15px] text-ink border border-hairline outline-none focus:border-primary-focus focus:bg-canvas"
         />
       ) : (
         <input
           name={name}
           type={type}
           required={required}
-          className="h-11 w-full rounded-11 bg-canvas-parchment px-4 text-[15px] text-ink border border-transparent outline-none focus:border-primary-focus focus:bg-canvas"
+          className="h-11 w-full rounded-11 bg-canvas-parchment px-4 text-[15px] text-ink border border-hairline outline-none focus:border-primary-focus focus:bg-canvas"
         />
       )}
     </div>
