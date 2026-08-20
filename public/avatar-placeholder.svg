@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240" role="img" aria-label="Avatar placeholder">
+  <title>Avatar placeholder</title>
+  <desc>Single-color circular avatar placeholder. Replace /public/avatar-placeholder.svg with the final portrait.</desc>
+
+  <!-- Solid background circle (single-color) -->
+  <circle cx="120" cy="120" r="120" fill="#cf6768"/>
+
+  <!-- Subtle head/shoulder silhouette in a deeper brand red so the
+       layout reads even before the real portrait is dropped in -->
+  <g fill="#8e211c" opacity="0.85">
+    <circle cx="120" cy="100" r="42"/>
+    <path d="M 40 240 Q 40 160 120 160 Q 200 160 200 240 Z"/>
+  </g>
+
+  <!-- Tiny bottom-right stamp so a maintainer can spot the placeholder -->
+  <g transform="translate(228 228)" text-anchor="end" font-family="Inter, system-ui, sans-serif">
+    <text font-size="9" letter-spacing="1.5" font-weight="600" fill="#fff7f7" opacity="0.85">PLACEHOLDER</text>
+  </g>
+</svg>

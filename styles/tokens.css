@@ -1,31 +1,38 @@
 :root {
-  /* ---- Apple design system (per Design.md) ---- */
+  /* ---- Brand palette (red theme) ---- */
 
   /* Accent — the single brand-level interactive color */
-  --color-primary: #0066cc;
-  --color-primary-focus: #0071e3;
-  --color-primary-on-dark: #2997ff;
+  --color-primary: #8e211c;             /* Primary Button */
+  --color-primary-focus: #6f1816;        /* Primary Button Hover */
+  --color-primary-on-dark: #f4a5a8;      /* Lighter rose for dark tile links */
+
+  /* Secondary — softer brand accent for "ghost" / second-tier CTAs */
+  --color-secondary: #cf6768;            /* Secondary Button */
+  --color-secondary-hover: #b94b4c;      /* Secondary Hover */
 
   /* Surfaces */
-  --color-canvas: #ffffff;
-  --color-canvas-parchment: #f5f5f7;
-  --color-surface-pearl: #fafafc;
-  --color-surface-tile-1: #272729;
-  --color-surface-tile-2: #2a2a2c;
-  --color-surface-tile-3: #252527;
-  --color-surface-black: #000000;
-  --color-surface-chip-translucent: rgba(210, 210, 215, 0.64);
+  --color-canvas: #ffffff;               /* Background chính */
+  --color-canvas-parchment: #fff7f7;     /* Background phụ (light) */
+  --color-surface-pearl: #fceaea;        /* Background phụ (warm) */
+  --color-surface-tile-1: #44100f;       /* Primary dark tile (heading red) */
+  --color-surface-tile-2: #332220;       /* Alternate dark tile */
+  --color-surface-tile-3: #3d0f0e;       /* Deeper dark tile */
+  --color-surface-black: #2a0808;        /* Deepest dark — global nav */
+  --color-surface-chip-translucent: rgba(245, 208, 209, 0.7); /* Pink-tinted chip */
 
   /* Ink / body */
-  --color-ink: #1d1d1f;
-  --color-body-on-dark: #ffffff;
-  --color-body-muted: #cccccc;
-  --color-ink-muted-80: #333333;
-  --color-ink-muted-48: #7a7a7a;
+  --color-ink: #44100f;                  /* Heading */
+  --color-body-on-dark: #ffffff;         /* Text on dark tiles */
+  --color-body-muted: #e8c8c8;           /* Muted text on dark tiles */
+  --color-ink-muted-80: #514343;         /* Body text */
+  --color-ink-muted-48: #8b7878;         /* Disabled / legal fine-print */
 
   /* Hairlines / dividers */
-  --color-divider-soft: rgba(0, 0, 0, 0.04);
-  --color-hairline: #e0e0e0;
+  --color-divider-soft: rgba(142, 33, 28, 0.08);  /* Faint red divider */
+  --color-hairline: #f0d9d9;                       /* Border */
+
+  /* Highlight / badge */
+  --color-badge: #f5d0d1;                /* Highlight / badge */
 
   /* ---- Typography ---- */
   /* Set by next/font (app/layout.tsx): --font-inter */

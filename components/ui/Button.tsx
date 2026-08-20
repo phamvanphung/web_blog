@@ -21,10 +21,10 @@ export const BUTTON_BASE =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-focus';
 
 export const BUTTON_VARIANT: Record<ButtonVariant, string> = {
-  // Apple pills — the signature CTA grammar
+  // Red brand pills — the signature CTA grammar
   'primary-pill': 'rounded-pill bg-primary text-white hover:bg-primary-focus',
   'secondary-pill':
-    'rounded-pill border border-primary text-primary hover:bg-primary hover:text-white',
+    'rounded-pill border border-secondary text-secondary hover:bg-secondary hover:text-white',
   'dark-utility': 'rounded-8 bg-tile-1 text-ink-ondark hover:bg-tile-2',
   'pearl-capsule': 'rounded-pill bg-canvas-parchment text-ink hover:bg-chip',
   'icon-circular':
@@ -32,7 +32,7 @@ export const BUTTON_VARIANT: Record<ButtonVariant, string> = {
 
   // Legacy aliases (unchanged behaviour, re-skinned through tokens)
   primary: 'rounded-pill bg-primary text-white hover:bg-primary-focus',
-  secondary: 'rounded-pill border border-hairline text-ink hover:bg-canvas-parchment',
+  secondary: 'rounded-pill border border-secondary text-secondary hover:bg-secondary hover:text-white',
   ghost: 'rounded-8 text-primary hover:bg-canvas-parchment'
 };
 

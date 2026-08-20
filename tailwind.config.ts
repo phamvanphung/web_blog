@@ -5,11 +5,15 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Apple system palette
+        // Red brand palette
         primary: {
           DEFAULT: 'var(--color-primary)',
           focus: 'var(--color-primary-focus)',
           ondark: 'var(--color-primary-on-dark)'
+        },
+        secondary: {
+          DEFAULT: 'var(--color-secondary)',
+          hover: 'var(--color-secondary-hover)'
         },
         canvas: {
           DEFAULT: 'var(--color-canvas)',
@@ -31,7 +35,8 @@ const config: Config = {
         },
         hairline: 'var(--color-hairline)',
         divider: 'var(--color-divider-soft)',
-        chip: 'var(--color-surface-chip-translucent)'
+        chip: 'var(--color-surface-chip-translucent)',
+        badge: 'var(--color-badge)'
       },
       fontFamily: {
         sans: ['var(--font-sans)'],

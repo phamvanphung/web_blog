@@ -18,11 +18,14 @@ export async function Header({ siteName }: Props = {}) {
   if (items.length > 0) return <GlobalNav items={items} siteName={siteName} />;
   // Fallback: render Nav list inline at the same level GlobalNav would.
   return (
-    <header className="sticky top-0 z-50 bg-tile-black">
+    <header className="sticky top-0 z-50 border-b border-hairline bg-canvas/90 backdrop-blur">
       <nav
         aria-label="Chính"
-        className="mx-auto flex h-nav max-w-wide items-center px-6"
+        className="mx-auto flex h-[68px] max-w-wide items-center justify-between gap-6 px-6"
       >
+        <span className="text-[20px] font-semibold tracking-[-0.01em] text-ink">
+          {siteName ?? '9ent'}
+        </span>
         <Nav items={[]} />
       </nav>
     </header>
