@@ -57,6 +57,15 @@ function isFullDocument(h: string): boolean {
  *    12000ms after load to catch late-loading assets (Unsplash
  *    images, Google Fonts, async scripts).
  *
+ *    Race condition guard: if the iframe has *already* finished
+ *    loading by the time our `useEffect` runs (common in React 19
+ *    dev with Strict Mode — the effect runs after commit but
+ *    `iframe.load` can fire in <16 ms for a small srcdoc), the
+ *    load listener we register would never fire. We also check
+ *    `contentDocument.readyState === 'complete'` synchronously and
+ *    call `setup()` immediately when it is, behind a `setupDone`
+ *    guard so we don't run twice if `load` then fires later.
+ *
  *    Height is set via direct DOM mutation on the wrapper — never
  *    through React state — so the parent tree never re-renders in
  *    response to size changes (which would retrigger the iframe's
@@ -77,6 +86,7 @@ export function RawHtmlBlock({ html }: Props) {
     const iframe = iframeRef.current;
     if (!wrapper || !iframe) return;
 
+    let setupDone = false;
     let observer: ResizeObserver | null = null;
     const timeouts: ReturnType<typeof setTimeout>[] = [];
 
@@ -112,6 +122,9 @@ export function RawHtmlBlock({ html }: Props) {
     };
 
     const setup = () => {
+      if (setupDone) return;
+      setupDone = true;
+
       // Defer initial measure by 2 animation frames so the browser has
       // had time to fully lay out the iframe content.
       requestAnimationFrame(() => {
@@ -138,7 +151,24 @@ export function RawHtmlBlock({ html }: Props) {
       });
     };
 
+    // Listen for future loads (covers the case where the iframe is
+    // still loading when the effect runs).
     iframe.addEventListener('load', setup);
+
+    // Race condition: in React 19 dev with Strict Mode the effect
+    // can run after the iframe has already finished loading srcdoc.
+    // The load listener above would then never fire and the wrapper
+    // would stay at its default 150px height forever. Check
+    // readyState synchronously and run setup now if it's already
+    // complete. `setupDone` prevents a double-call if load then
+    // fires later.
+    try {
+      if (iframe.contentDocument?.readyState === 'complete') {
+        setup();
+      }
+    } catch {
+      // ignore
+    }
 
     return () => {
       iframe.removeEventListener('load', setup);
