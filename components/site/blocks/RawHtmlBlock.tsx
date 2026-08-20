@@ -105,31 +105,73 @@ export function RawHtmlBlock({ html }: Props) {
 
     /**
      * Walk every CSSStyleRule inside the iframe's stylesheets and
-     * neutralize any `vh`-based `min-height` / `height` declarations
-     * by setting them to `auto`. The element then renders at its
-     * natural content height regardless of iframe viewport.
+     * convert any `vh` length to a fixed `px` value pinned at the
+     * iframe's *current* viewport height. This breaks the feedback
+     * loop between iframe viewport sizing and `vh`-based layout
+     * properties regardless of which property uses vh —
+     * `min-height`, `height`, `padding`, `margin`, `top` / `bottom`
+     * on positioned elements, even `font-size` — and regardless of
+     * which class names the pasted page happens to use.
      *
-     * Why this rather than reading `getComputedStyle().minHeight`?
+     * Why CSSStyleRule.style rather than `getComputedStyle().X`?
      * Computed styles resolve viewport-relative units: at a 150 px
      * iframe viewport `100vh` is reported as `"150px"`, so a regex
      * on the resolved value never matches `vh`. CSSStyleRule.style
-     * on the other hand preserves the original authored text
-     * (`"100vh"`), which is what we need to find.
+     * preserves the original authored text (`"100vh"`), which is
+     * what we need.
      *
-     * Why we do this at all: pasted landing pages routinely contain
-     * `.hero { min-height: 100vh }`. If we set the wrapper to
-     * body.scrollHeight, the iframe viewport grows → 100vh grows →
-     * hero height grows → body.scrollHeight grows → we grow the
-     * wrapper → … until Chromium caps body height at 2^25
-     * (= 33 554 432 px). Setting the rule to `auto` breaks the
-     * loop: hero settles at its natural rendered size and
-     * subsequent iframe expansion doesn't feed back into body
-     * height.
+     * Why this matters at all: pasted landing pages routinely
+     * contain `.hero { min-height: 100vh }`. If we set the wrapper
+     * to body.scrollHeight, the iframe viewport grows → 100vh
+     * grows → hero height grows → body.scrollHeight grows → we
+     * grow the wrapper → … until Chromium caps body height at
+     * 2^25 (= 33 554 432 px). Pinning every vh value at the
+     * initial viewport breaks the loop: hero (or whichever element
+     * used vh) settles at its initial rendered size and subsequent
+     * iframe expansion doesn't feed back into body height.
      */
-    const overrideVhSizing = () => {
+    const overrideVhUnits = () => {
       try {
         const doc = iframe.contentDocument;
         if (!doc) return;
+        const win = doc.defaultView;
+        if (!win) return;
+
+        const vh = win.innerHeight;
+        if (!vh || vh <= 0) return;
+
+        /** Match a single-value declaration that is purely vh units. */
+        const isPureVh = (val: string): boolean =>
+          /^\s*-?[\d.]+vh\s*$/.test(val);
+
+        /** Convert "100vh" → "150px" (using the current viewport). */
+        const vhToPx = (val: string): string => {
+          const num = parseFloat(val);
+          return `${(num * vh) / 100}px`;
+        };
+
+        /** Recurse into a rule, recursing one level for @media / @supports. */
+        const processRule = (rule: CSSRule) => {
+          const cssStyle = (rule as CSSStyleRule).style;
+          if (cssStyle) {
+            // Iterate ALL declared properties — no hard-coded list,
+            // so any future vh-based property is handled the same way.
+            for (let i = 0; i < cssStyle.length; i++) {
+              const prop = cssStyle.item(i);
+              if (!prop) continue;
+              const val = cssStyle.getPropertyValue(prop);
+              if (val && isPureVh(val)) {
+                cssStyle.setProperty(prop, vhToPx(val));
+              }
+            }
+          }
+          const inner = (rule as { cssRules?: CSSRuleList }).cssRules;
+          if (inner) {
+            for (const r of Array.from(inner)) {
+              processRule(r);
+            }
+          }
+        };
 
         for (const sheet of Array.from(doc.styleSheets)) {
           let rules: CSSRuleList | null = null;
@@ -142,29 +184,7 @@ export function RawHtmlBlock({ html }: Props) {
           if (!rules) continue;
 
           for (const rule of Array.from(rules)) {
-            // CSSStyleRule has a .style property; @media / @supports
-            // wrap rules and need to recurse one level.
-            const targets: CSSStyleDeclaration[] = [];
-            if ((rule as CSSStyleRule).style) {
-              targets.push((rule as CSSStyleRule).style);
-            }
-            const cssRules = (rule as { cssRules?: CSSRuleList }).cssRules;
-            if (cssRules) {
-              for (const inner of Array.from(cssRules)) {
-                if ((inner as CSSStyleRule).style) {
-                  targets.push((inner as CSSStyleRule).style);
-                }
-              }
-            }
-
-            for (const style of targets) {
-              for (const prop of ['minHeight', 'height'] as const) {
-                const val = style.getPropertyValue(prop === 'minHeight' ? 'min-height' : 'height');
-                if (typeof val === 'string' && /^\s*-?[\d.]+vh\s*$/.test(val)) {
-                  style.setProperty(prop === 'minHeight' ? 'min-height' : 'height', 'auto');
-                }
-              }
-            }
+            processRule(rule);
           }
         }
 
@@ -211,12 +231,16 @@ export function RawHtmlBlock({ html }: Props) {
       if (setupDone) return;
       setupDone = true;
 
-      // Neutralize any `vh`-based `min-height` / `height` rules in the
-      // iframe's stylesheets BEFORE measuring. Without this, expanding
-      // the wrapper would expand the iframe viewport → 100vh → hero
-      // height → body height → wrapper again, looping until body hits
-      // the Chromium 2^25 cap.
-      overrideVhSizing();
+      // Pin every vh-based declaration in the iframe's stylesheets to
+      // px at the initial viewport BEFORE measuring. Without this,
+      // expanding the wrapper expands the iframe viewport → 100vh
+      // grows → any vh-based height grows → body height grows →
+      // wrapper grows → … loops until body hits Chromium's 2^25 cap.
+      // No hard-coded property list: we iterate every declared
+      // property on every rule, so any future vh-using property
+      // (min-height, height, padding, margin, top, font-size, …)
+      // is handled the same way regardless of class names.
+      overrideVhUnits();
 
       // Defer initial measure by 2 animation frames so the browser has
       // had time to fully lay out the iframe content.
