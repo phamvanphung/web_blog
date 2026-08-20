@@ -26,26 +26,36 @@ function isFullDocument(h: string): boolean {
  *    `<script src="…">`, `<style>`, and inline `<script>` all work
  *    without us extracting / re-injecting anything.
  *
- *    We auto-size the wrapper's height to the inner document's
- *    scrollHeight so the iframe never develops an internal scrollbar
- *    — the parent page scrolls naturally over the iframe area, giving
- *    a single seamless scroll experience.
+ *    We auto-size the wrapper's height to fit the inner document so
+ *    the iframe never develops an internal scrollbar — the parent
+ *    page scrolls naturally over the iframe area, giving a single
+ *    seamless scroll experience.
  *
  *    Why a wrapper div rather than sizing the iframe directly?
  *    React's style diffing removes inline `style` properties that are
  *    absent from the next render's `style` prop. If we set the
  *    iframe's height via DOM mutation but pass only `{width,
- *    border, display}` as the iframe's React `style`, React will
- *    wipe our height on the next render — back to the browser's
- *    default iframe height (150px). Setting height on a wrapper
- *    `<div>` with no React `style` prop dodges that: React never
- *    touches the wrapper's style, our DOM mutations persist, and
- *    the iframe inside inherits via `height: 100%`.
+ *    border, display}` as the iframe's React `style`, React wipes
+ *    our height on the next render back to the browser's iframe
+ *    default (150px). The wrapper has only `{width}` in its React
+ *    style, so React leaves the height slot alone — our DOM mutations
+ *    persist, and the iframe inside inherits via `height: 100%`.
  *
- *    We measure on `load`, watch the inner body with `ResizeObserver`
- *    to catch layout shifts (images loading, fonts swapping, JS-driven
- *    layout), and also poll at 100/500/1500/3000ms after load to
- *    catch late-loading assets.
+ *    Why walk the DOM to measure instead of `body.scrollHeight`?
+ *    `scrollHeight` reflects only what's been laid out. Right after
+ *    iframe load, the iframe viewport is tiny (browser default),
+ *    which makes `100vh` in the pasted HTML small, which makes
+ *    sections under the hero still unrendered, which makes
+ *    `scrollHeight` artificially small. We walk every element under
+ *    `<body>` and take the max `getBoundingClientRect().bottom` —
+ *    that forces a synchronous layout pass, walks the whole tree,
+ *    and gets the real content height regardless of viewport size.
+ *
+ *    We measure on `load` (deferred by 2 RAF for layout stability),
+ *    watch the inner body with `ResizeObserver` to catch layout
+ *    shifts, and poll at 100/300/500/1000/2000/3000/5000/8000/
+ *    12000ms after load to catch late-loading assets (Unsplash
+ *    images, Google Fonts, async scripts).
  *
  *    Height is set via direct DOM mutation on the wrapper — never
  *    through React state — so the parent tree never re-renders in
@@ -75,19 +85,26 @@ export function RawHtmlBlock({ html }: Props) {
         const doc = iframe.contentDocument;
         if (!doc) return;
         const body = doc.body;
-        const docEl = doc.documentElement;
         if (!body) return;
-        // documentElement.scrollHeight is the most reliable — it
-        // includes everything in the document, even content that
-        // overflows <body>.
-        const height = Math.max(
-          docEl?.scrollHeight ?? 0,
-          docEl?.offsetHeight ?? 0,
-          body.scrollHeight,
-          body.offsetHeight
-        );
-        if (height > 0) {
-          wrapper.style.height = `${height}px`;
+
+        // Walk every element under <body> and take the max bottom
+        // edge. `getBoundingClientRect()` forces a synchronous layout,
+        // so this gives the real rendered height even when the iframe
+        // viewport is currently small (which is the case right after
+        // load, before our first measurement has set the wrapper
+        // height).
+        let maxBottom = 0;
+        const walk = (el: Element) => {
+          const rect = el.getBoundingClientRect();
+          if (rect.bottom > maxBottom) maxBottom = rect.bottom;
+          for (const child of Array.from(el.children)) {
+            walk(child);
+          }
+        };
+        walk(body);
+
+        if (maxBottom > 0) {
+          wrapper.style.height = `${maxBottom}px`;
         }
       } catch {
         // Cross-origin (shouldn't happen for srcdoc, but guard anyway).
@@ -95,7 +112,12 @@ export function RawHtmlBlock({ html }: Props) {
     };
 
     const setup = () => {
-      measure();
+      // Defer initial measure by 2 animation frames so the browser has
+      // had time to fully lay out the iframe content.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(measure);
+      });
+
       try {
         const body = iframe.contentDocument?.body;
         if (body && typeof ResizeObserver !== 'undefined') {
@@ -105,9 +127,13 @@ export function RawHtmlBlock({ html }: Props) {
       } catch {
         // ignore
       }
-      // Poll at milestones — images / fonts / async scripts that
-      // change layout don't always trip ResizeObserver cleanly.
-      [100, 500, 1500, 3000].forEach((delay) => {
+
+      // Aggressive polling to catch late-loading assets (Unsplash
+      // images, Google Fonts) and JS-driven layout changes that
+      // ResizeObserver might miss. 12s ceiling is enough for typical
+      // external image loads; further changes can trigger via the
+      // observer.
+      [100, 300, 500, 1000, 2000, 3000, 5000, 8000, 12000].forEach((delay) => {
         timeouts.push(setTimeout(measure, delay));
       });
     };
@@ -126,10 +152,9 @@ export function RawHtmlBlock({ html }: Props) {
   }
 
   return (
-    // Wrapper has NO React `style` prop — we control its width and
-    // height imperatively via DOM mutation in the effect. React's
-    // style-diffing would otherwise wipe our height on the next
-    // render.
+    // Wrapper has NO `height` in its React style prop — we control it
+    // imperatively via DOM mutation in the effect. React's style
+    // diffing would otherwise wipe our height on the next render.
     <div ref={wrapperRef} style={{ width: '100%' }}>
       <iframe
         ref={iframeRef}
