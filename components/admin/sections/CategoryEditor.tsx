@@ -84,7 +84,7 @@ export function CategoryEditor({ section, onChange, groups }: Props) {
             checked={d.showAll}
             onChange={(e) => onChange({ ...section, data: { ...d, showAll: e.target.checked } })}
           />
-          Hiển thị nút "Xem tất cả"
+          Hiển thị nút &ldquo;Xem tất cả&rdquo;
         </label>
       </div>
     </div>
