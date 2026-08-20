@@ -28,7 +28,19 @@ export function BlockRenderer({ sections }: { sections: Section[] }) {
             return <MediaBlock key={s.id} {...s.data} />;
           }
           case 'rawhtml': {
-            return <RawHtmlBlock key={s.id} html={s.data.html} />;
+            // rawhtml is a full HTML document rendered inside an iframe.
+            // The public catch-all wraps multi-section pages in
+            // <Container width="prose"> which would otherwise squeeze the
+            // iframe into ~68ch. Wrap in `.diag-full-bleed` to escape the
+            // Container's max-width while preserving the section's order
+            // in the flow. When the page has only this one section
+            // (`isFullLanding`), there's no Container ancestor and the
+            // class is a harmless no-op.
+            return (
+              <div className="diag-full-bleed">
+                <RawHtmlBlock key={s.id} html={s.data.html} />
+              </div>
+            );
           }
           case 'form': {
             return <FormBlock key={s.id} {...s.data} />;

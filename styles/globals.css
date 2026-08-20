@@ -16,6 +16,11 @@
     font-weight: 400;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    /* Clip horizontal overflow so `.diag-full-bleed` (which uses 100vw)
+       can't create a horizontal scrollbar when the viewport's vertical
+       scrollbar takes up space. `clip` (vs `hidden`) does not break
+       `position: sticky` descendants. */
+    overflow-x: clip;
   }
 
   h1,
@@ -120,6 +125,20 @@
     max-width: 72rem;
     margin-inline: auto;
     padding-inline: 1.5rem;
+  }
+
+  /* Full-bleed escape for rawhtml sections inside Container width="prose".
+     Width = viewport (so it spans the screen); the negative margin trick
+     pulls the box back by half the difference between the parent and the
+     viewport, cancelling the parent's max-width centering. Section order
+     is preserved because the wrapper is just an inline element in the
+     normal flow. In the single-section `isFullLanding` case there is no
+     Container ancestor, so this class is a harmless no-op (the box just
+     fills the natural viewport width). */
+  .diag-full-bleed {
+    width: 100vw;
+    margin-inline-start: calc(50% - 50vw);
+    margin-inline-end: calc(50% - 50vw);
   }
 
   /* ---- Notion-like editor: callout + divider + embed placeholder ---- */
