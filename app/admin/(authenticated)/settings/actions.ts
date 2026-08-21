@@ -46,5 +46,12 @@ export async function updateSettingAction(
   // individual getSetting cached reads refresh.
   revalidateTag(settingsTag(parsed.data.key));
   if (parsed.data.key.startsWith('site.')) revalidateTag(BRAND_TAG);
+  // `site.homeHref` is also read by the root-path middleware
+  // (`/middleware.ts`) which keeps its own in-process cache with a
+  // 60 s TTL. Cache invalidation across workers isn't possible from
+  // here (the cache lives in the Edge worker's memory) but the TTL
+  // bounds the worst-case staleness. The brand cache above is what
+  // actually drives the visible logo / wordmark link in the header,
+  // so re-invalidating it is the user-visible half of the equation.
   return { ok: true };
 }
