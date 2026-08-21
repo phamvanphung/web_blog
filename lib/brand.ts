@@ -14,26 +14,43 @@ import { cachedGetSetting, BRAND_TAG } from '@/modules/settings/server';
 
 const DEFAULT_SITE_NAME = '9ent';
 const DEFAULT_TAGLINE = 'Blog công ty 9ent';
+const DEFAULT_HOME_HREF = '/';
 
 export type Brand = {
   siteName: string;
   tagline: string;
   taglineLong: string;
+  /** Logo / wordmark link target. Falls back to `/` if not configured. */
+  homeHref: string;
 };
+
+/**
+ * Resolve the configured home URL, defaulting to `/` when the
+ * `site.homeHref` setting is empty or missing. Trimmed; relative
+ * paths are accepted (`/` or `/landing`), absolute URLs are not
+ * validated here — admin is trusted to paste a usable value.
+ */
+export async function getHomeHref(): Promise<string> {
+  const raw = await cachedGetSetting('site.homeHref');
+  const trimmed = raw?.trim();
+  return trimmed || DEFAULT_HOME_HREF;
+}
 
 export const getBrand = cache((): Promise<Brand> =>
   unstable_cache(
     async () => {
-      const [name, tagline] = await Promise.all([
+      const [name, tagline, homeHref] = await Promise.all([
         cachedGetSetting('site.name'),
-        cachedGetSetting('site.tagline')
+        cachedGetSetting('site.tagline'),
+        cachedGetSetting('site.homeHref')
       ]);
       return {
         siteName: name?.trim() || DEFAULT_SITE_NAME,
         tagline: tagline?.trim() || DEFAULT_TAGLINE,
         taglineLong:
           tagline?.trim() ||
-          'Show dự án, chia sẻ quá trình làm — nơi khách hàng hiện hữu và tiềm năng thấy cách chúng tôi làm việc.'
+          'Show dự án, chia sẻ quá trình làm — nơi khách hàng hiện hữu và tiềm năng thấy cách chúng tôi làm việc.',
+        homeHref: homeHref?.trim() || DEFAULT_HOME_HREF
       };
     },
     ['brand'],

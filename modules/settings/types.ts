@@ -3,6 +3,7 @@ export type SettingKey =
   | 'site.tagline'
   | 'site.logo'
   | 'site.favicon'
+  | 'site.homeHref'
   | 'contact.email'
   | 'social.facebook'
   | 'social.youtube'

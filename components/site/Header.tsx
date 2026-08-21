@@ -5,9 +5,11 @@ import { getMenuByLocation } from '@/modules/menus/server/public';
 
 type Props = {
   siteName?: string;
+  /** Logo / wordmark link target. Falls back to `/` when unset. */
+  homeHref?: string;
 };
 
-export async function Header({ siteName }: Props = {}) {
+export async function Header({ siteName, homeHref }: Props = {}) {
   const tree = await getMenuByLocation('primary').catch(() => []);
   const items = tree.map((n) => ({
     href: n.href,
@@ -15,7 +17,8 @@ export async function Header({ siteName }: Props = {}) {
     openInNew: n.openInNew
   }));
   // Pass siteName through so GlobalNav can render the brand wordmark.
-  if (items.length > 0) return <GlobalNav items={items} siteName={siteName} />;
+  if (items.length > 0)
+    return <GlobalNav items={items} siteName={siteName} homeHref={homeHref} />;
   // Fallback: render Nav list inline at the same level GlobalNav would.
   return (
     <header className="sticky top-0 z-50 border-b border-hairline bg-canvas/90 backdrop-blur">

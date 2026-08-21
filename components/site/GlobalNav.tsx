@@ -8,6 +8,8 @@ type Props = {
   items: Item[];
   /** Brand wordmark text (default "9ent"). Read from `Setting.site.name`. */
   siteName?: string;
+  /** Logo / wordmark link target. Falls back to `/` when unset. */
+  homeHref?: string;
 };
 
 /**
@@ -20,8 +22,12 @@ type Props = {
  * Replaces the previous two-row band (52px black + 52px frosted).
  * Sticky so anchor links feel anchored.
  */
-export function GlobalNav({ items, siteName }: Props) {
+export function GlobalNav({ items, siteName, homeHref }: Props) {
   const brand = (siteName ?? '9ent').trim() || '9ent';
+  const home = (homeHref ?? '/').trim() || '/';
+  // Absolute URLs open in a new tab so the in-site nav stack doesn't get
+  // ripped out from under the visitor when they click the logo.
+  const externalHome = /^https?:\/\//i.test(home);
   return (
     <header className="sticky top-0 z-50 border-b border-hairline bg-canvas/90 backdrop-blur">
       <nav
@@ -29,7 +35,9 @@ export function GlobalNav({ items, siteName }: Props) {
         className="mx-auto flex h-[68px] max-w-wide items-center justify-between gap-6 px-6"
       >
         <Link
-          href="/"
+          href={home}
+          target={externalHome ? '_blank' : undefined}
+          rel={externalHome ? 'noopener noreferrer' : undefined}
           aria-label={`${brand} — Trang chủ`}
           className="inline-flex items-center gap-3 rounded-8 outline-none transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary-focus"
         >
