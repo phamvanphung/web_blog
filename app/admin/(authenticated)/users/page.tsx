@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { deleteUserAction } from './actions';
 import { ButtonLink } from '@/components/ui/ButtonLink';
 import Link from 'next/link';
+import { UserRowActions } from './UserRowActions';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +12,7 @@ export default async function UsersPage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
-  await requireRole('ADMIN');
+  const me = await requireRole('ADMIN');
   const sp = await searchParams;
   const errorMsg =
     sp.error === 'duplicate'
@@ -68,22 +69,47 @@ export default async function UsersPage({
               <td className="py-3 text-ink">{u.email}</td>
               <td className="py-3 text-ink-80">{u.name}</td>
               <td className="py-3 text-ink-80">{u.role.toLowerCase()}</td>
-              <td className="py-3 text-ink-80">{u.status.toLowerCase()}</td>
+              <td className="py-3 text-ink-80">
+                <span
+                  className={
+                    u.status === 'ACTIVE'
+                      ? 'inline-block rounded-pill bg-primary/10 px-2 py-0.5 text-[11px] uppercase tracking-[0.06em] text-primary'
+                      : 'inline-block rounded-pill bg-canvas-parchment px-2 py-0.5 text-[11px] uppercase tracking-[0.06em] text-ink-48'
+                  }
+                >
+                  {u.status.toLowerCase()}
+                </span>
+              </td>
               <td className="py-3 text-[12px] text-ink-48">{u.createdAt.toISOString()}</td>
               <td className="py-3 text-right">
-                <div className="flex justify-end gap-3">
-                  <Link
-                    href={`/admin/users/${u.id}/edit`}
-                    className="text-primary hover:underline"
-                  >
-                    Sửa
-                  </Link>
-                  <form action={deleteUserAction}>
-                    <input type="hidden" name="id" value={u.id} />
-                    <button type="submit" className="text-[#d70015] hover:underline">
-                      Xóa
-                    </button>
-                  </form>
+                <div className="flex flex-col items-end gap-2">
+                  <UserRowActions
+                    userId={u.id}
+                    status={u.status as 'ACTIVE' | 'DISABLED'}
+                    isSelf={u.id === me.id}
+                  />
+                  <div className="flex items-center justify-end gap-3">
+                    <Link
+                      href={`/admin/users/${u.id}/edit`}
+                      className="text-primary hover:underline"
+                    >
+                      Sửa
+                    </Link>
+                    <form action={deleteUserAction}>
+                      <input type="hidden" name="id" value={u.id} />
+                      <button
+                        type="submit"
+                        className="text-[#d70015] hover:underline"
+                        title={
+                          u.id === me.id
+                            ? 'Không thể xóa chính mình'
+                            : 'Xoá user này'
+                        }
+                      >
+                        Xóa
+                      </button>
+                    </form>
+                  </div>
                 </div>
               </td>
             </tr>
