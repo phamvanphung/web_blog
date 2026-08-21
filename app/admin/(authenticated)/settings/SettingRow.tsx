@@ -9,10 +9,14 @@ const inputClass =
 
 export function SettingRow({
   keyName,
+  label,
+  description,
   value,
   updatedAt
 }: {
   keyName: string;
+  label: string;
+  description: string;
   value: string;
   updatedAt: string;
 }) {
@@ -25,19 +29,34 @@ export function SettingRow({
     // key={updatedAt} forces remount when the server returns a fresh updatedAt,
     // so the input's defaultValue reflects the just-saved value.
     <form
-      key={updatedAt}
+      key={updatedAt || `ghost-${keyName}`}
       action={formAction}
       className="space-y-2 border-b border-hairline pb-5"
     >
-      <label
-        className="block text-[12px] uppercase tracking-[0.08em] text-ink-48"
-        htmlFor={`k-${keyName}`}
-      >
-        {keyName}
-      </label>
+      <div className="flex items-baseline justify-between gap-3">
+        <label
+          className="block text-[14px] font-semibold text-ink"
+          htmlFor={`k-${keyName}`}
+        >
+          {label}
+        </label>
+        <span className="text-[11px] uppercase tracking-[0.06em] text-ink-48">
+          {keyName}
+        </span>
+      </div>
+      {description && (
+        <p className="text-[12px] leading-snug text-ink-80">{description}</p>
+      )}
       <input id={`k-${keyName}`} type="hidden" name="key" value={keyName} />
-      <input name="value" defaultValue={value} className={inputClass} />
-      <p className="text-[12px] text-ink-48">Cập nhật: {updatedAt}</p>
+      <input
+        name="value"
+        defaultValue={value}
+        placeholder={value ? '' : '(chưa cấu hình — để trống dùng mặc định)'}
+        className={inputClass}
+      />
+      {updatedAt && (
+        <p className="text-[12px] text-ink-48">Cập nhật: {updatedAt}</p>
+      )}
       {state?.ok === false && (
         <p role="alert" className="text-[12px] text-[#d70015]">
           {state.error}
