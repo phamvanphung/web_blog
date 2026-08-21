@@ -266,6 +266,97 @@ export function RawHtmlBlock({ html }: Props) {
       [100, 300, 500, 1000, 2000, 3000, 5000, 8000, 12000].forEach((delay) => {
         timeouts.push(setTimeout(measure, delay));
       });
+
+      // ---- In-iframe navigation ----
+      //
+      // Problem: when this block is rendered inside an iframe wrapper
+      // (e.g. a browser preview tool that embeds localhost), every
+      // `<a>` click inside the iframe triggers a normal browser
+      // navigation in the iframe's own history. The outer wrapper
+      // never sees the URL change, so its "Back" button takes the
+      // user out of the rawhtml section entirely, and the iframe
+      // ends up showing a stale page.
+      //
+      // Fix: intercept clicks on links inside the iframe and route
+      // them through `location.replace`. Because srcdoc is same-origin
+      // with the parent, `replace` performs a same-document navigation
+      // — no white flash, no re-layout of the wrapper chrome, just a
+      // smooth content swap. Same-origin <a> clicks (anchor jumps to
+      // #ids) keep their default behaviour so in-page anchors still
+      // scroll the iframe contents.
+      //
+      // Also listen for `popstate` so the browser's Back/Forward
+      // buttons work: the iframe's history stack is preserved by
+      // `replace` (each call pushes a new entry), and we re-run the
+      // vh-pin + measure pipeline on the new document via the
+      // iframe's existing `load` listener (which fires for every
+      // `location.replace`).
+      try {
+        const idoc = iframe.contentDocument;
+        const iwin = iframe.contentWindow;
+        if (!idoc || !iwin) return;
+
+        // Seed the iframe's history with the initial URL so that the
+        // first Back press has somewhere to go (otherwise Back from
+        // the very first page exits the iframe entirely).
+        const initialUrl = idoc.location.href;
+        if (iwin.history.state === null) {
+          iwin.history.replaceState({ rawhtmlNav: true }, '', initialUrl);
+        }
+
+        const onClick = (e: MouseEvent) => {
+          // Respect modifier keys — let the browser handle cmd/ctrl/
+          // shift/middle-click as new-tab/window opens.
+          if (
+            e.defaultPrevented ||
+            e.button !== 0 ||
+            e.metaKey ||
+            e.ctrlKey ||
+            e.shiftKey ||
+            e.altKey
+          ) {
+            return;
+          }
+          const a = (e.target as Element | null)?.closest('a');
+          if (!a) return;
+
+          const href = a.getAttribute('href');
+          if (!href || href.startsWith('javascript:')) return;
+
+          // In-page anchors (#id) — let the browser scroll the iframe
+          // and push a real history entry.
+          if (href.startsWith('#')) return;
+
+          // External links (different origin, mailto:, tel:, …) —
+          // let the iframe navigate normally so the browser can open
+          // them in the right way.
+          let url: URL;
+          try {
+            url = new URL(href, idoc.baseURI);
+          } catch {
+            return;
+          }
+          if (url.origin !== iwin.location.origin) return;
+
+          e.preventDefault();
+          // `location.replace` is same-document navigation when only
+          // the hash changes, but it's a full reload otherwise. The
+          // iframe's `load` listener (registered above) fires for the
+          // reload, re-applies the vh-pin, and re-measures.
+          iwin.location.replace(url.href);
+        };
+        idoc.addEventListener('click', onClick, true);
+
+        // Back / Forward inside the iframe: nothing to do — the
+        // browser handles `popstate` by navigating the iframe
+        // history, which already re-fires our `load` listener.
+        // We only need to clean up the click listener on unmount.
+        const cleanup = () => idoc.removeEventListener('click', onClick, true);
+        // Stash the cleanup so the effect's return can call it.
+        (iframe as unknown as { __rawhtmlCleanup?: () => void }).__rawhtmlCleanup = cleanup;
+      } catch {
+        // Cross-origin or detached — silently degrade.
+      }
     };
 
     // Listen for future loads (covers the case where the iframe is
@@ -291,6 +382,12 @@ export function RawHtmlBlock({ html }: Props) {
       iframe.removeEventListener('load', setup);
       observer?.disconnect();
       timeouts.forEach(clearTimeout);
+      const cleanup = (iframe as unknown as { __rawhtmlCleanup?: () => void })
+        .__rawhtmlCleanup;
+      if (cleanup) {
+        cleanup();
+        delete (iframe as unknown as { __rawhtmlCleanup?: () => void }).__rawhtmlCleanup;
+      }
     };
   }, [html]);
 
