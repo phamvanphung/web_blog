@@ -304,4 +304,42 @@
 
   /* Bubble menu brand alignment */
   .bubble-menu button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; }
+
+  /* ---- Marquee strip ----
+     Pure-CSS horizontal scroll band used on the home hero. The inner
+     track is duplicated so the translate loop is seamless. Pause on
+     hover for accessibility and respect prefers-reduced-motion. */
+  .marquee {
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      black 8%,
+      black 92%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      black 8%,
+      black 92%,
+      transparent 100%
+    );
+  }
+  .marquee-track {
+    display: inline-flex;
+    width: max-content;
+    animation: marquee-scroll 38s linear infinite;
+  }
+  .marquee:hover .marquee-track,
+  .marquee:focus-within .marquee-track {
+    animation-play-state: paused;
+  }
+  @keyframes marquee-scroll {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .marquee-track { animation: none; }
+  }
 }
