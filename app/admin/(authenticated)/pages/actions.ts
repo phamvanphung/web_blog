@@ -52,7 +52,12 @@ export async function createPageAction(
     ipHash: await hashIp(ip)
   });
   revalidatePath('/admin/pages');
-  return { ok: true, id };
+  // Redirect to the edit page so the URL actually changes. This makes
+  // the browser's Back button return to /admin/pages (the list) instead
+  // of re-showing the now-empty "new" form — important when the page
+  // lives inside an iframe wrapper whose own back stack otherwise
+  // disagrees with the iframe's history.
+  redirect(`/admin/pages/${id}/edit`);
 }
 
 export async function updatePageAction(
