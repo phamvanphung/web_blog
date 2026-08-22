@@ -1,6 +1,7 @@
 import { requireRole } from '@/lib/auth';
 import { listMedia } from '@/modules/media/server';
 import { UploadForm } from './UploadForm';
+import { MediaCard } from './MediaCard';
 import { deleteMediaFormAction } from './actions';
 
 export const dynamic = 'force-dynamic';
@@ -25,24 +26,17 @@ export default async function MediaPage() {
       ) : (
         <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
           {items.map((m) => (
-            <li key={m.id} className="space-y-1">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={m.url}
-                alt={m.altText ?? m.originalName}
-                className="aspect-square w-full rounded-11 border border-hairline object-cover"
-              />
-              <p className="truncate text-[12px] text-ink-80">{m.originalName}</p>
-              <p className="text-[12px] text-ink-48">
-                {m.width}×{m.height} · {(m.fileSize / 1024).toFixed(1)} KB
-              </p>
-              <form action={deleteMediaFormAction}>
-                <input type="hidden" name="id" value={m.id} />
-                <button type="submit" className="text-[12px] text-[#d70015] hover:underline">
-                  Xóa
-                </button>
-              </form>
-            </li>
+            <MediaCard
+              key={m.id}
+              id={m.id}
+              url={m.url}
+              altText={m.altText}
+              originalName={m.originalName}
+              width={m.width}
+              height={m.height}
+              fileSize={m.fileSize}
+              deleteAction={deleteMediaFormAction}
+            />
           ))}
         </ul>
       )}
