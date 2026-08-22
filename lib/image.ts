@@ -1,6 +1,7 @@
 // lib/image.ts
-// One-call Sharp pipeline: validate MIME, EXIF-rotate, generate 4 WebP variants.
-// Server-only.
+// Validates MIME, EXIF-rotates, then runs sharp once per entry in
+// `MEDIA_VARIANTS` (currently 4: original/large/medium/thumb). Output is
+// always WebP regardless of source format. Server-only.
 
 import sharp from 'sharp';
 import { MEDIA_VARIANTS, type MediaVariant } from '@/modules/media/types';
