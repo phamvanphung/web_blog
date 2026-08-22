@@ -10,8 +10,6 @@
 //   - Set UPLOAD_ROOT in the environment to override the default at deploy time.
 
 import path from 'node:path';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
-import { join, dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { MAX_UPLOAD_BYTES } from '@/modules/media/types';
 
@@ -54,53 +52,16 @@ export function publicUrlFor(storedName: string): string {
 }
 
 // ============================================================
-// StorageAdapter contract — implemented by P2 LocalDiskStorage
-// (and optionally swapped for S3/R2 later).
+// Notes on the (removed) StorageAdapter interface
 // ============================================================
-
-export interface UploadResult {
-  storedName: string;
-  path: string; // relative to UPLOAD_ROOT
-  url: string;
-  width?: number;
-  height?: number;
-  fileSize: number;
-  mimeType: string;
-}
-
-export interface StorageAdapter {
-  save(_buffer: Buffer, _originalName: string, _mime: string): Promise<UploadResult>;
-  delete(_path: string): Promise<void>;
-}
-
-/**
- * Default local-disk storage adapter.
- * Writes buffers to UPLOAD_ROOT/<YYYY>/MM/<uuid>.webp via node:fs/promises.
- * Cross-OS safe: posix-style relative path from pathForUpload is joined with
- * OS-native separators by node:path for filesystem ops.
- */
-export class LocalDiskStorage implements StorageAdapter {
-  async save(buffer: Buffer, _originalName: string, _mime: string): Promise<UploadResult> {
-    const ext = 'webp';
-    const storedName = newStoredName(ext);
-    const relPath = pathForUpload(storedName); // already uses posix joins — gives "YYYY/MM/<uuid>.webp"
-    const absPath = join(getUploadRoot(), relPath); // join with OS separator for FS ops
-    await mkdir(dirname(absPath), { recursive: true });
-    await writeFile(absPath, buffer);
-    return {
-      storedName,
-      path: relPath, // posix-style relative — DB stores this verbatim
-      url: publicUrlFor(storedName), // "/uploads/YYYY/MM/<uuid>.webp"
-      fileSize: buffer.byteLength,
-      mimeType: 'image/webp'
-    };
-  }
-
-  async delete(relPath: string): Promise<void> {
-    const abs = join(getUploadRoot(), relPath);
-    await rm(abs, { force: true }).catch(() => {});
-  }
-}
+//
+// An earlier revision of this file exported a `StorageAdapter` interface
+// plus a `LocalDiskStorage` class implementing it. The class was never
+// wired in — `uploadMediaAction` calls `writeFile` directly via
+// `getUploadRoot` + `pathForUpload` + `publicUrlFor`. Grep confirms no
+// other consumer imports `LocalDiskStorage`, `StorageAdapter`, or
+// `UploadResult`. The class is dead code on the upload path and is
+// preserved here only as a future hook for swapping in S3/R2.
 
 export const storage = {
   getUploadRoot,
