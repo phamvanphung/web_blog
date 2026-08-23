@@ -27,10 +27,25 @@ function isFullDocument(h: string): boolean {
  *    `<script src="…">`, `<style>`, and inline `<script>` all work
  *    without us extracting / re-injecting anything.
  *
- *    We auto-size the wrapper's height to fit the inner document so
- *    the iframe never develops an internal scrollbar — the parent
- *    page scrolls naturally over the iframe area, giving a single
- *    seamless scroll experience.
+ *    We render the iframe at `height: 100vh; position: sticky;
+ *    top: 0` so it always fills the viewport as the parent page
+ *    scrolls. The wrapper is sized to the inner document's height
+ *    so the parent page has enough scroll length to expose every
+ *    section. A two-way scroll sync keeps the iframe's internal
+ *    scrollY in lock-step with the parent's — even though there are
+ *    technically two scrolling containers, the user sees one
+ *    continuous scroll surface.
+ *
+ *    Why `height: 100vh` rather than `height: 100%` of the wrapper?
+ *    If the iframe's height scales with the wrapper, the iframe
+ *    viewport grows to match the document height, which breaks
+ *    `position: sticky` *inside* the iframe (sticky needs the
+ *    iframe viewport to be smaller than the content it's scrolling).
+ *    That's the failure mode the /dulichvietnam htmlraw hit: every
+ *    `.stage { position: sticky }` stopped sticking once the iframe
+ *    viewport equalled the body height. Pinning the iframe to a
+ *    fixed `100vh` keeps the iframe viewport permanently smaller
+ *    than `.journey`, so sticky stages engage correctly.
  *
  *    Why a wrapper div rather than sizing the iframe directly?
  *    React's style diffing removes inline `style` properties that are
@@ -59,17 +74,26 @@ function isFullDocument(h: string): boolean {
  *    images, Google Fonts, async scripts).
  *
  *    **Feedback-loop guard.** Pasting landing pages is common and
- *    they often contain `min-height: 100vh` on hero sections. If we
- *    set the wrapper to body.scrollHeight, the iframe viewport grows,
- *    100vh grows proportionally, the hero's height grows, body grows
- *    past our measurement, we measure again, set the wrapper even
- *    bigger, and so on until the layout engine caps body height at
- *    2^25 (= 33 554 432 px). Before measuring we walk every element
- *    in the inner document; anything whose computed `min-height`
- *    (or `height`) ends in `vh` we convert to a fixed `px` value
- *    pinned to the *initial* iframe viewport. That locks hero
- *    sections at their natural rendered size so subsequent viewport
- *    expansion does not feed back into body height.
+ *    they often contain `min-height: 100vh` on hero sections. The
+ *    page that prompted this fix used `.journey { height: 3024vh }`
+ *    with nested `.stage { position: sticky; height: 100vh }`. Two
+ *    defenses work together:
+ *
+ *    (a) The iframe viewport is decoupled from wrapper height. The
+ *        iframe is `height: 100vh` (= outer window's viewport, fixed
+ *        at render time), not `height: 100%` of the wrapper. So even
+ *        if we grew the wrapper to 27,000 px, the iframe viewport
+ *        stays at 911 px — there's no way for wrapper expansion to
+ *        inflate 100vh.
+ *
+ *    (b) We additionally walk every CSSStyleRule inside the iframe
+ *        and convert any `vh` length to a fixed `px` value pinned at
+ *        the *initial* iframe viewport, *before* measuring. This is
+ *        belt-and-braces: even if some future change accidentally
+ *        makes the iframe viewport scale with the wrapper, hero /
+ *        journey / etc. sizes are already locked. We also re-pin on
+ *        iframe reloads (location.replace navigation), and on outer
+ *        window resize (because 100vh itself changes).
  *
  *    Race condition guard: if the iframe has *already* finished
  *    loading by the time our `useEffect` runs (common in React 19
@@ -77,8 +101,10 @@ function isFullDocument(h: string): boolean {
  *    `iframe.load` can fire in <16 ms for a small srcdoc), the
  *    load listener we register would never fire. We also check
  *    `contentDocument.readyState === 'complete'` synchronously and
- *    call `setup()` immediately when it is, behind a `setupDone`
- *    guard so we don't run twice if `load` then fires later.
+ *    call `setup()` immediately when it is. `setup()` is idempotent —
+ *    it tears down the previous setup at its start, so even if both
+ *    the readyState path and the load event fire in quick succession
+ *    the end state is the same as one call.
  *
  *    Height is set via direct DOM mutation on the wrapper — never
  *    through React state — so the parent tree never re-renders in
@@ -100,7 +126,6 @@ export function RawHtmlBlock({ html }: Props) {
     const iframe = iframeRef.current;
     if (!wrapper || !iframe) return;
 
-    let setupDone = false;
     let observer: ResizeObserver | null = null;
     const timeouts: ReturnType<typeof setTimeout>[] = [];
 
@@ -224,16 +249,104 @@ export function RawHtmlBlock({ html }: Props) {
         walk(body);
 
         if (maxBottom > 0) {
-          wrapper.style.height = `${maxBottom}px`;
+          const newHeight = Math.round(maxBottom);
+          const currentHeight = wrapper.style.height
+            ? parseInt(wrapper.style.height, 10)
+            : 0;
+
+          if (newHeight === currentHeight) return;
+
+          // ---- Shrink guard -----------------------------------------
+          // Polling re-measurements can temporarily see a smaller
+          // body height (e.g. an image failed to decode yet, a web
+          // font reflowed mid-load). If we shrank the wrapper to
+          // match, the outer page would re-clamp `window.scrollY`
+          // to a lower max, our `outerToInner` listener would
+          // scroll the iframe back, and then a moment later when
+          // the asset finishes loading and the body grows again
+          // the wrapper would expand but the iframe scroll would
+          // stay at the now-stale lower value — making it look
+          // like the user "can't reach the end" of the page even
+          // though the document actually fits.
+          //
+          // To prevent that, treat the *highest* measured value as
+          // the wrapper height and never shrink below it. We still
+          // allow shrinking on a deliberate reset (window resize)
+          // — see `resetMeasureFloor()` below, called from the
+          // resize listener.
+          if (newHeight < currentHeight && !measure.allowShrink) {
+            // Raise the floor but don't shrink the wrapper.
+            // (We don't update the floor to newHeight either —
+            // we keep the floor at the largest-ever measurement
+            // so a later bigger measurement can still grow it.)
+            return;
+          }
+          if (newHeight > currentHeight) {
+            measure.floor = newHeight;
+          }
+          wrapper.style.height = `${newHeight}px`;
         }
       } catch {
         // Cross-origin (shouldn't happen for srcdoc, but guard anyway).
       }
     };
+    // Tracks the highest measured body height. `measure` only ever
+    // grows the wrapper up to this value; `resetMeasureFloor()`
+    // (called from the resize listener) drops the floor back to 0
+    // so a window resize can re-establish the right size.
+    measure.floor = 0;
+    // When true, `measure` will shrink the wrapper if the new
+    // measurement is smaller than the current value. Polling keeps
+    // this `false`; the resize handler flips it briefly.
+    measure.allowShrink = false;
+    const resetMeasureFloor = () => {
+      measure.floor = 0;
+      measure.allowShrink = true;
+      measure();
+      // Allow only the next call to shrink; restore default after.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          measure.allowShrink = false;
+        });
+      });
+    };
 
     const setup = () => {
-      if (setupDone) return;
-      setupDone = true;
+      // ---- Tear down the previous setup's resources (if any) ----
+      //
+      // The iframe's `load` event fires on every navigation — both the
+      // initial render AND any in-iframe link clicks we route through
+      // `location.replace` (e.g. clicking a link inside the pasted
+      // htmlraw navigates the iframe to the link target). The previous
+      // version guarded with `setupDone` so `setup()` only ran once,
+      // which left the *second* navigation in a broken state: a stale
+      // ResizeObserver watching a detached body, a stale `measure.floor`
+      // that prevented the wrapper from re-sizing to the new page, and
+      // listeners wired to a now-detached document. Here we tear down
+      // the previous setup at the START of every call so each
+      // navigation starts from a clean slate.
+      const prevCleanup = (iframe as unknown as {
+        __rawhtmlCleanup?: () => void;
+      }).__rawhtmlCleanup;
+      if (prevCleanup) {
+        prevCleanup();
+        delete (iframe as unknown as { __rawhtmlCleanup?: () => void })
+          .__rawhtmlCleanup;
+      }
+      if (observer) {
+        observer.disconnect();
+        observer = null;
+      }
+      // Cancel any in-flight polling timeouts from the previous setup —
+      // they'd otherwise fire `measure()` against a now-stale document.
+      timeouts.forEach(clearTimeout);
+      timeouts.length = 0;
+      // Reset the measure floor so the new document can re-establish its
+      // real height without being capped by the previous page's
+      // measurement, and allow shrink so a shorter new page can shrink
+      // the wrapper down to its real size.
+      measure.floor = 0;
+      measure.allowShrink = true;
 
       // Pin every vh-based declaration in the iframe's stylesheets to
       // px at the initial viewport BEFORE measuring. Without this,
@@ -247,9 +360,20 @@ export function RawHtmlBlock({ html }: Props) {
       overrideVhUnits();
 
       // Defer initial measure by 2 animation frames so the browser has
-      // had time to fully lay out the iframe content.
+      // had time to fully lay out the iframe content. We start with
+      // `measure.allowShrink = true` (set in the teardown block above)
+      // so a shorter new page can shrink the wrapper down to its real
+      // size; then lock `allowShrink` back to false after the measure
+      // runs so transient smaller measurements during the subsequent
+      // polling/observer passes don't shrink the wrapper below its
+      // high-water mark.
       requestAnimationFrame(() => {
-        requestAnimationFrame(measure);
+        requestAnimationFrame(() => {
+          measure();
+          requestAnimationFrame(() => {
+            measure.allowShrink = false;
+          });
+        });
       });
 
       try {
@@ -361,6 +485,133 @@ export function RawHtmlBlock({ html }: Props) {
       } catch {
         // Cross-origin or detached — silently degrade.
       }
+
+      // ---- One-way scroll sync: outer page → iframe ----
+      //
+      // Iframe is `position: sticky; top: 0; height: 100vh` so it
+      // always fills the viewport as the outer page scrolls. To give
+      // the user a single continuous scroll surface we mirror the
+      // outer page's scrollY into the iframe as an offset relative
+      // to the wrapper's top edge.
+      //
+      // Two-way sync would be cleaner in theory, but it ping-pongs:
+      // scrolling outer triggers the iframe's `scroll` event, which
+      // would trigger outer scroll back, ad infinitum. A
+      // requestAnimationFrame-based re-entrancy flag doesn't help
+      // because the scroll events fire *after* the RAF callback, so
+      // by the time the iframe's `scroll` listener runs, the flag is
+      // already cleared. Instead we go one-way (outer → iframe) and
+      // redirect wheel events landing inside the iframe to the outer
+      // page (see `onIframeWheel` below) so the user has only one
+      // scroll surface to think about.
+      try {
+        const iwin = iframe.contentWindow;
+        const idoc = iframe.contentDocument;
+        if (iwin && idoc) {
+          const outerToInner = () => {
+            const wrapperRect = wrapper.getBoundingClientRect();
+            const wrapperTop = window.scrollY + wrapperRect.top;
+            const offset = Math.max(0, window.scrollY - wrapperTop);
+            // Read the iframe's CURRENT document/window lazily instead
+            // of using the captured `idoc`/`iwin` from this setup call.
+            // Without this, during the brief window between an in-iframe
+            // navigation starting (the iframe's `location.replace` call)
+            // and the next `load` event re-running `setup()`, the captured
+            // `idoc` points at the *previous* now-detached document whose
+            // `scrollHeight` is 0 — so `max` becomes 0, every
+            // `iwin.scrollTo` clamps to 0, and the iframe scroll visibly
+            // freezes while the outer page keeps scrolling. Reading
+            // `iframe.contentDocument` directly here always gives us the
+            // current state.
+            const liveDoc = iframe.contentDocument;
+            const liveWin = iframe.contentWindow;
+            if (!liveDoc || !liveWin) return;
+            const max = Math.max(
+              0,
+              liveDoc.documentElement.scrollHeight - liveWin.innerHeight
+            );
+            // **Must use the options form with `behavior: 'instant'`.**
+            // The pasted htmlraw typically has `html { scroll-behavior:
+            // smooth }` — the legacy two-argument `scrollTo(x, y)`
+            // form honours that preference, so the call would *animate*
+            // to the target instead of jumping. Animations take
+            // hundreds of ms; if a follow-up `outerToInner` fires
+            // before the animation completes, it kicks off a second
+            // animation that races with the first and the iframe ends
+            // up at a random intermediate position — which is exactly
+            // the "scrolls back up near the end" bug the user reported.
+            // `behavior: 'instant'` is the standards-blessed way to
+            // bypass the smooth-scroll preference for programmatic
+            // jumps.
+            liveWin.scrollTo({ top: Math.min(offset, max), behavior: 'instant' });
+          };
+
+          // Wheel events that land on the iframe area are redirected
+          // to the outer page's scroll. The browser would otherwise
+          // scroll the iframe's body and leave the outer page stuck,
+          // making the iframe feel "out of sync" with the rest of
+          // the page (the bug we're fixing). The outer `scroll`
+          // listener above then mirrors the new outer scrollY back
+          // into the iframe.
+          //
+          // The trailing `outerToInner()` is load-bearing: when the
+          // outer page is already at max scroll, `window.scrollBy`
+          // is a no-op and no scroll event fires, so the iframe
+          // would otherwise stay stuck at whatever stale scrollY
+          // it last synced to (e.g. after polling temporarily
+          // shrunk the wrapper, then the wrapper grew back but the
+          // iframe scroll was never re-pinned). Re-running
+          // `outerToInner` here snaps the iframe to the correct
+          // offset for the current outer scroll position.
+          const onIframeWheel = (e: WheelEvent) => {
+            e.preventDefault();
+            window.scrollBy(0, e.deltaY);
+            outerToInner();
+          };
+
+          window.addEventListener('scroll', outerToInner, { passive: true });
+          iwin.addEventListener('wheel', onIframeWheel, { passive: false });
+
+          // On outer window resize, 100vh changes → iframe viewport
+          // changes → re-pin vh values to the new viewport height
+          // so any `min-height: 100vh` etc. scales correctly, and
+          // re-measure the wrapper because the inner content height
+          // might shift. We have to drop the measure floor first
+          // so the wrapper is allowed to shrink if the new
+          // viewport (and therefore the vh-bearing hero) is smaller.
+          const onResize = () => {
+            overrideVhUnits();
+            resetMeasureFloor();
+          };
+          window.addEventListener('resize', onResize, { passive: true });
+
+          // Stash all the new teardowns alongside the click
+          // cleanup we registered above so the effect's return can
+          // run them all.
+          const extraCleanups = () => {
+            window.removeEventListener('scroll', outerToInner);
+            iwin.removeEventListener('wheel', onIframeWheel);
+            window.removeEventListener('resize', onResize);
+          };
+          const prev =
+            (iframe as unknown as { __rawhtmlCleanup?: () => void })
+              .__rawhtmlCleanup;
+          (iframe as unknown as { __rawhtmlCleanup?: () => void }).__rawhtmlCleanup =
+            () => {
+              prev?.();
+              extraCleanups();
+            };
+
+          // Initial sync after first measure so the iframe scroll
+          // matches the user's current scroll position (relevant if
+          // they land mid-page via deep link / browser back).
+          requestAnimationFrame(() => {
+            requestAnimationFrame(outerToInner);
+          });
+        }
+      } catch {
+        // Cross-origin or detached — silently degrade.
+      }
     };
 
     // Listen for future loads (covers the case where the iframe is
@@ -403,12 +654,28 @@ export function RawHtmlBlock({ html }: Props) {
     // Wrapper has NO `height` in its React style prop — we control it
     // imperatively via DOM mutation in the effect. React's style
     // diffing would otherwise wipe our height on the next render.
+    //
+    // iframe is `position: sticky; top: 0; height: 100vh; z-index: 1`
+    // so it stays in view as the parent page scrolls and the iframe
+    // viewport remains permanently smaller than the inner document
+    // (which is what makes `position: sticky` *inside* the iframe
+    // engage correctly). z-index 1 keeps it above any in-iframe
+    // backgrounds; our app's sticky header overlays it from above
+    // via its own z-index.
     <div ref={wrapperRef} style={{ width: '100%' }}>
       <iframe
         ref={iframeRef}
         srcDoc={html}
         title="Embedded page"
-        style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+        style={{
+          width: '100%',
+          height: '100vh',
+          border: 'none',
+          display: 'block',
+          position: 'sticky',
+          top: 0,
+          zIndex: 1,
+        }}
       />
     </div>
   );
