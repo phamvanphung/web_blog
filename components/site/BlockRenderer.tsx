@@ -15,20 +15,28 @@ export function BlockRenderer({ sections }: { sections: Section[] }) {
       {sections.map((s) => {
         switch (s.kind) {
           case 'hero': {
+            // `key` must be on the outermost element returned from the
+            // map callback. We used to put it on <HeroBlock> (an inner
+            // element) which silently passed the React key warning —
+            // Fragment children still need keys on the actual node that
+            // appears in the array.
             return (
-              <div className="diag-full-bleed">
-                <HeroBlock key={s.id} {...s.data} />
+              <div key={s.id} className="diag-full-bleed">
+                <HeroBlock {...s.data} />
               </div>
             );
           }
           case 'cta': {
             return (
-              <div className="diag-full-bleed">
-                <CtaBlock key={s.id} {...s.data} />
+              <div key={s.id} className="diag-full-bleed">
+                <CtaBlock {...s.data} />
               </div>
             );
           }
           case 'richtext': {
+            // `null` is a valid Fragment child and does not require a
+            // key, but we still want to skip empty sections cleanly
+            // without polluting the array with a keyed `null`.
             const html = sectionToHtml(s);
             if (!html) return null;
             return <RichTextBlock key={s.id} html={html.html} />;
@@ -46,8 +54,8 @@ export function BlockRenderer({ sections }: { sections: Section[] }) {
             // (`isFullLanding`), there's no Container ancestor and the
             // class is a harmless no-op.
             return (
-              <div className="diag-full-bleed">
-                <RawHtmlBlock key={s.id} html={s.data.html} />
+              <div key={s.id} className="diag-full-bleed">
+                <RawHtmlBlock html={s.data.html} />
               </div>
             );
           }

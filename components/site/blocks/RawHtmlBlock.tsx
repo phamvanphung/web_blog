@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { replaceVhUnits } from './vhPin';
 
 type Props = {
   html: string;
@@ -129,6 +130,13 @@ export function RawHtmlBlock({ html }: Props) {
      * initial viewport breaks the loop: hero (or whichever element
      * used vh) settles at its initial rendered size and subsequent
      * iframe expansion doesn't feed back into body height.
+     *
+     * The pin catches `vh` in *any* declaration value — including
+     * mixed expressions like `calc(100vh - 52px)`,
+     * `min(100vh, 800px)`, or even `height: calc(100vh - 4rem)`.
+     * Earlier versions only matched declarations that were *purely*
+     * `100vh`, which let expressions like `calc(100vh - 52px) (used
+     * on the page that prompted this fix) feed the feedback loop.
      */
     const overrideVhUnits = () => {
       try {
@@ -140,16 +148,6 @@ export function RawHtmlBlock({ html }: Props) {
         const vh = win.innerHeight;
         if (!vh || vh <= 0) return;
 
-        /** Match a single-value declaration that is purely vh units. */
-        const isPureVh = (val: string): boolean =>
-          /^\s*-?[\d.]+vh\s*$/.test(val);
-
-        /** Convert "100vh" → "150px" (using the current viewport). */
-        const vhToPx = (val: string): string => {
-          const num = parseFloat(val);
-          return `${(num * vh) / 100}px`;
-        };
-
         /** Recurse into a rule, recursing one level for @media / @supports. */
         const processRule = (rule: CSSRule) => {
           const cssStyle = (rule as CSSStyleRule).style;
@@ -160,8 +158,14 @@ export function RawHtmlBlock({ html }: Props) {
               const prop = cssStyle.item(i);
               if (!prop) continue;
               const val = cssStyle.getPropertyValue(prop);
-              if (val && isPureVh(val)) {
-                cssStyle.setProperty(prop, vhToPx(val));
+              // Cheap pre-filter so we don't allocate a new string for
+              // every declaration (the common case is no `vh` at all).
+              if (val && /\d+vh/.test(val)) {
+                const replaced = replaceVhUnits(val, vh);
+                // setProperty preserves !important; assigning via
+                // `style[name] =` would silently drop the priority flag.
+                const priority = cssStyle.getPropertyPriority(prop);
+                cssStyle.setProperty(prop, replaced, priority);
               }
             }
           }
