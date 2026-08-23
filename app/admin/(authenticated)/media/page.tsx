@@ -1,14 +1,32 @@
 import { requireRole } from '@/lib/auth';
 import { listMedia } from '@/modules/media/server';
 import { UploadForm } from './UploadForm';
-import { MediaCard } from './MediaCard';
+import { MediaGrid } from './MediaGrid';
 import { deleteMediaFormAction } from './actions';
 
 export const dynamic = 'force-dynamic';
 
 export default async function MediaPage() {
   await requireRole('ADMIN');
-  const { items, total } = await listMedia({ take: 60 });
+  // Initial page — 60 most-recent. Older rows load lazily via the
+  // `loadMoreMediaAction` server action triggered by IntersectionObserver
+  // inside <MediaGrid>. Total is rendered as the count badge on the grid
+  // heading so the user can tell how many are still off-screen.
+  const INITIAL_PAGE = 60;
+  const { items, total } = await listMedia({ take: INITIAL_PAGE });
+
+  // Map to the same wire shape the server action returns so the client
+  // component can treat SSR rows and lazily-loaded rows uniformly.
+  const initialItems = items.map((m) => ({
+    id: m.id,
+    url: m.url,
+    altText: m.altText,
+    originalName: m.originalName,
+    width: m.width,
+    height: m.height,
+    fileSize: m.fileSize,
+    createdAt: m.createdAt.toISOString()
+  }));
 
   return (
     <div>
@@ -20,26 +38,19 @@ export default async function MediaPage() {
 
       <UploadForm />
 
-      <h2 className="mb-3 mt-10 text-[21px] font-semibold tracking-tight">Tất cả ({total})</h2>
-      {items.length === 0 ? (
+      <h2 className="mb-3 mt-10 text-[21px] font-semibold tracking-tight">
+        Tất cả ({total})
+        <span className="ml-3 text-[12px] font-normal text-ink-48">
+          đang hiển thị {items.length}
+        </span>
+      </h2>
+      {initialItems.length === 0 ? (
         <p className="text-[13px] text-ink-48">Chưa có media nào.</p>
       ) : (
-        <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-          {items.map((m) => (
-            <MediaCard
-              key={m.id}
-              id={m.id}
-              url={m.url}
-              altText={m.altText}
-              originalName={m.originalName}
-              width={m.width}
-              height={m.height}
-              fileSize={m.fileSize}
-              deleteAction={deleteMediaFormAction}
-            />
-          ))}
-        </ul>
+        <MediaGrid initialItems={initialItems} deleteAction={deleteMediaFormAction} />
       )}
     </div>
   );
 }
+
+
