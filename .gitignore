@@ -53,5 +53,6 @@ next-env.d.ts
 .playwright-mcp/
 human/
 /*.png
-"docs/" 
-".git.backup/" 
+docs/
+.git.backup/ 
+brainstorm.md
