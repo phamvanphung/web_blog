@@ -59,9 +59,9 @@ cp .env.example .env
 # Sửa DATABASE_URL nếu khác (Windows Docker thường dùng `localhost:3306`, Linux dùng `localhost:3306` hoặc socket)
 
 # 4. Migrate + seed
-pnpm db:migrate --name init
+pnpm db:migrate       # apply tất cả pending migrations (init đã có sẵn trong repo)
 pnpm db:seed
-# Admin mặc định: admin@9ent.vn / changeme123!  (đổi ngay sau khi đăng nhập ở P1)
+# Admin mặc định: admin@9ent.vn / changeme123!  (đổi ngay sau khi login lần đầu)
 
 # 5. Chạy dev
 pnpm dev
@@ -70,13 +70,13 @@ pnpm dev
 Truy cập:
 
 - **Public:** http://localhost:3000
-- **Admin:** http://localhost:3000/admin/login (sẽ enable auth ở P1)
-- **Health:** http://localhost:3000/api/health — trả `{ ok: true, db: 'up' }` khi MySQL chạy ổn
+- **Admin:** http://localhost:3000/admin/login
+- **Health:** http://localhost:3000/api/health — trả `{ ok: true, db: 'up', ts: 'ISO-timestamp' }` khi MySQL chạy ổn
 
 ## Storage
 
 - **Local (Windows / Linux dev):** `UPLOAD_ROOT="./storage/uploads"` (relative). Thư mục `storage/uploads/.gitkeep` đã được commit; mọi file upload thật được gitignore.
-- **Production (VPS Ubuntu):** Override `UPLOAD_ROOT="/srv/9ent/storage/uploads"` trong `.env` thật trên server. Nginx serve `/uploads/*` trực tiếp từ disk (cấu hình ở P7).
+- **Production (VPS Ubuntu):** Override `UPLOAD_ROOT="/srv/9ent/storage/uploads"` + `UPLOAD_PUBLIC_BASE="/uploads"` trong `.env` thật trên server. Nginx serve `/uploads/*` trực tiếp từ disk (cấu hình ở P7).
 
 ## Scripts
 
@@ -91,6 +91,7 @@ pnpm format:check       # prettier check
 pnpm test               # vitest unit
 pnpm test:e2e           # playwright (cần dev server + MySQL)
 pnpm db:migrate         # prisma migrate dev
+pnpm db:generate        # prisma generate (chạy tự động qua postinstall)
 pnpm db:seed            # tạo admin mặc định
 pnpm db:studio          # Prisma Studio GUI
 ```
@@ -118,7 +119,7 @@ Hai role:
 Default admin (seed bởi `prisma/seed.ts`):
 
 - Email: `admin@9ent.vn`
-- Password: `changeme123!` ← đổi ngay sau khi login lần đầu (sẽ có UI ở P2+).
+- Password: `changeme123!` ← đổi ngay sau khi login lần đầu.
 
 Login flow: `/admin/login`. Rate-limit 5 attempts / 15 min / IP. P1 implementation is **in-memory per Node process** — fine for dev + single-instance deploy. For multi-instance (PM2 cluster, k8s, etc.) replace `lib/rateLimit.ts` with a Redis-backed implementation before launch; the sliding-window API stays the same.
 
@@ -183,7 +184,7 @@ Admin pages:
 
 Một số gates yêu cầu MySQL thật để pass:
 
-- `/api/health` trả `{ ok: true, db: 'up' }` (P0/P1) — không có DB → 503 với `{ db: 'down' }`.
+- `/api/health` trả `{ ok: true, db: 'up', ts: 'ISO-timestamp' }` khi DB OK — không có DB → 503 với `{ ok: false, db: 'down', error: '...' }`.
 - E2E test `home.spec.ts > health endpoint returns ok` (P0) — fail khi MySQL down.
 - E2E login round-trip thật (right password → dashboard) — cần seed admin user.
 
