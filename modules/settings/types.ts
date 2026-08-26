@@ -15,6 +15,7 @@ export type SettingKey =
   | 'seo.defaultDescription'
   | 'seo.ogImage'
   | 'content.postsPerPage'
-  | 'content.timezone';
+  | 'content.timezone'
+  | 'site.notFoundPath';
 
 export type SettingsMap = Partial<Record<SettingKey, string>>;

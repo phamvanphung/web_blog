@@ -97,6 +97,12 @@ export const SETTING_META: Record<SettingKey, SettingMeta> = {
     label: 'Múi giờ',
     description: 'Múi giờ cho lịch đăng bài, ví dụ `Asia/Ho_Chi_Minh`.',
     group: 'content'
+  },
+  'site.notFoundPath': {
+    label: 'Đường dẫn trang 404',
+    description:
+      'Path tới trang 404 tuỳ chỉnh (ví dụ `/khong-tim-thay`). Để trống = dùng 404 mặc định. Hỗ trợ cả URL tuyệt đối (https://...).',
+    group: 'site'
   }
 };
 
