@@ -375,3 +375,41 @@ model ContactSubmission {
 
   @@index([status, createdAt])
 }
+
+// ============================================================
+// POPUPS
+// ============================================================
+
+enum PopupStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum PopupTriggerType {
+  ALL
+  HOMEPAGE
+  PATH
+}
+
+enum PopupFrequency {
+  ALWAYS
+  ONCE
+}
+
+model Popup {
+  id            String           @id @default(cuid())
+  name          String           @db.VarChar(120)
+  htmlContent   String           @db.LongText
+  triggerType   PopupTriggerType @default(ALL)
+  triggerPaths  Json?
+  frequency     PopupFrequency   @default(ONCE)
+  delaySeconds  Int              @default(0)
+  status        PopupStatus      @default(DRAFT)
+  notes         String?          @db.VarChar(500)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  deletedAt     DateTime?
+
+  @@index([status, triggerType])
+  @@index([deletedAt])
+}
