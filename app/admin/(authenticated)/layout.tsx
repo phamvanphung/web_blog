@@ -17,6 +17,7 @@ const NAV: { href: string; label: string; icon: IconName }[] = [
   { href: '/admin/menus', label: 'Menu', icon: 'menu' },
   { href: '/admin/contacts', label: 'Liên hệ', icon: 'contact' },
   { href: '/admin/users', label: 'Users', icon: 'user' },
+  { href: '/admin/popups', label: 'Popups', icon: 'megaphone' },
   { href: '/admin/settings', label: 'Settings', icon: 'settings' },
   { href: '/admin/audit-log', label: 'Audit log', icon: 'audit' }
 ];

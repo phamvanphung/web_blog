@@ -15,7 +15,8 @@ export type IconName =
   | 'contact'
   | 'user'
   | 'settings'
-  | 'audit';
+  | 'audit'
+  | 'megaphone';
 
 const PATHS: Record<IconName, string> = {
   // Dashboard — 4 tiles / squares
@@ -80,7 +81,11 @@ const PATHS: Record<IconName, string> = {
   audit:
     '<rect x="6" y="4" width="12" height="18" rx="2"></rect>' +
     '<path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"></path>' +
-    '<path d="m9 12 2 2 4-4"></path>'
+    '<path d="m9 12 2 2 4-4"></path>',
+
+  // Megaphone — bullhorn / announcement
+  megaphone:
+    '<path d="M3 11l19-9-9 19-2-8-8-2z"></path>'
 };
 
 type Props = SVGProps<SVGSVGElement> & {
