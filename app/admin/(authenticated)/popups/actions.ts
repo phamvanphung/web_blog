@@ -1,6 +1,6 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { requireRole } from '@/lib/auth';
 import {
@@ -61,6 +61,7 @@ export async function createPopupAction(
     const input = await parseForm(formData);
     await createPopup(input);
     revalidatePath('/admin/popups');
+    revalidateTag('popups:public');
     redirect('/admin/popups');
   } catch (e) {
     if (e instanceof Error && e.message.includes('NEXT_REDIRECT')) throw e;
@@ -79,6 +80,7 @@ export async function updatePopupAction(
     await updatePopup({ id, ...input });
     revalidatePath('/admin/popups');
     revalidatePath(`/admin/popups/${id}`);
+    revalidateTag('popups:public');
     redirect('/admin/popups');
   } catch (e) {
     if (e instanceof Error && e.message.includes('NEXT_REDIRECT')) throw e;
@@ -91,4 +93,5 @@ export async function deletePopupAction(formData: FormData): Promise<void> {
   const id = asString(formData.get('id'));
   await softDeletePopup(id);
   revalidatePath('/admin/popups');
+  revalidateTag('popups:public');
 }
