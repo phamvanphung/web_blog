@@ -86,37 +86,34 @@ const getCachedHomeHref = async (origin: string): Promise<string | null> => {
 export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
-  // Only the bare root. `pathname` is always normalised so trailing
-  // slashes, query strings, fragments don't reach this branch.
-  if (pathname !== ROOT_PATH) return NextResponse.next();
+  // Always set x-pathname so the (site) layout can read the current path.
+  // The redirect branch below also forwards the header on the rewritten
+  // request so downstream server components see the original pathname.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-pathname', pathname);
+  const forwarded = NextResponse.next({ request: { headers: requestHeaders } });
+
+  // Only the bare root runs the homeHref redirect. Everything else is a
+  // no-op pass-through that has already been stamped with x-pathname.
+  if (pathname !== ROOT_PATH) return forwarded;
 
   const homeHref = await getCachedHomeHref(request.nextUrl.origin);
 
   // No setting (or the default `/`) → no redirect. The homepage renders.
-  if (!homeHref || homeHref === '/') return NextResponse.next();
+  if (!homeHref || homeHref === '/') return forwarded;
 
-  // Build the redirect target. Relative paths stay same-origin; we
-  // copy over the original query string so a visitor arriving at
-  // `/?utm=...` keeps their tracking params. Hashes can't be sent
-  // server-side so they're silently dropped (browsers will scroll
-  // the new page to top regardless).
   const target =
     /^https?:\/\//i.test(homeHref)
       ? new URL(homeHref)
       : new URL(homeHref + search, request.nextUrl.origin);
 
-  // 307 preserves the HTTP method + body (here it's always GET so
-  // irrelevant) and signals "this redirect is definitive, don't
-  // cache it client-side". 301 is SEO-friendly but caches at
-  // intermediaries — admin might point homeHref at a different
-  // landing next week and we don't want stale 301s in CDNs.
   return NextResponse.redirect(target, 307);
 }
 
-// Match only `/` so the middleware cost is essentially zero for
-// every other request. Next.js requires either a string array or
-// a matcher object; we list the single route we care about and
-// rely on `pathname !== '/'` to bail otherwise.
+// Match every non-static path so we can stamp x-pathname. The homeHref
+// redirect inside the function still only fires for `/`. Static assets
+// (`_next/*`, `/favicon.ico`, etc.) are excluded so the middleware does
+// zero work for them.
 export const config = {
-  matcher: ['/']
+  matcher: ['/((?!_next|favicon.ico).*)']
 };
