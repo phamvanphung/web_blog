@@ -14,10 +14,16 @@ const PUBLIC_SELECT = {
   id: true,
   name: true,
   htmlContent: true,
+  // `status` and `deletedAt` MUST be selected — `matches()` defends in
+  // depth by re-checking these fields, so dropping them from the SELECT
+  // silently breaks every popup (status/deletedAt become `undefined`
+  // and the matcher rejects them).
+  status: true,
   triggerType: true,
   triggerPaths: true,
   frequency: true,
-  delaySeconds: true
+  delaySeconds: true,
+  deletedAt: true
 } as const;
 
 /**
