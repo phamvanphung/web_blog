@@ -51,20 +51,25 @@ test.describe('Admin /admin/popups CRUD', () => {
   });
 
   test('soft-deletes a popup', async ({ page }) => {
-    await page.goto('/admin/popups');
-    await page.waitForLoadState('networkidle');
-    const before = await page.locator('tbody tr').count();
-    // Only delete if there's something to delete
-    if (before > 0) {
-      await page.getByRole('button', { name: 'Xóa' }).first().click();
-      // Wait for the row count to decrease (server action updates the page)
-      await page.waitForFunction(
-        ({ beforeCount }) => document.querySelectorAll('tbody tr').length < beforeCount,
-        { beforeCount: before },
-        { timeout: 10000 }
-      );
-      const after = await page.locator('tbody tr').count();
-      expect(after).toBeLessThan(before);
-    }
+    // Create a uniquely-named popup so we delete a specific one
+    // rather than whatever happens to be first in the list (which
+    // could be a popup other tests depend on).
+    await page.goto('/admin/popups/new');
+    await page.locator('input[name="name"]').fill('E2E delete-target popup');
+    await page.locator('textarea[name="htmlContent"]').fill('<p>delete me</p>');
+    await page.getByLabel('Tất cả các trang').check();
+    await page.getByLabel('Chỉ 1 lần / browser').check();
+    await page.locator('select[name="status"]').selectOption('DRAFT');
+    await page.getByRole('button', { name: 'Tạo popup' }).click();
+    await page.waitForURL(/\/admin\/popups$/);
+
+    // Find the row for our popup and click its Xóa button specifically.
+    const row = page.getByRole('row').filter({ hasText: 'E2E delete-target popup' });
+    await expect(row).toBeVisible();
+    await row.getByRole('button', { name: 'Xóa' }).click();
+    await page.waitForURL(/\/admin\/popups$/);
+
+    // The deleted popup should no longer appear in the list.
+    await expect(page.getByText('E2E delete-target popup')).toHaveCount(0);
   });
 });
