@@ -17,6 +17,7 @@ const headers = vi.hoisted(() =>
 );
 
 const findUnique = vi.hoisted(() => vi.fn());
+const findFirst = vi.hoisted(() => vi.fn().mockResolvedValue(null));
 const create = vi.hoisted(() => vi.fn().mockResolvedValue({ id: 'p1', name: 'x' }));
 const update = vi.hoisted(() => vi.fn().mockResolvedValue({ id: 'p1' }));
 
@@ -29,7 +30,7 @@ vi.mock('@/lib/auth', () => ({ requireRole }));
 vi.mock('@/lib/audit', () => ({ audit, hashIp }));
 vi.mock('@/lib/db', () => ({
   db: {
-    popup: { create, update, findUnique, findMany: vi.fn() }
+    popup: { create, update, findUnique, findFirst, findMany: vi.fn() }
   }
 }));
 
@@ -37,7 +38,6 @@ import { createPopup, updatePopup, softDeletePopup } from '@/modules/popups/serv
 
 beforeEach(() => {
   vi.clearAllMocks();
-  audit.mockClear();
   findUnique.mockResolvedValue({ id: 'p1' });
 });
 
@@ -56,6 +56,15 @@ describe('CRUD revalidates tags', () => {
     const tags = revalidateTag.mock.calls.map((c) => c[0]);
     expect(tags).toContain('popups:admin-list');
     expect(tags).toContain('popups:public');
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          name: 'Promo',
+          htmlContent: '<p>x</p>',
+          status: 'DRAFT'
+        })
+      })
+    );
     expect(audit).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'popup.create', target: 'Popup', targetId: 'p1' })
     );
@@ -75,6 +84,9 @@ describe('CRUD revalidates tags', () => {
         where: { id: 'p1' },
         data: expect.objectContaining({ deletedAt: expect.any(Date) })
       })
+    );
+    expect(audit).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'popup.delete', target: 'Popup', targetId: 'p1' })
     );
     const tags = revalidateTag.mock.calls.map((c) => c[0]);
     expect(tags).toContain('popups:admin-list');

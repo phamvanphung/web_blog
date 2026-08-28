@@ -43,7 +43,7 @@ export async function listPopups(
 }
 
 export async function getPopup(idOrName: string) {
-  const byId = await db.popup.findUnique({ where: { id: idOrName } });
+  const byId = await db.popup.findFirst({ where: { id: idOrName, deletedAt: null } });
   if (byId) return byId;
   return db.popup.findFirst({
     where: { name: idOrName, deletedAt: null }
