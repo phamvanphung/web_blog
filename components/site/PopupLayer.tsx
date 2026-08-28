@@ -8,7 +8,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { SerializedPopup } from '@/modules/popups/types';
 import { PopupFrame } from './PopupFrame';
 import { usePopupDismissal } from '@/hooks/usePopupDismissal';
@@ -41,22 +41,27 @@ export function PopupLayer({ popups }: Props) {
     return () => timers.forEach(clearTimeout);
   }, [popups, isDismissed]);
 
+  const handleClose = useCallback(
+    (id: string) => {
+      setOpenIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      const popup = popups.find((p) => p.id === id);
+      if (popup && popup.frequency === 'ONCE') dismiss(id);
+    },
+    [popups, dismiss]
+  );
+
   const topOpenId = popups.find((p) => openIds.has(p.id))?.id ?? null;
 
-  useEscToClose(() => {
+  const closeTop = useCallback(() => {
     if (topOpenId) handleClose(topOpenId);
-  }, openIds.size > 0);
-  useBodyScrollLock(openIds.size > 0);
+  }, [topOpenId, handleClose]);
 
-  const handleClose = (id: string) => {
-    setOpenIds((prev) => {
-      const next = new Set(prev);
-      next.delete(id);
-      return next;
-    });
-    const popup = popups.find((p) => p.id === id);
-    if (popup && popup.frequency === 'ONCE') dismiss(id);
-  };
+  useEscToClose(closeTop, openIds.size > 0);
+  useBodyScrollLock(openIds.size > 0);
 
   return (
     <>

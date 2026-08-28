@@ -53,7 +53,7 @@ export function PopupFrame({ popup, onClose }: Props) {
         <iframe
           srcDoc={popup.htmlContent}
           title={popup.name}
-          sandbox="allow-scripts allow-forms allow-popups allow-same-origin"
+          sandbox="allow-scripts allow-forms allow-popups"
           className="block h-[80vh] w-full border-0"
         />
       </div>
