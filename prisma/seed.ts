@@ -42,7 +42,18 @@ async function main() {
     { key: 'site.name', value: '9ent' },
     { key: 'site.tagline', value: 'Blog công ty 9ent' },
     { key: 'content.postsPerPage', value: '12' },
-    { key: 'content.timezone', value: 'Asia/Ho_Chi_Minh' }
+    { key: 'content.timezone', value: 'Asia/Ho_Chi_Minh' },
+    // Theme defaults (mirror DEFAULT_THEME_HEX in lib/theme.ts).
+    // Pre-seeded so the inline <style> in root layout has values to read
+    // even before the admin opens the Theme page for the first time.
+    { key: 'theme.primary', value: '#8e211c' },
+    { key: 'theme.secondary', value: '#cf6768' },
+    { key: 'theme.surface.canvas', value: '#ffffff' },
+    { key: 'theme.surface.warm', value: '#fff7f7' },
+    { key: 'theme.surface.dark', value: '#44100f' },
+    { key: 'theme.ink.heading', value: '#44100f' },
+    { key: 'theme.hairline', value: '#f0d9d9' },
+    { key: 'theme.badge', value: '#f5d0d1' }
   ];
   for (const s of defaults) {
     await db.setting.upsert({ where: { key: s.key }, update: {}, create: s });
