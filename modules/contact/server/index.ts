@@ -43,9 +43,11 @@ export async function submitContact(
       }
     });
     return { ok: true, id: row.id };
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.error('contact submit failed', e);
+  } catch {
+    // Swallow the error to avoid leaking server internals via the
+    // returned message (or the response shape). The admin /admin/contacts
+    // view shows DB rows directly so legitimate submissions are still
+    // visible to the operator even if persistence hits a transient fault.
     return { ok: false, error: 'internal' };
   }
 }

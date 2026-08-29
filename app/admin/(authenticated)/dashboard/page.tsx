@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { db } from '@/lib/db';
-import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,11 +42,9 @@ export default async function DashboardPage() {
     categories = catCount;
     tags = tagCount;
     recentPosts = recent;
-  } catch (e) {
+  } catch {
     dbDown = true;
-    logger.warn('dashboard.counts_failed', {
-      error: (e as Error).message.slice(0, 200)
-    });
+    // DB unreachable: UI shows a banner via {dbDown && ...} further down.
   }
 
   return (

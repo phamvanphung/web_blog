@@ -7,7 +7,6 @@ import { headers } from 'next/headers';
 import { db } from '@/lib/db';
 import { processImage, ALLOWED_MIME_SET } from '@/lib/image';
 import { getUploadRoot, MAX_UPLOAD_BYTES, pathForUpload, publicUrlFor } from '@/lib/storage';
-import { logger } from '@/lib/logger';
 import { writeFile, mkdir } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -114,6 +113,5 @@ export async function uploadMediaAction(
   // Media may be referenced as a category cover image — invalidate that
   // cached list so newly uploaded covers appear in `/chu-de` immediately.
   revalidateTag('categories:list');
-  logger.info('media.upload', { id: record.id, userId: me.id });
   return { ok: true, id: record.id };
 }

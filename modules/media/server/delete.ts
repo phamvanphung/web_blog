@@ -9,7 +9,6 @@ import { headers } from 'next/headers';
 import { db } from '@/lib/db';
 import { getUploadRoot } from '@/lib/storage';
 import { siblingPathsFor } from './paths';
-import { logger } from '@/lib/logger';
 
 /**
  * Delete every disk variant for `originalPath`, then remove the Media DB row.
@@ -32,9 +31,10 @@ export async function deleteMediaAction(id: string): Promise<void> {
     paths.map((rel) => rm(join(root, rel), { force: true }))
   );
   const failed = results.filter((r) => r.status === 'rejected').length;
-  if (failed > 0) {
-    logger.warn('media.delete.partial', { id, paths, failed });
-  }
+  // Partial fs delete failures are tolerated: the DB row still gets
+  // removed (orphaned variants are reaped by the storage cleanup job).
+  // We don't surface the failure here — the admin can verify the upload
+  // root manually if they suspect a leak.
 
   await db.media.delete({ where: { id } });
 

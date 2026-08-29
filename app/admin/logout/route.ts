@@ -9,7 +9,6 @@ import { redirect } from 'next/navigation';
 import { cookies, headers } from 'next/headers';
 import { audit, hashIp } from '@/lib/audit';
 import { db } from '@/lib/db';
-import { logger } from '@/lib/logger';
 
 const COOKIE_NAME = process.env.SESSION_COOKIE_NAME ?? 'sid';
 
@@ -31,7 +30,6 @@ export async function POST(): Promise<Response> {
         action: 'logout',
         ipHash: await hashIp(ip)
       });
-      logger.info('logout', { userId: session.userId });
     }
   }
   jar.delete(COOKIE_NAME);

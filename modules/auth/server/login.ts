@@ -7,7 +7,6 @@ import { verifyPassword } from '@/lib/auth';
 import { audit, hashIp } from '@/lib/audit';
 import { createLimiter } from '@/lib/rateLimit';
 import { createSession } from './session';
-import { logger } from '@/lib/logger';
 
 const Credentials = z.object({
   email: z.string().email().max(200),
@@ -91,6 +90,5 @@ export async function attemptLogin(args: {
     action: 'login.success',
     ipHash: await hashIp(args.ip)
   });
-  logger.info('login.success', { userId: user.id });
   return { ok: true };
 }

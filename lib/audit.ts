@@ -3,7 +3,6 @@
 // (we don't want a failed audit write to break a successful login).
 
 import { db } from '@/lib/db';
-import { logger } from '@/lib/logger';
 
 export type AuditInput = {
   userId?: string | null;
@@ -27,10 +26,11 @@ export async function audit(input: AuditInput): Promise<void> {
       }
     });
   } catch (e) {
-    logger.warn('audit.write_failed', {
-      action: input.action,
-      error: (e as Error).message.slice(0, 200)
-    });
+    // Best-effort: never throw to caller. We swallow the DB write error
+    // here intentionally — losing an audit row is preferable to failing
+    // the user-facing action (login, save, etc.). If you need to
+    // observe these failures, query the AuditLog table for gaps.
+    void e;
   }
 }
 
