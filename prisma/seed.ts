@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { PrismaClient, Prisma, UserRole } from '@prisma/client';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 import { hash } from '@node-rs/argon2';
+import { DEFAULT_THEME_HEX } from '../modules/settings/theme-defaults';
 
 const url = process.env.DATABASE_URL;
 if (!url) {
@@ -43,17 +44,11 @@ async function main() {
     { key: 'site.tagline', value: 'Blog công ty 9ent' },
     { key: 'content.postsPerPage', value: '12' },
     { key: 'content.timezone', value: 'Asia/Ho_Chi_Minh' },
-    // Theme defaults (mirror DEFAULT_THEME_HEX in lib/theme.ts).
-    // Pre-seeded so the inline <style> in root layout has values to read
-    // even before the admin opens the Theme page for the first time.
-    { key: 'theme.primary', value: '#8e211c' },
-    { key: 'theme.secondary', value: '#cf6768' },
-    { key: 'theme.surface.canvas', value: '#ffffff' },
-    { key: 'theme.surface.warm', value: '#fff7f7' },
-    { key: 'theme.surface.dark', value: '#44100f' },
-    { key: 'theme.ink.heading', value: '#44100f' },
-    { key: 'theme.hairline', value: '#f0d9d9' },
-    { key: 'theme.badge', value: '#f5d0d1' }
+    // Theme defaults pulled from the shared constant so they never drift
+    // from `lib/theme.ts` / the "Khôi phục mặc định" admin button. Pre-seeded
+    // so the inline <style> in root layout has values to read even before the
+    // admin opens the Theme page for the first time.
+    ...Object.entries(DEFAULT_THEME_HEX).map(([key, value]) => ({ key, value }))
   ];
   for (const s of defaults) {
     await db.setting.upsert({ where: { key: s.key }, update: {}, create: s });

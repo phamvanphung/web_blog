@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { DEFAULT_THEME_HEX } from '../../modules/settings/theme-defaults';
 
 test.describe('Theme management', () => {
   test('admin can change theme.primary and site repaints', async ({ page, context }) => {
@@ -40,10 +41,15 @@ test.describe('Theme management', () => {
     });
     expect(headerBg).toBe('rgb(30, 64, 175)');
 
-    // Cleanup: reset theme to default
+    // Cleanup: reset theme to default. Use data-testid to disambiguate
+    // from the save form (both now expose role="status" success messages).
     await page.goto('/admin/theme');
-    await page.getByRole('button', { name: /khôi phục mặc định/i }).click();
-    await expect(page.getByRole('status')).toContainText(/đã khôi phục/i);
+    await page.getByTestId('reset-theme-form').getByRole('button', { name: /khôi phục mặc định/i }).click();
+    await expect(page.getByTestId('reset-theme-status')).toContainText(/đã khôi phục/i);
+
+    // Pickers should also reflect the defaults visually — not just the DB.
+    const primaryHex = page.locator('input[name="theme.primary"][type="text"]');
+    await expect(primaryHex).toHaveValue(DEFAULT_THEME_HEX['theme.primary']);
   });
 
   test('audit log captures theme.update', async ({ page }) => {

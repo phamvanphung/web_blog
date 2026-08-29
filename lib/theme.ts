@@ -11,31 +11,20 @@ import { unstable_cache } from 'next/cache';
 import { cachedGetSetting } from '@/modules/settings/server';
 import type { ThemeKey } from '@/modules/settings/types';
 
+// DEFAULT_THEME_HEX / HEX_REGEX / isValidHex live in the client-safe
+// `modules/settings/theme-defaults.ts` so the admin form can import them
+// without pulling in `unstable_cache` and the Prisma-backed setting cache.
+// Imported here so `getTheme()` can fall back to defaults, and re-exported
+// for existing server-side callers (`page.tsx`, `actions.ts` dynamic
+// import, unit tests).
+import {
+  DEFAULT_THEME_HEX,
+  HEX_REGEX,
+  isValidHex
+} from '@/modules/settings/theme-defaults';
+export { DEFAULT_THEME_HEX, HEX_REGEX, isValidHex };
+
 export const THEME_TAG = 'settings:theme';
-
-/**
- * The hex values shipped in `styles/tokens.css`. Used as the fallback when
- * a theme.* setting is missing from the DB (first deploy, fresh DB, or
- * admin never opened the theme page). Keep in sync with tokens.css.
- */
-export const DEFAULT_THEME_HEX: Record<ThemeKey, string> = {
-  'theme.primary': '#8e211c',
-  'theme.secondary': '#cf6768',
-  'theme.surface.canvas': '#ffffff',
-  'theme.surface.warm': '#fff7f7',
-  'theme.surface.dark': '#44100f',
-  'theme.ink.heading': '#44100f',
-  'theme.hairline': '#f0d9d9',
-  'theme.badge': '#f5d0d1'
-};
-
-/** Zod-compatible regex the admin form enforces before write. */
-export const HEX_REGEX = /^#[0-9a-f]{6}$/i;
-
-/** Cheap runtime guard (Zod's regex is the authoritative validator). */
-export function isValidHex(input: string): boolean {
-  return HEX_REGEX.test(input);
-}
 
 export type ResolvedTheme = Record<ThemeKey, string | null>;
 
