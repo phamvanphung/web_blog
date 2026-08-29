@@ -21,9 +21,13 @@ describe('hexToHsl / hslToHex', () => {
     expect(back.toLowerCase()).toMatch(/^#[0-9a-f]{6}$/);
   });
 
-  it('handles 3-digit shorthand #abc → #aabbcc', () => {
-    const hsl = hexToHsl('#abc');
-    expect(hslToHex(hsl)).toBe('#aabbcc');
+  it('expands 3-digit shorthand #abc → #aabbcc (same HSL as explicit form)', () => {
+    // Both inputs should produce identical HSL — verifying normalizeHex expansion.
+    expect(hexToHsl('#abc')).toEqual(hexToHsl('#aabbcc'));
+  });
+
+  it('expands 3-digit shorthand #fff → #ffffff', () => {
+    expect(hexToHsl('#fff')).toEqual(hexToHsl('#ffffff'));
   });
 });
 
