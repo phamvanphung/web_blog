@@ -16,7 +16,8 @@ export type IconName =
   | 'user'
   | 'settings'
   | 'audit'
-  | 'megaphone';
+  | 'megaphone'
+  | 'palette';
 
 const PATHS: Record<IconName, string> = {
   // Dashboard — 4 tiles / squares
@@ -85,7 +86,15 @@ const PATHS: Record<IconName, string> = {
 
   // Megaphone — bullhorn / announcement
   megaphone:
-    '<path d="M3 11l19-9-9 19-2-8-8-2z"></path>'
+    '<path d="M3 11l19-9-9 19-2-8-8-2z"></path>',
+
+  // Palette — color theme (CMS theme picker)
+  palette:
+    '<circle cx="12" cy="12" r="9"></circle>' +
+    '<circle cx="7.5" cy="10.5" r="1.2" fill="currentColor"></circle>' +
+    '<circle cx="12" cy="7.5" r="1.2" fill="currentColor"></circle>' +
+    '<circle cx="16.5" cy="10.5" r="1.2" fill="currentColor"></circle>' +
+    '<path d="M12 21a4 4 0 0 0 0-8h-1a2 2 0 0 1 0-4 4 4 0 0 0 4-4"></path>',
 };
 
 type Props = SVGProps<SVGSVGElement> & {
