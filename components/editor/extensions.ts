@@ -52,7 +52,15 @@ const SlashCommandExtension = Extension.create({
 });
 
 export const extensionBundle: AnyExtension[] = [
-  StarterKit.configure({ codeBlock: { HTMLAttributes: { class: 'language-plain' } } }),
+  // StarterKit v3 bundles Link + Underline by default. Disable both here so
+  // the explicit configured versions below are the only ones registered —
+  // otherwise Tiptap warns "Duplicate extension names found: ['link',
+  // 'underline']" on every editor mount.
+  StarterKit.configure({
+    codeBlock: { HTMLAttributes: { class: 'language-plain' } },
+    link: false,
+    underline: false
+  }),
   Link.configure({ openOnClick: false, autolink: true, linkOnPaste: true }),
   Underline,
   Image.configure({ inline: false, allowBase64: false }),
