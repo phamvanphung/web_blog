@@ -62,7 +62,14 @@ export default async function AuthedLayout({ children }: { children: ReactNode }
           ))}
         </nav>
       </aside>
-      <Container width="xl" className="py-12">
+      {/* overflow-x-clip: visually clip any full-bleed children (e.g.
+          .diag-full-bleed blocks inside /admin/pages/[id]/preview) at the
+          admin main column edges so they can't overlap the sidebar. The
+          body's overflow-x: clip already prevents the horizontal scrollbar;
+          this layer prevents the visual overlap. Underlying scrollWidth
+          measurements will still report the raw extent — that's expected
+          (clip only hides visually) and doesn't indicate a render error. */}
+      <Container width="xl" className="overflow-x-clip py-12">
         {children}
       </Container>
     </div>
