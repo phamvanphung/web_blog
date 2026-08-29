@@ -359,6 +359,66 @@ export function RawHtmlBlock({ html }: Props) {
       // is handled the same way regardless of class names.
       overrideVhUnits();
 
+      // Hide the iframe's own scrollbar so the outer page is the only
+      // scroll surface the user sees. The pasted htmlraw landing pages
+      // routinely have body content taller than the iframe's 100vh
+      // viewport, which makes the iframe render its own vertical
+      // scrollbar even though scrolling is fully controlled by the outer
+      // page (wheel/touch inside the iframe is already redirected out via
+      // `onIframeWheel` and the touch handlers below). Hiding the
+      // scrollbar visually collapses those two scroll surfaces into one.
+      //
+      // `touch-action: none` is load-bearing for the mobile touch
+      // handler below: without it, iOS Safari starts native scroll on
+      // touchstart (before our touchmove can preventDefault), so the
+      // iframe scrolls itself before our redirect runs and the user
+      // sees the iframe move out of sync with the outer page.
+      //
+      // Taps on links / buttons still work — `touch-action: none`
+      // disables native gesture handling but click events are still
+      // synthesized normally by the browser, so the existing
+      // `onClick` handler that routes in-iframe navigation through
+      // `location.replace` continues to function.
+      //
+      // We re-run this on every setup() (after iframe load / in-iframe
+      // navigation) — the previous document is gone and the new one
+      // needs the same treatment. `__rawhtml_scrollbar_hider` is
+      // looked up by id so we don't pile up duplicate <style> tags.
+      const injectScrollbarHider = () => {
+        try {
+          const doc = iframe.contentDocument;
+          if (!doc) return;
+          let style = doc.getElementById('__rawhtml_scrollbar_hider');
+          if (!style) {
+            style = doc.createElement('style');
+            style.id = '__rawhtml_scrollbar_hider';
+            // srcdoc parses as a full document, but a pasted snippet
+            // might omit <head>; in that case doc.head exists but is
+            // empty — appendChild still works. Belt-and-braces fallback
+            // for the rare case it doesn't.
+            const target = doc.head || doc.documentElement || doc.body;
+            if (!target) return;
+            target.appendChild(style);
+          }
+          style.textContent = `
+            html, body {
+              scrollbar-width: none;
+              -ms-overflow-style: none;
+              touch-action: none;
+            }
+            html::-webkit-scrollbar,
+            body::-webkit-scrollbar {
+              display: none;
+              width: 0;
+              height: 0;
+            }
+          `;
+        } catch {
+          // Cross-origin — shouldn't happen for srcdoc, but guard anyway.
+        }
+      };
+      injectScrollbarHider();
+
       // Defer initial measure by 2 animation frames so the browser has
       // had time to fully lay out the iframe content. We start with
       // `measure.allowShrink = true` (set in the teardown block above)
@@ -569,8 +629,59 @@ export function RawHtmlBlock({ html }: Props) {
             outerToInner();
           };
 
+          // Mobile touch redirect — same idea as onIframeWheel, but
+          // for the touch-only path. Mobile browsers don't synthesize
+          // wheel events for touch, so without this a finger-drag
+          // inside the iframe scrolls the iframe's body natively (iOS
+          // rubber-band, Android native momentum) and the outer page
+          // stays put, giving the user the confusing "two scroll
+          // surfaces" experience.
+          //
+          // We track the initial touch Y on touchstart, then on
+          // touchmove we preventDefault (so iOS doesn't kick off
+          // native momentum scroll after the finger lifts) and pass
+          // deltaY to the outer page. The existing outer→iframe
+          // scroll sync then mirrors the new outer position back into
+          // the iframe.
+          //
+          // `touch-action: none` (injected via injectScrollbarHider)
+          // is load-bearing here: without it, iOS Safari starts
+          // native scroll on touchstart before our touchmove can
+          // preventDefault, leading to the iframe scrolling itself
+          // before our redirect runs.
+          //
+          // We ignore multi-finger gestures — pinch-zoom inside the
+          // iframe is disabled anyway by `touch-action: none`, and
+          // tracking multiple touch points adds state for no UX gain.
+          let lastTouchY = 0;
+          const onTouchStart = (e: TouchEvent) => {
+            const t = e.touches[0];
+            if (e.touches.length !== 1 || !t) return;
+            lastTouchY = t.clientY;
+          };
+          const onTouchMove = (e: TouchEvent) => {
+            const t = e.touches[0];
+            if (e.touches.length !== 1 || !t) return;
+            e.preventDefault();
+            const currentY = t.clientY;
+            const deltaY = lastTouchY - currentY;
+            lastTouchY = currentY;
+            // scrollBy is a no-op when outer is at max scroll — no
+            // scroll event fires — so we explicitly call outerToInner
+            // to re-pin the iframe scroll to the right offset. Same
+            // guard as onIframeWheel.
+            window.scrollBy(0, deltaY);
+            outerToInner();
+          };
+          const onTouchEnd = () => {
+            lastTouchY = 0;
+          };
+
           window.addEventListener('scroll', outerToInner, { passive: true });
           iwin.addEventListener('wheel', onIframeWheel, { passive: false });
+          iwin.addEventListener('touchstart', onTouchStart, { passive: true });
+          iwin.addEventListener('touchmove', onTouchMove, { passive: false });
+          iwin.addEventListener('touchend', onTouchEnd, { passive: true });
 
           // On outer window resize, 100vh changes → iframe viewport
           // changes → re-pin vh values to the new viewport height
@@ -581,6 +692,7 @@ export function RawHtmlBlock({ html }: Props) {
           // viewport (and therefore the vh-bearing hero) is smaller.
           const onResize = () => {
             overrideVhUnits();
+            injectScrollbarHider();
             resetMeasureFloor();
           };
           window.addEventListener('resize', onResize, { passive: true });
@@ -591,6 +703,9 @@ export function RawHtmlBlock({ html }: Props) {
           const extraCleanups = () => {
             window.removeEventListener('scroll', outerToInner);
             iwin.removeEventListener('wheel', onIframeWheel);
+            iwin.removeEventListener('touchstart', onTouchStart);
+            iwin.removeEventListener('touchmove', onTouchMove);
+            iwin.removeEventListener('touchend', onTouchEnd);
             window.removeEventListener('resize', onResize);
           };
           const prev =
