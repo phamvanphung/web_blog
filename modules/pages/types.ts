@@ -106,6 +106,7 @@ export type PostsSection = {
   data: {
     groupSlug?: string;     // empty/undefined = no filter
     heading?: string;       // section heading (no body, per design)
+    headingAlign?: 'left' | 'center'; // default 'center' when heading is set
     layout: PostsLayout;    // 'list' or 'grid'
     limit: number;          // list mode: total items
     cols?: PostsGridCols;   // grid mode: columns (rows = ceil(limit / cols))

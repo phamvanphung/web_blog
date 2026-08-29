@@ -36,12 +36,14 @@ export async function PostsBlock(props: Props) {
   const showImage = props.showImage;
   const showTitle = props.showTitle;
   const showExcerpt = props.showExcerpt;
+  const headingAlign = props.headingAlign ?? 'center';
+  const headingClass = headingAlign === 'left' ? 'text-left' : 'text-center';
 
   return (
     <Tile tone="light">
       <Container width="comfortable" className="py-section">
         {props.heading && (
-          <h2 className="text-center text-d-md">{props.heading}</h2>
+          <h2 className={`${headingClass} text-d-md`}>{props.heading}</h2>
         )}
 
         {props.layout === 'grid' ? (

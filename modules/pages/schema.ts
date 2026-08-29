@@ -93,10 +93,12 @@ const CategoriesSectionSchema = z.object({
 
 const PostsLayoutSchema = z.enum(['list', 'grid']);
 const PostsGridColsSchema = z.union([z.literal(2), z.literal(3), z.literal(4)]);
+const PostsHeadingAlignSchema = z.enum(['left', 'center']);
 
 const PostsData = z.object({
   groupSlug: z.string().optional(),
   heading: z.string().max(200).optional(),
+  headingAlign: PostsHeadingAlignSchema.default('center'),
   layout: PostsLayoutSchema.default('list'),
   // Limit caps at 48 to mirror listPublishedPosts; rows × cols must fit.
   limit: z.number().int().min(1).max(48).default(6),

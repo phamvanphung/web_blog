@@ -49,6 +49,23 @@ export function PostsEditor({ section, onChange, groups }: Props) {
         className={inputClass}
       />
 
+      <div className="flex items-center gap-2">
+        <label className="text-[12px] text-ink-48">Căn tiêu đề</label>
+        <select
+          value={d.headingAlign ?? 'center'}
+          onChange={(e) =>
+            onChange({
+              ...section,
+              data: { ...d, headingAlign: e.target.value as 'left' | 'center' }
+            })
+          }
+          className={inputClass + ' w-32'}
+        >
+          <option value="left">Căn trái</option>
+          <option value="center">Căn giữa</option>
+        </select>
+      </div>
+
       <div className="flex gap-2">
         <select
           value={layout}
