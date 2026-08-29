@@ -183,3 +183,49 @@ export async function incrementViews(postId: string): Promise<void> {
     })
     .catch(() => undefined);
 }
+
+type RecentOpts = {
+  groupSlug?: string;
+  limit: number;
+};
+
+/**
+ * Cached "recent posts" helper for the public site. Used by the
+ * `posts` CMS block (Section kind `posts`).
+ *
+ * - `groupSlug` is optional. When set, results are filtered to posts that
+ *   belong to at least one Category where `category.groupId` matches the
+ *   resolved CategoryGroup and `category.hidden = false`. The slug→id
+ *   lookup happens INSIDE the cached function so it runs once per
+ *   (groupSlug, limit) tuple.
+ * - If the slug does not resolve, returns `[]` (the calling block then
+ *   hides itself, so an unknown group never 500s the page).
+ * - Sort is `publishedAt DESC`; `PUBLIC_BASE_WHERE` excludes drafts.
+ * - Tag `posts:recent` invalidates the whole family on any post mutation.
+ */
+export function listRecentPosts(opts: RecentOpts) {
+  const limit = Math.min(48, Math.max(1, opts.limit));
+  const groupSlug = opts.groupSlug ?? null;
+  const key = `posts:recent:${JSON.stringify({ groupSlug, limit })}`;
+  return unstable_cache(
+    async () => {
+      const where = { ...PUBLIC_BASE_WHERE } as Record<string, unknown>;
+      if (groupSlug) {
+        const group = await db.categoryGroup.findUnique({ where: { slug: groupSlug } });
+        if (!group) return [];
+        where.categories = {
+          some: { category: { groupId: group.id, hidden: false } }
+        };
+      }
+      const rows = await db.post.findMany({
+        where,
+        orderBy: { publishedAt: 'desc' },
+        take: limit,
+        select: PUBLIC_SELECT
+      });
+      return rows as unknown as ListResult['rows'];
+    },
+    [key],
+    { tags: ['posts:recent'], revalidate: 60 }
+  )().then((data) => reviveDates(data));
+}

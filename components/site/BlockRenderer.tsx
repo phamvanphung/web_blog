@@ -8,6 +8,7 @@ import { RawHtmlBlock } from './blocks/RawHtmlBlock';
 import { DividerBlock } from './blocks/DividerBlock';
 import { FormBlock } from './blocks/FormBlock';
 import { CategoryBlock } from './blocks/CategoryBlock';
+import { PostsBlock } from './blocks/PostsBlock';
 
 export function BlockRenderer({ sections }: { sections: Section[] }) {
   return (
@@ -67,6 +68,9 @@ export function BlockRenderer({ sections }: { sections: Section[] }) {
           }
           case 'categories': {
             return <CategoryBlock key={s.id} {...s.data} />;
+          }
+          case 'posts': {
+            return <PostsBlock key={s.id} {...s.data} />;
           }
         }
       })}

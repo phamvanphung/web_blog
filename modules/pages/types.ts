@@ -84,6 +84,37 @@ export type CategoriesSection = {
   };
 };
 
+// ---------------------------------------------------------------------------
+// Recent Posts block
+// ---------------------------------------------------------------------------
+//
+// Renders the N most-recently-published posts. The display shape is one of:
+//   - 'list'   : vertical stack of (image-bearing) row cards. `limit` items.
+//   - 'grid'   : CSS-grid of (image-bearing) tile cards. `cols × rows`
+//                determines the total item count, so the user enters both.
+//
+// `groupSlug` filters posts by CategoryGroup (empty = no filter). The slug
+// is resolved to a groupId inside `listRecentPosts` so the editor can stay
+// slug-typed (matching CategoryEditor / PageFormClient's existing prop).
+
+export type PostsLayout = 'list' | 'grid';
+export type PostsGridCols = 2 | 3 | 4;
+
+export type PostsSection = {
+  kind: 'posts';
+  id: SectionId;
+  data: {
+    groupSlug?: string;     // empty/undefined = no filter
+    heading?: string;       // section heading (no body, per design)
+    layout: PostsLayout;    // 'list' or 'grid'
+    limit: number;          // list mode: total items
+    cols?: PostsGridCols;   // grid mode: columns (rows = ceil(limit / cols))
+    showImage: boolean;
+    showTitle: boolean;
+    showExcerpt: boolean;
+  };
+};
+
 export type Section =
   | RichTextSection
   | HeroSection
@@ -92,7 +123,8 @@ export type Section =
   | MediaSection
   | RawHtmlSection
   | DividerSection
-  | CategoriesSection;
+  | CategoriesSection
+  | PostsSection;
 
 export type SectionKind = Section['kind'];
 

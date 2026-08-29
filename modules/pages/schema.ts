@@ -91,6 +91,27 @@ const CategoriesSectionSchema = z.object({
   data: CategoriesData
 });
 
+const PostsLayoutSchema = z.enum(['list', 'grid']);
+const PostsGridColsSchema = z.union([z.literal(2), z.literal(3), z.literal(4)]);
+
+const PostsData = z.object({
+  groupSlug: z.string().optional(),
+  heading: z.string().max(200).optional(),
+  layout: PostsLayoutSchema.default('list'),
+  // Limit caps at 48 to mirror listPublishedPosts; rows × cols must fit.
+  limit: z.number().int().min(1).max(48).default(6),
+  cols: PostsGridColsSchema.default(3),
+  showImage: z.boolean().default(true),
+  showTitle: z.boolean().default(true),
+  showExcerpt: z.boolean().default(false)
+});
+
+const PostsSectionSchema = z.object({
+  kind: z.literal('posts'),
+  id: z.string(),
+  data: PostsData
+});
+
 export const SectionSchema: z.ZodType<Section> = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('richtext'), id: z.string(), data: RichTextData }),
   z.object({ kind: z.literal('hero'), id: z.string(), data: HeroData }),
@@ -100,10 +121,11 @@ export const SectionSchema: z.ZodType<Section> = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('rawhtml'), id: z.string(), data: RawHtmlData }),
   z.object({ kind: z.literal('divider'), id: z.string(), data: DividerData }),
   CategoriesSectionSchema,
+  PostsSectionSchema,
 ]);
 
 export const SectionsArraySchema = z.array(SectionSchema).max(50);
 
 export const SECTION_KINDS: Section['kind'][] = [
-  'richtext', 'hero', 'cta', 'form', 'media', 'rawhtml', 'divider', 'categories',
+  'richtext', 'hero', 'cta', 'form', 'media', 'rawhtml', 'divider', 'categories', 'posts',
 ];

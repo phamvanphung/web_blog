@@ -11,6 +11,7 @@ import { RichTextEditor } from './sections/RichTextEditor';
 import { RawHtmlEditor } from './sections/RawHtmlEditor';
 import { DividerEditor } from './sections/DividerEditor';
 import { CategoryEditor } from './sections/CategoryEditor';
+import { PostsEditor } from './sections/PostsEditor';
 
 type Props = {
   value: Section[];
@@ -27,6 +28,7 @@ const kindLabel: Record<SectionKind, string> = {
   rawhtml: 'HTML thuần',
   divider: 'Phân cách',
   categories: 'Danh mục',
+  posts: 'Bài viết mới',
 };
 
 function newSectionId(): string {
@@ -53,6 +55,21 @@ function defaultSection(kind: SectionKind): Section {
       return { kind: 'divider', id, data: {} };
     case 'categories':
       return { kind: 'categories', id, data: { groupSlug: 'default', layout: 'grid-3', limit: 12, showAll: false, orderBy: 'sortOrder' } };
+    case 'posts':
+      return {
+        kind: 'posts',
+        id,
+        data: {
+          groupSlug: undefined,
+          heading: 'Bài viết mới',
+          layout: 'list',
+          limit: 6,
+          cols: 3,
+          showImage: true,
+          showTitle: true,
+          showExcerpt: false
+        }
+      };
   }
 }
 
@@ -89,6 +106,7 @@ export function SectionList({ value, onChange, groups }: Props) {
       case 'rawhtml': return `${s.data.html.slice(0, 60)}…`;
       case 'divider': return '—';
       case 'categories': return `Danh mục (${s.data.groupSlug})`;
+    case 'posts': return `Bài viết mới${s.data.groupSlug ? ` (${s.data.groupSlug})` : ''}`;
     }
   }
 
@@ -127,6 +145,9 @@ export function SectionList({ value, onChange, groups }: Props) {
               {s.kind === 'divider' && <DividerEditor />}
               {s.kind === 'categories' && (
                 <CategoryEditor section={s} onChange={(next) => update(s.id, next)} groups={groups} />
+              )}
+              {s.kind === 'posts' && (
+                <PostsEditor section={s} onChange={(next) => update(s.id, next)} groups={groups} />
               )}
             </div>
           )}
