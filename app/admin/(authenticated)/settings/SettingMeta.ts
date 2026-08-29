@@ -8,7 +8,7 @@ import type { SettingKey } from '@/modules/settings/types';
 export type SettingMeta = {
   label: string;
   description: string;
-  group: 'site' | 'contact' | 'social' | 'analytics' | 'newsletter' | 'seo' | 'content';
+  group: 'site' | 'contact' | 'social' | 'analytics' | 'newsletter' | 'seo' | 'content' | 'theme';
 };
 
 export const SETTING_META: Record<SettingKey, SettingMeta> = {
@@ -103,6 +103,46 @@ export const SETTING_META: Record<SettingKey, SettingMeta> = {
     description:
       'Path tới trang 404 tuỳ chỉnh (ví dụ `/khong-tim-thay`). Để trống = dùng 404 mặc định. Hỗ trợ cả URL tuyệt đối (https://...).',
     group: 'site'
+  },
+  'theme.primary': {
+    label: 'Màu chính (Primary)',
+    description: 'CTA chính — nút "Đăng ký", "Mua ngay", link hover.',
+    group: 'theme'
+  },
+  'theme.secondary': {
+    label: 'Màu phụ (Secondary)',
+    description: 'CTA phụ — nút ghost, badge nhấn nhẹ.',
+    group: 'theme'
+  },
+  'theme.surface.canvas': {
+    label: 'Nền chính (Canvas)',
+    description: 'Background trang — thường là trắng hoặc tone rất nhạt.',
+    group: 'theme'
+  },
+  'theme.surface.warm': {
+    label: 'Nền phụ (Warm)',
+    description: 'Background phụ cho section xen kẽ — parchment/pearl.',
+    group: 'theme'
+  },
+  'theme.surface.dark': {
+    label: 'Nền tối (Dark tile)',
+    description: 'Khối heading lớn, footer, CTA section — tone đậm nhất.',
+    group: 'theme'
+  },
+  'theme.ink.heading': {
+    label: 'Chữ heading (Ink)',
+    description: 'Màu chữ tiêu đề + body. Body muted tự derive.',
+    group: 'theme'
+  },
+  'theme.hairline': {
+    label: 'Đường viền (Hairline)',
+    description: 'Border, divider giữa các khối.',
+    group: 'theme'
+  },
+  'theme.badge': {
+    label: 'Điểm nhấn (Badge)',
+    description: 'Highlight, badge nhãn — tone nhẹ nổi bật.',
+    group: 'theme'
   }
 };
 
@@ -113,5 +153,6 @@ export const GROUP_LABELS: Record<SettingMeta['group'], string> = {
   analytics: 'Analytics',
   newsletter: 'Newsletter',
   seo: 'SEO',
-  content: 'Nội dung'
+  content: 'Nội dung',
+  theme: 'Theme'
 };
