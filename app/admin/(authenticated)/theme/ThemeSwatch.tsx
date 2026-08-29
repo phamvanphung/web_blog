@@ -1,6 +1,6 @@
 'use client';
 
-// ThemeSwatch — 3-band preview showing how the current color picks combine.
+// ThemeSwatch — 2-band preview showing how the current color picks combine.
 // Recomputes derived tokens (focus/hover) client-side using the same
 // deriveFocus algorithm as the server, so previews stay in sync with what
 // will actually be rendered after save.

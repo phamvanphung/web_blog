@@ -1,6 +1,6 @@
 import { requireRole } from '@/lib/auth';
 import { getTheme, DEFAULT_THEME_HEX } from '@/lib/theme';
-import { THEME_KEYS, THEME_LABELS, type ThemeKey } from '@/modules/settings/types';
+import { THEME_KEYS, type ThemeKey } from '@/modules/settings/types';
 import { ThemeForm } from './ThemeForm';
 import { AdminBreadcrumb } from '@/components/admin/AdminBreadcrumb';
 
@@ -28,7 +28,7 @@ export default async function ThemeAdminPage() {
         <div>
           <h1 className="text-d-sm font-semibold text-ink">Theme</h1>
           <p className="mt-1 text-[14px] text-ink-80">
-            Cấu hình 8 màu chủ đạo áp dụng cho cả site và admin. Đổi xong bấm "Lưu theme" — site
+            Cấu hình 8 màu chủ đạo áp dụng cho cả site và admin. Đổi xong bấm &quot;Lưu theme&quot; — site
             repaint ngay request kế tiếp (cache bị invalidate).
           </p>
         </div>
