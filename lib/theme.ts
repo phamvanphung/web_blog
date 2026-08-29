@@ -37,7 +37,7 @@ export function isValidHex(input: string): boolean {
   return HEX_REGEX.test(input);
 }
 
-export type ThemeMap = Record<ThemeKey, string | null>;
+export type ResolvedTheme = Record<ThemeKey, string | null>;
 
 /**
  * Resolve all 8 theme colors from the Setting table.
@@ -51,7 +51,7 @@ export type ThemeMap = Record<ThemeKey, string | null>;
  *   the admin opens the theme page.
  */
 export const getTheme = cache(
-  (): Promise<ThemeMap> =>
+  (): Promise<ResolvedTheme> =>
     unstable_cache(
       async () => {
         const [primary, secondary, surfaceCanvas, surfaceWarm, surfaceDark, inkHeading, hairline, badge] =
