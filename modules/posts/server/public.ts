@@ -165,12 +165,23 @@ async function listRelatedPostsUncached(postId: string, categoryIds: string[], l
   });
 }
 
-/** Cached related-posts helper. Tag includes the source postId. */
+/** Cached related-posts helper.
+ *
+ * Tags:
+ * - `posts:related:<postId>` — per-post tag, used by the post detail page
+ *   to bust just its own related list when the source post changes
+ *   categories / title.
+ * - `posts:related` — shared family tag, invalidated by every post
+ *   mutation (publish/unpublish/delete/setCategories/…). Any post can
+ *   appear in any other post's related list, so without this shared tag
+ *   we'd have to iterate every postId on every mutation to keep stale
+ *   drafts from leaking into related lists after an unpublish.
+ */
 export function listRelatedPosts(postId: string, categoryIds: string[], limit = 3) {
   return unstable_cache(
     async () => listRelatedPostsUncached(postId, categoryIds, limit),
     ['posts:related', postId, String(limit)],
-    { tags: [`posts:related:${postId}`], revalidate: 120 }
+    { tags: [`posts:related:${postId}`, 'posts:related'], revalidate: 120 }
   )().then((data) => reviveDates(data));
 }
 
