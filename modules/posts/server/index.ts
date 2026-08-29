@@ -241,6 +241,14 @@ export async function publishPost(id: string): Promise<void> {
   revalidateTag(ADMIN_LIST_TAG);
   revalidateTag(PUBLIC_LIST_TAG);
   revalidateTag(FEATURED_TAG);
+  // A freshly published post must immediately surface in the public site's
+  // "Recent posts" CMS block (cached under `posts:recent`) and in other
+  // posts' related lists (cached under the shared `posts:related` family
+  // tag). Without these the block keeps serving the pre-publish snapshot
+  // for up to 60–120 s after publish, which makes the new post invisible
+  // until the cache TTL expires.
+  revalidateTag('posts:recent');
+  revalidateTag('posts:related');
   revalidateTag(detailTag(existing.slug));
 }
 
@@ -264,6 +272,54 @@ export async function deletePost(id: string): Promise<void> {
   revalidatePath('/admin/posts');
   revalidateTag(ADMIN_LIST_TAG);
   revalidateTag(PUBLIC_LIST_TAG);
+  // Trashed posts must drop out of every public listing — featured,
+  // recent CMS block, and related lists — not just /blog (which is what
+  // PUBLIC_LIST_TAG = 'posts:list' covers). Featured was previously
+  // missed entirely here, so a trashed featured post kept showing on the
+  // homepage until its 60 s TTL.
+  revalidateTag(FEATURED_TAG);
+  revalidateTag('posts:recent');
+  revalidateTag('posts:related');
+}
+
+/**
+ * Demote a PUBLISHED post back to DRAFT. Inverse of `publishPost`.
+ * Keeps `publishedAt` as the historical first-publish timestamp so a
+ * subsequent re-publish (via `publishPost`) won't reset it — the existing
+ * `publishedAt: existing.publishedAt ?? new Date()` pattern preserves
+ * the original publish date through unpublish→republish cycles.
+ */
+export async function unpublishPost(id: string): Promise<void> {
+  const me = await requireRole('ADMIN');
+  const existing = await db.post.findUnique({ where: { id } });
+  if (!existing) throw new Error('Post not found');
+
+  await db.post.update({
+    where: { id },
+    data: { status: 'DRAFT' }
+  });
+
+  const h = await headers();
+  const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? null;
+  await audit({
+    userId: me.id,
+    action: 'post.unpublish',
+    target: 'Post',
+    targetId: id,
+    ipHash: await hashIp(ip)
+  });
+
+  revalidatePath('/admin/posts');
+  revalidatePath(`/admin/posts/${id}/edit`);
+  revalidateTag(ADMIN_LIST_TAG);
+  revalidateTag(PUBLIC_LIST_TAG);
+  // Same rationale as `publishPost`: an unpublished post must drop out
+  // of "Recent posts" CMS blocks and related lists immediately, not 60–
+  // 120 s later when the cache TTL expires.
+  revalidateTag(FEATURED_TAG);
+  revalidateTag('posts:recent');
+  revalidateTag('posts:related');
+  if (existing.slug) revalidateTag(detailTag(existing.slug));
 }
 
 /* ---------- Taxonomy (admin) ---------- */

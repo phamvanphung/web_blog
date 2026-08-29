@@ -2,7 +2,7 @@ import { notFound, redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { requireRole } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { getPost, publishPost, deletePost } from '@/modules/posts/server';
+import { getPost, publishPost, unpublishPost, deletePost } from '@/modules/posts/server';
 import { listCategories } from '@/modules/categories/server';
 import { listTags } from '@/modules/tags/server';
 import { listMedia } from '@/modules/media/server';
@@ -27,6 +27,15 @@ async function deleteAction(formData: FormData) {
   const id = String(formData.get('id') ?? '');
   await deletePost(id);
   redirect('/admin/posts?status=TRASHED');
+}
+
+async function unpublishAction(formData: FormData) {
+  'use server';
+  await requireRole('ADMIN');
+  const id = String(formData.get('id') ?? '');
+  await unpublishPost(id);
+  revalidatePath(`/admin/posts/${id}/edit`);
+  revalidatePath('/admin/posts');
 }
 
 export default async function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
@@ -63,11 +72,18 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
             {post.status === 'PUBLISHED' ? 'Sửa (đã xuất bản)' : 'Sửa bài viết'}
           </h1>
         <div className="flex items-center gap-4">
-          {post.status !== 'PUBLISHED' && (
+          {post.status !== 'PUBLISHED' ? (
             <form action={publishAction}>
               <input type="hidden" name="id" value={post.id} />
               <Button type="submit" variant="primary-pill" size="sm">
                 Publish
+              </Button>
+            </form>
+          ) : (
+            <form action={unpublishAction}>
+              <input type="hidden" name="id" value={post.id} />
+              <Button type="submit" variant="secondary-pill" size="sm">
+                Chuyển về nháp
               </Button>
             </form>
           )}
