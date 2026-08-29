@@ -60,7 +60,7 @@ export function ContactForm() {
         {state.ok && state.message && (
           <p className="text-[13px] text-primary">{state.message}</p>
         )}
-        {!state.ok && state.error && <p className="text-[13px] text-[#d70015]">{state.error}</p>}
+        {!state.ok && state.error && <p className="text-[13px] text-error">{state.error}</p>}
       </div>
     </form>
   );
@@ -85,7 +85,7 @@ function Field({
     <div>
       <label className="mb-1 block text-[13px] text-ink-80">
         {label}
-        {required && <span className="text-[#d70015]"> *</span>}
+        {required && <span className="text-error"> *</span>}
       </label>
       {textarea ? (
         <textarea

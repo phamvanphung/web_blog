@@ -32,14 +32,14 @@ export function NewsletterForm() {
       />
       <SubmitButton />
       {state && !state.ok && state.error === 'invalid' && (
-        <p className="text-[12px] text-[#d70015] sm:col-span-2">Email không hợp lệ.</p>
+        <p className="text-[12px] text-error sm:col-span-2">Email không hợp lệ.</p>
       )}
       {state && !state.ok && state.error === 'rate_limited' && (
-        <p className="text-[12px] text-[#d70015] sm:col-span-2">
+        <p className="text-[12px] text-error sm:col-span-2">
           Quá nhiều yêu cầu. Thử lại sau {state.retryAfterSec ?? 60}s.
         </p>
       )}
-      {state?.ok && <p className="text-[12px] text-[#1f7a3a] sm:col-span-2">✓ Đăng ký thành công!</p>}
+      {state?.ok && <p className="text-[12px] text-success sm:col-span-2">✓ Đăng ký thành công!</p>}
     </form>
   );
 }

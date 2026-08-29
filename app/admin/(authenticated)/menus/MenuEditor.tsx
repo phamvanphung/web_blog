@@ -128,7 +128,7 @@ function ItemRow({
           </form>
           <form action={deleteAction}>
             <input type="hidden" name="itemId" value={item.id} />
-            <button type="submit" className="text-[#d70015] hover:underline">
+            <button type="submit" className="text-error hover:underline">
               Xóa
             </button>
           </form>

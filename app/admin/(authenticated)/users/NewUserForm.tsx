@@ -60,7 +60,7 @@ export function NewUserForm() {
       {result && !result.ok && (
         <div
           role="alert"
-          className="rounded-11 border border-hairline bg-canvas-parchment p-3 text-[13px] text-[#d70015]"
+          className="rounded-11 border border-hairline bg-canvas-parchment p-3 text-[13px] text-error"
         >
           {result.error}
         </div>

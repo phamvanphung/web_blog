@@ -45,7 +45,7 @@ export default async function AuditLogPage({
           <p className="text-[13px] text-ink-48">{total} entries.</p>
         </div>
         <form action={purgeOldAction}>
-          <button type="submit" className="text-[13px] text-[#d70015] hover:underline">
+          <button type="submit" className="text-[13px] text-error hover:underline">
             Xóa entries &gt; 90 ngày
           </button>
         </form>

@@ -20,7 +20,7 @@ export function GroupForm() {
         <input name="name" required className={inputClass} />
       </div>
       {state?.ok === false && (
-        <p role="alert" className="text-[13px] text-[#d70015]">{state.error}</p>
+        <p role="alert" className="text-[13px] text-error">{state.error}</p>
       )}
       {state?.ok === true && (
         <p role="status" className="text-[13px] text-primary">Đã tạo group.</p>

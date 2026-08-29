@@ -64,7 +64,7 @@ export function GroupRow({ group, refCount }: GroupRowProps) {
           <input type="hidden" name="id" value={group.id} />
           <button
             type="submit"
-            className="rounded-8 border border-hairline px-3 py-1 text-[12px] text-[#d70015] hover:bg-canvas-parchment"
+            className="rounded-8 border border-hairline px-3 py-1 text-[12px] text-error hover:bg-canvas-parchment"
           >
             Xóa
           </button>
@@ -72,7 +72,7 @@ export function GroupRow({ group, refCount }: GroupRowProps) {
       )}
 
       {state?.ok === false && (
-        <span className="basis-full text-[12px] text-[#d70015]">{state.error}</span>
+        <span className="basis-full text-[12px] text-error">{state.error}</span>
       )}
     </li>
   );

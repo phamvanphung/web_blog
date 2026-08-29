@@ -108,7 +108,7 @@ export function CategoryRow({ category, parents, groups, depth }: Props) {
           </div>
 
           {state?.ok === false && (
-            <p role="alert" className="text-[12px] text-[#d70015]">{state.error}</p>
+            <p role="alert" className="text-[12px] text-error">{state.error}</p>
           )}
 
           <div className="flex items-center gap-2">
@@ -163,7 +163,7 @@ export function CategoryRow({ category, parents, groups, depth }: Props) {
           <input type="hidden" name="id" value={category.id} />
           <button
             type="submit"
-            className="rounded-8 border border-hairline px-3 py-1 text-[12px] text-[#d70015] hover:bg-canvas-parchment"
+            className="rounded-8 border border-hairline px-3 py-1 text-[12px] text-error hover:bg-canvas-parchment"
           >
             Xóa
           </button>

@@ -114,7 +114,7 @@ export function SectionList({ value, onChange, groups }: Props) {
             <button type="button" onClick={() => setEditingId(editingId === s.id ? null : s.id)} className="text-[12px] text-primary">
               {editingId === s.id ? 'Đóng' : 'Sửa'}
             </button>
-            <button type="button" onClick={() => remove(s.id)} className="text-[12px] text-[#d70015]">×</button>
+            <button type="button" onClick={() => remove(s.id)} className="text-[12px] text-error">×</button>
           </div>
           {editingId === s.id && (
             <div className="border-t border-hairline px-4 py-3">

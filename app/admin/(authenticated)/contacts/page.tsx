@@ -75,7 +75,7 @@ export default async function ContactsPage() {
                 )}
                 <form action={deleteContactAction}>
                   <input type="hidden" name="id" value={c.id} />
-                  <button type="submit" className="text-[#d70015] hover:underline">
+                  <button type="submit" className="text-error hover:underline">
                     Xóa
                   </button>
                 </form>

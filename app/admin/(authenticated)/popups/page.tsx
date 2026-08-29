@@ -81,7 +81,7 @@ export default async function PopupsPage() {
                       <input type="hidden" name="id" value={p.id} />
                       <button
                         type="submit"
-                        className="text-[#d70015] hover:underline"
+                        className="text-error hover:underline"
                       >
                         Xóa
                       </button>

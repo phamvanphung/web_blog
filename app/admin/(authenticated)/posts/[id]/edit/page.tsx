@@ -73,7 +73,7 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
           )}
           <form action={deleteAction}>
             <input type="hidden" name="id" value={post.id} />
-            <button type="submit" className="text-[13px] text-[#d70015] hover:underline">
+            <button type="submit" className="text-[13px] text-error hover:underline">
               Xóa
             </button>
           </form>

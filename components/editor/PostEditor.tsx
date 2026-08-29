@@ -87,8 +87,8 @@ export function PostEditor({
       <div className={`${columnClass} flex items-center justify-between gap-3 rounded-11 border border-hairline bg-canvas px-4 py-2`}>
         <p className="flex flex-wrap items-center gap-2 text-[12px] text-ink-48">
           {status === 'saving' && 'Đang lưu…'}
-          {status === 'saved' && <span className="text-[#1f7a3a]">✓ Đã lưu.</span>}
-          {status === 'error' && <span className="text-[#d70015]">✗ {error}</span>}
+          {status === 'saved' && <span className="text-success">✓ Đã lưu.</span>}
+          {status === 'error' && <span className="text-error">✗ {error}</span>}
           {status === 'idle' && (dirty ? 'Có thay đổi chưa lưu.' : 'Chưa có thay đổi.')}
           {initialStatus && (
             <>

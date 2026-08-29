@@ -33,7 +33,7 @@ export default async function EditPagePage({ params }: { params: Promise<{ id: s
             </Link>
             <form action={deletePageAction}>
               <input type="hidden" name="id" value={page.id} />
-              <button type="submit" className="text-[13px] text-[#d70015] hover:underline">
+              <button type="submit" className="text-[13px] text-error hover:underline">
                 Xóa trang
               </button>
             </form>

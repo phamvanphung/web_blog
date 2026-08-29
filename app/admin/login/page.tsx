@@ -46,7 +46,7 @@ export default function LoginPage() {
           {state?.error && (
             <div
               role="alert"
-              className="rounded-11 bg-canvas-parchment p-3 text-[13px] text-[#d70015]"
+              className="rounded-11 bg-canvas-parchment p-3 text-[13px] text-error"
             >
               {state.error}
             </div>

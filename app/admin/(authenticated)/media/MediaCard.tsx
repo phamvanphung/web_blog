@@ -144,7 +144,7 @@ export function MediaCard({
           when the user just wanted to preview the image. */}
       <form action={deleteAction}>
         <input type="hidden" name="id" value={id} />
-        <button type="submit" className="text-[12px] text-[#d70015] hover:underline">
+        <button type="submit" className="text-[12px] text-error hover:underline">
           Xóa
         </button>
       </form>

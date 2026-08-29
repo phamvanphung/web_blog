@@ -26,7 +26,7 @@ export function TagForm() {
         {pending ? 'Đang tạo...' : 'Tạo tag'}
       </Button>
       {state?.ok === false && (
-        <span role="alert" className="text-[13px] text-[#d70015]">
+        <span role="alert" className="text-[13px] text-error">
           {state.error}
         </span>
       )}

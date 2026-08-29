@@ -77,7 +77,7 @@ export function CategoryForm({
         </label>
       </div>
       {state?.ok === false && (
-        <p role="alert" className="text-[13px] text-[#d70015]">
+        <p role="alert" className="text-[13px] text-error">
           {state.error}
         </p>
       )}

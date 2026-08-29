@@ -65,7 +65,7 @@ export function UploadForm() {
           {busy ? 'Đang upload...' : 'Upload'}
         </Button>
         {err && (
-          <span role="alert" className="text-[13px] text-[#d70015]">
+          <span role="alert" className="text-[13px] text-error">
             {err}
           </span>
         )}

@@ -58,7 +58,7 @@ export function SettingRow({
         <p className="text-[12px] text-ink-48">Cập nhật: {updatedAt}</p>
       )}
       {state?.ok === false && (
-        <p role="alert" className="text-[12px] text-[#d70015]">
+        <p role="alert" className="text-[12px] text-error">
           {state.error}
         </p>
       )}

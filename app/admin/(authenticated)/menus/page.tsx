@@ -101,7 +101,7 @@ export default async function MenusPage() {
                 </Link>
                 <form action={deleteMenuAction}>
                   <input type="hidden" name="id" value={m.id} />
-                  <button type="submit" className="text-[12px] text-[#d70015] hover:underline">
+                  <button type="submit" className="text-[12px] text-error hover:underline">
                     Xóa menu
                   </button>
                 </form>

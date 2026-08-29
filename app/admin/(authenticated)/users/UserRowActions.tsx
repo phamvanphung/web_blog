@@ -70,7 +70,7 @@ export function UserRowActions({
             disabled={togglePending}
             className={
               status === 'ACTIVE'
-                ? 'text-[#d70015] hover:underline disabled:opacity-40'
+                ? 'text-error hover:underline disabled:opacity-40'
                 : 'text-primary hover:underline disabled:opacity-40'
             }
             title={
@@ -101,7 +101,7 @@ export function UserRowActions({
 
       {/* Inline feedback for toggle (above the reset form when both fire) */}
       {toggleState && !toggleState.ok && (
-        <p role="alert" className="text-[12px] text-[#d70015]">
+        <p role="alert" className="text-[12px] text-error">
           {toggleState.error}
         </p>
       )}
@@ -138,7 +138,7 @@ export function UserRowActions({
             />
           </div>
           {resetState && !resetState.ok && (
-            <p role="alert" className="text-[12px] text-[#d70015]">
+            <p role="alert" className="text-[12px] text-error">
               {resetState.error}
             </p>
           )}

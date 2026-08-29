@@ -47,7 +47,7 @@ export default async function UsersPage({
       <p className="mb-8 text-[13px] text-ink-48">Admin-only. CRUD đầy đủ.</p>
 
       {errorMsg && (
-        <div className="mb-4 rounded-11 border border-hairline bg-canvas-parchment p-3 text-[13px] text-[#d70015]">
+        <div className="mb-4 rounded-11 border border-hairline bg-canvas-parchment p-3 text-[13px] text-error">
           {errorMsg}
         </div>
       )}
@@ -99,7 +99,7 @@ export default async function UsersPage({
                       <input type="hidden" name="id" value={u.id} />
                       <button
                         type="submit"
-                        className="text-[#d70015] hover:underline"
+                        className="text-error hover:underline"
                         title={
                           u.id === me.id
                             ? 'Không thể xóa chính mình'
