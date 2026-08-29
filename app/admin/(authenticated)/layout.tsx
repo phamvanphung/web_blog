@@ -38,7 +38,7 @@ export default async function AuthedLayout({ children }: { children: ReactNode }
         >
           <Logo tone="ondark" text={brand.siteName} />
         </Link>
-        <p className="mb-6 text-[12px] text-ink-dim">
+        <div className="mb-6 text-[12px] text-ink-dim">
           {user.name} · {user.role.toLowerCase()} ·{' '}
           <form action="/admin/logout" method="post" className="inline">
             <button
@@ -48,7 +48,7 @@ export default async function AuthedLayout({ children }: { children: ReactNode }
               Logout
             </button>
           </form>
-        </p>
+        </div>
         <nav aria-label="CMS" className="space-y-1 text-[14px]">
           {NAV.map((it) => (
             <Link

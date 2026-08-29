@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useFormStatus } from 'react-dom';
+import { useActionState } from 'react';
 import { createPageAction, updatePageAction, type PageFormState } from './actions';
 import type { Section } from '@/modules/pages/types';
 import { SectionList } from '@/components/admin/SectionList';
@@ -17,7 +18,7 @@ export function PageFormClient({ initial, groups }: Props) {
   const [sections, setSections] = useState<Section[]>(initial?.sections ?? []);
   const isEdit = Boolean(initial?.id);
 
-  const [state, formAction] = useFormState<PageFormState | undefined, FormData>(
+  const [state, formAction] = useActionState<PageFormState | undefined, FormData>(
     isEdit ? updatePageAction : createPageAction,
     undefined
   );
