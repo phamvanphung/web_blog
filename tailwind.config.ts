@@ -36,7 +36,9 @@ const config: Config = {
         hairline: 'var(--color-hairline)',
         divider: 'var(--color-divider-soft)',
         chip: 'var(--color-surface-chip-translucent)',
-        badge: 'var(--color-badge)'
+        badge: 'var(--color-badge)',
+        error: 'var(--color-error)',
+        success: 'var(--color-success)'
       },
       fontFamily: {
         sans: ['var(--font-sans)'],

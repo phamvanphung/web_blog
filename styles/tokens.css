@@ -34,6 +34,10 @@
   /* Highlight / badge */
   --color-badge: #f5d0d1;                /* Highlight / badge */
 
+  /* ---- Status / feedback (admin form messages, validation) ---- */
+  --color-error: #d70015;                  /* Error / destructive */
+  --color-success: #1f7a3a;                /* Success / confirmed */
+
   /* ---- Typography ---- */
   /* Set by next/font (app/layout.tsx): --font-inter */
   --font-sans: var(--font-inter), Inter, system-ui, -apple-system,
