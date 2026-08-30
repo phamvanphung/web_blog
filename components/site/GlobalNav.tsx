@@ -59,9 +59,19 @@ export function GlobalNav({ items, siteName, homeHref, logoUrl }: Props) {
             priority
           />
           {brand && (
-            <span className="hidden text-[20px] font-semibold tracking-[-0.01em] text-ink md:inline">
-              {brand}
-            </span>
+            <>
+              {/* Mobile: compact wordmark so the brand stays
+                  discoverable on small screens. Whole word on one line,
+                  truncated if too long for the 68px header minus logo
+                  and the trailing hamburger button. */}
+              <span className="truncate text-[16px] font-semibold tracking-[-0.01em] text-ink md:hidden">
+                {brand}
+              </span>
+              {/* PC: full-size wordmark, inline with the desktop nav. */}
+              <span className="hidden text-[20px] font-semibold tracking-[-0.01em] text-ink md:inline">
+                {brand}
+              </span>
+            </>
           )}
         </Link>
 

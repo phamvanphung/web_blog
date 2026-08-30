@@ -608,11 +608,92 @@ export function RawHtmlBlock({ html }: Props) {
               if (pendingDeltaY !== 0) {
                 const dy = pendingDeltaY;
                 pendingDeltaY = 0;
-                window.scrollBy(0, dy);
-                // Manual outer sync — scrollBy on iOS sometimes
-                // doesn't emit a `scroll` event when at the rail,
-                // so we force the outerToInner pass after.
-                pendingOuterSync = true;
+                // ---- Rail-aware scroll chain swap ----
+                //
+                // The first version of this block unconditionally
+                // forwarded touch delta to the outer page via
+                // `window.scrollBy`. After the previous rAF coalesce
+                // pass that stopped the per-event stutter, the new
+                // visible bug was at the start / end of the iframe:
+                //
+                //   • User reaches the bottom of the iframe (inner
+                //     `scrollY === max`) and keeps swiping down.
+                //     `scrollBy` on the outer page moves the outer
+                //     scrollY forward until outer also hits its
+                //     max. iOS then *bounces* the outer page —
+                //     rubber-band scroll fires further `scroll`
+                //     events at a position past the real `max`,
+                //     and on each one `outerToInner` re-runs
+                //     `iwin.scrollTo(target)` against the inner
+                //     iframe. Because the iframe is also at max,
+                //     the target clamps back to `max`; visually the
+                //     iframe scrolls to a position the user did
+                //     NOT intend, then snaps back — "lướt ngược
+                //     lại thì page chạy về đầu/giữa".
+                //
+                //   • Same shape on overscroll UP at the top.
+                //
+                // Fix: read each container's current scroll & max
+                // BEFORE attempting to move it. Pick whichever
+                // surface has room in the direction of `dy` and
+                // scroll THAT one. If neither has room (both at
+                // their rail), drop the delta entirely so we don't
+                // feed iOS bounce into `outerToInner`.
+                const liveWin = iframe.contentWindow;
+                const liveDoc = iframe.contentDocument;
+                if (liveWin && liveDoc) {
+                  const innerY = liveWin.scrollY;
+                  const innerMax = Math.max(
+                    0,
+                    liveDoc.documentElement.scrollHeight -
+                      liveWin.innerHeight
+                  );
+                  const outerY = window.scrollY;
+                  const outerMax = Math.max(
+                    0,
+                    document.documentElement.scrollHeight -
+                      window.innerHeight
+                  );
+
+                  const innerHasRoomDown =
+                    dy > 0 && innerY < innerMax - 0.5;
+                  const innerHasRoomUp =
+                    dy < 0 && innerY > 0.5;
+                  const outerHasRoomDown =
+                    dy > 0 && outerY < outerMax - 0.5;
+                  const outerHasRoomUp =
+                    dy < 0 && outerY > 0.5;
+
+                  if (innerHasRoomDown || innerHasRoomUp) {
+                    // Inner has scroll room in the swipe direction —
+                    // drive the iframe directly. This is the most
+                    // important branch: it gives iOS native momentum
+                    // a chance to engage for in-iframe swipe, instead
+                    // of going through outer→inner one-way sync which
+                    // fights momentum by re-pinning inner scrollY to
+                    // the (lagging, frame-quantised) outer position.
+                    liveWin.scrollBy({ top: dy, behavior: 'instant' });
+                    // Sync outer anyway in case inner's window
+                    // position relative to outer drifted (e.g. user
+                    // started in middle of wrapper, inner advanced
+                    // beyond outer → now outer should also advance
+                    // proportionally so the iframe stays anchored
+                    // to the wrapper). Skipping this caused the
+                    // "inner races ahead of outer" symptom on long
+                    // swipes inside the iframe.
+                    pendingOuterSync = true;
+                  } else if (outerHasRoomDown || outerHasRoomUp) {
+                    // Inner is at rail in this direction; outer has
+                    // room — scroll the outer.
+                    window.scrollBy(0, dy);
+                    pendingOuterSync = true;
+                  } else {
+                    // Both surfaces at rail — likely iOS bounce.
+                    // Drop the delta and skip the sync entirely so
+                    // we don't re-pin the iframe to a position past
+                    // its real max.
+                  }
+                }
               }
               if (pendingOuterSync) {
                 pendingOuterSync = false;
@@ -636,6 +717,23 @@ export function RawHtmlBlock({ html }: Props) {
             if (wrapperRect.bottom <= 0 || wrapperRect.top >= viewportH) {
               return;
             }
+            // Outer-page rail guard. iOS fires extra `scroll` events
+            // during rubber-band bounce past `scrollHeight - innerHeight`
+            // — the visible symptom is that on every such bounce event
+            // we used to re-`scrollTo` the iframe, which moved the
+            // iframe scroll position away from the user's actual intent.
+            // If the outer page is at its own rail (and not the result
+            // of being mid-flight within the wrapper), don't poke the
+            // iframe.
+            const outerY = window.scrollY;
+            const outerMax = Math.max(
+              0,
+              document.documentElement.scrollHeight - window.innerHeight
+            );
+            const isWrapperAtOuterRail =
+              Math.abs(outerY - outerMax) < 1 &&
+              wrapperRect.top <= 0;
+            if (isWrapperAtOuterRail) return;
             const wrapperTop = window.scrollY + wrapperRect.top;
             const offset = Math.max(0, window.scrollY - wrapperTop);
             // Read the iframe's CURRENT document/window lazily instead
