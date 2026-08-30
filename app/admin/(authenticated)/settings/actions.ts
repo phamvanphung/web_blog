@@ -48,10 +48,12 @@ export async function updateSettingAction(
   if (parsed.data.key.startsWith('site.')) revalidateTag(BRAND_TAG);
   // `site.homeHref` is also read by the root-path middleware
   // (`/middleware.ts`) which keeps its own in-process cache with a
-  // 60 s TTL. Cache invalidation across workers isn't possible from
+  // 1 s TTL. Cache invalidation across workers isn't possible from
   // here (the cache lives in the Edge worker's memory) but the TTL
-  // bounds the worst-case staleness. The brand cache above is what
-  // actually drives the visible logo / wordmark link in the header,
-  // so re-invalidating it is the user-visible half of the equation.
+  // is short enough that an admin who refreshes `/` after saving
+  // sees the new redirect target within a second. The brand cache
+  // above is what actually drives the visible logo / wordmark link
+  // in the header, so re-invalidating it is the user-visible half
+  // of the equation.
   return { ok: true };
 }

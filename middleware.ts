@@ -42,8 +42,16 @@ const ROOT_PATH = '/';
  * instance re-fetches the endpoint and the stale entry is replaced
  * within `STALE_AFTER_MS`. This bounds the worst-case staleness
  * without requiring a cross-instance cache.
+ *
+ * 1 s chosen for UX — admin saves `site.homeHref`, refreshes `/`,
+ * and the redirect reflects the new target almost immediately.
+ * Workload cost is negligible: the Node endpoint behind this is
+ * already memoised via `unstable_cache` (BRAND_TAG, 600 s revalidate
+ * + invalidation on every admin write), so a cache miss here is
+ * usually an in-process memo hit that costs one HTTP round-trip
+ * (intra-Next, no real network).
  */
-const STALE_AFTER_MS = 60_000;
+const STALE_AFTER_MS = 1_000;
 
 type CacheEntry = { value: string | null; loadedAt: number };
 declare global {
