@@ -568,8 +568,74 @@ export function RawHtmlBlock({ html }: Props) {
         const iwin = iframe.contentWindow;
         const idoc = iframe.contentDocument;
         if (iwin && idoc) {
+          // ---- rAF coalescing --------------------------------------
+          //
+          // The first version of this block dispatched one `scrollBy`
+          // + one `iwin.scrollTo` per `touchmove` (which fires dozens
+          // of times per finger drag on mobile). That's two layout-
+          // thrashing calls per event, racing with the browser's own
+          // scroll/paint pipeline — the user sees the iframe "skip"
+          // frame-by-frame (the "giật/lag" symptom) and iOS momentum
+          // never engages because every frame we yank the inner
+          // scrollY back to the outer one.
+          //
+          // We now coalesce both directions through a single rAF
+          // callback per frame:
+          //   • `pendingDeltaY` accumulates touch deltas; the rAF
+          //     callback fires `window.scrollBy` AT MOST ONCE per
+          //     frame and clears the accumulator.
+          //   • `pendingOuterSync` is a boolean; multiple `scroll`
+          //     events in the same frame collapse to one
+          //     `outerToInner` call.
+          //
+          // Net effect on mobile: scrollBy happens on the rAF tick
+          // (after the browser has had the frame to paint), the
+          // follow-up iwin.scrollTo runs in the SAME rAF, no race,
+          // and iOS momentum (which the OS still injects via the
+          // programmatic scrollBy's chain) is preserved because we
+          // stop fighting it.
+          let pendingDeltaY = 0;
+          let pendingOuterSync = false;
+          let rafId = 0;
+          const scheduleTick = () => {
+            if (rafId) return;
+            rafId = requestAnimationFrame(() => {
+              rafId = 0;
+              // Touch delta first so any resulting outer `scroll`
+              // event lands in this same task and gets coalesced
+              // into the outerToInner call below instead of firing
+              // its own rAF.
+              if (pendingDeltaY !== 0) {
+                const dy = pendingDeltaY;
+                pendingDeltaY = 0;
+                window.scrollBy(0, dy);
+                // Manual outer sync — scrollBy on iOS sometimes
+                // doesn't emit a `scroll` event when at the rail,
+                // so we force the outerToInner pass after.
+                pendingOuterSync = true;
+              }
+              if (pendingOuterSync) {
+                pendingOuterSync = false;
+                outerToInner();
+              }
+            });
+          };
+
           const outerToInner = () => {
             const wrapperRect = wrapper.getBoundingClientRect();
+            const viewportH = window.innerHeight;
+            // Skip sync entirely when the wrapper isn't intersecting
+            // the viewport — i.e. the user has scrolled past this
+            // section into another section of the page. Without
+            // this guard, every outer `scroll` event anywhere on
+            // the page would poke the iframe scrollY (which is
+            // unrelated to the current visual state), and iOS
+            // bounce at the bottom of the page would pop the iframe
+            // back to the top (the "vuốt nhẹ lên là load lại đầu
+            // page" symptom).
+            if (wrapperRect.bottom <= 0 || wrapperRect.top >= viewportH) {
+              return;
+            }
             const wrapperTop = window.scrollY + wrapperRect.top;
             const offset = Math.max(0, window.scrollY - wrapperTop);
             // Read the iframe's CURRENT document/window lazily instead
@@ -590,6 +656,7 @@ export function RawHtmlBlock({ html }: Props) {
               0,
               liveDoc.documentElement.scrollHeight - liveWin.innerHeight
             );
+            const target = Math.min(offset, max);
             // **Must use the options form with `behavior: 'instant'`.**
             // The pasted htmlraw typically has `html { scroll-behavior:
             // smooth }` — the legacy two-argument `scrollTo(x, y)`
@@ -603,7 +670,15 @@ export function RawHtmlBlock({ html }: Props) {
             // `behavior: 'instant'` is the standards-blessed way to
             // bypass the smooth-scroll preference for programmatic
             // jumps.
-            liveWin.scrollTo({ top: Math.min(offset, max), behavior: 'instant' });
+            //
+            // Additional micro-jitter guard: if the iframe already
+            // sits within ~1px of where we want it (within
+            // sub-pixel / iOS bounce noise), skip the scrollTo.
+            // Repeated no-op scrollTo calls at the page rail were
+            // observed to combine with iOS bounce into a visible
+            // "snap to top" loop.
+            if (Math.abs(liveWin.scrollY - target) < 1) return;
+            liveWin.scrollTo({ top: target, behavior: 'instant' });
           };
 
           // Wheel events that land on the iframe area are redirected
@@ -653,6 +728,13 @@ export function RawHtmlBlock({ html }: Props) {
           // We ignore multi-finger gestures — pinch-zoom inside the
           // iframe is disabled anyway by `touch-action: none`, and
           // tracking multiple touch points adds state for no UX gain.
+          //
+          // Performance: touchmove fires 60–120 Hz on mobile, but
+          // `window.scrollBy` is layout-thrashing and `outerToInner`
+          // calls `getBoundingClientRect` + `iwin.scrollTo` — running
+          // both per event exhausts the main thread and visually
+          // stutters. We accumulate `deltaY` between rAFs and run
+          // both ops at most once per frame.
           let lastTouchY = 0;
           const onTouchStart = (e: TouchEvent) => {
             const t = e.touches[0];
@@ -664,20 +746,28 @@ export function RawHtmlBlock({ html }: Props) {
             if (e.touches.length !== 1 || !t) return;
             e.preventDefault();
             const currentY = t.clientY;
+            // Accumulate relative to `lastTouchY` (not frame-relative)
+            // so missed touchmoves between rAFs don't get lost.
             const deltaY = lastTouchY - currentY;
             lastTouchY = currentY;
-            // scrollBy is a no-op when outer is at max scroll — no
-            // scroll event fires — so we explicitly call outerToInner
-            // to re-pin the iframe scroll to the right offset. Same
-            // guard as onIframeWheel.
-            window.scrollBy(0, deltaY);
-            outerToInner();
+            if (deltaY === 0) return;
+            pendingDeltaY += deltaY;
+            scheduleTick();
           };
           const onTouchEnd = () => {
             lastTouchY = 0;
           };
 
-          window.addEventListener('scroll', outerToInner, { passive: true });
+          // The outer `scroll` listener just marks the rAF as
+          // needing a sync — actual work happens inside `scheduleTick`
+          // so we never do more than one sync per frame, regardless
+          // of how many scroll events the browser fires.
+          const onOuterScroll = () => {
+            pendingOuterSync = true;
+            scheduleTick();
+          };
+
+          window.addEventListener('scroll', onOuterScroll, { passive: true });
           iwin.addEventListener('wheel', onIframeWheel, { passive: false });
           iwin.addEventListener('touchstart', onTouchStart, { passive: true });
           iwin.addEventListener('touchmove', onTouchMove, { passive: false });
@@ -701,12 +791,18 @@ export function RawHtmlBlock({ html }: Props) {
           // cleanup we registered above so the effect's return can
           // run them all.
           const extraCleanups = () => {
-            window.removeEventListener('scroll', outerToInner);
+            window.removeEventListener('scroll', onOuterScroll);
             iwin.removeEventListener('wheel', onIframeWheel);
             iwin.removeEventListener('touchstart', onTouchStart);
             iwin.removeEventListener('touchmove', onTouchMove);
             iwin.removeEventListener('touchend', onTouchEnd);
             window.removeEventListener('resize', onResize);
+            // Cancel any in-flight rAF so the callback doesn't run
+            // against a detached iframe after navigation/unmount.
+            if (rafId) {
+              cancelAnimationFrame(rafId);
+              rafId = 0;
+            }
           };
           const prev =
             (iframe as unknown as { __rawhtmlCleanup?: () => void })
