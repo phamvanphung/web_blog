@@ -6,6 +6,7 @@ import { Footer } from '@/components/site/Footer';
 import { PopupLayer } from '@/components/site/PopupLayer';
 import { buildMetadata } from '@/lib/seo';
 import { getBrand } from '@/lib/brand';
+import { getContactEmail } from '@/lib/contact';
 import { getActivePopupsForPath } from '@/modules/popups/server/public';
 
 // Async metadata — reads the same brand cache as the layout below.
@@ -20,6 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function SiteLayout({ children }: { children: ReactNode }) {
   const brand = await getBrand();
+  const contactEmail = await getContactEmail();
 
   // middleware stamps x-pathname on every non-static request. Fall back
   // to '/' so HOMEPAGE-trigger popups still match when the header is
@@ -32,7 +34,7 @@ export default async function SiteLayout({ children }: { children: ReactNode }) 
     <div className="flex min-h-screen flex-col bg-canvas">
       <Header siteName={brand.siteName} homeHref={brand.homeHref} />
       <main className="flex-1">{children}</main>
-      <Footer siteName={brand.siteName} tagline={brand.taglineLong} />
+      <Footer siteName={brand.siteName} tagline={brand.taglineLong} email={contactEmail} />
       <PopupLayer popups={popups} />
     </div>
   );

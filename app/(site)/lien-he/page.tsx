@@ -4,6 +4,7 @@ import { Container } from '@/components/ui/Container';
 import { Tile } from '@/components/ui/Tile';
 import { ContactForm } from '@/components/site/ContactForm';
 import { buildMetadata } from '@/lib/seo';
+import { getContactEmail } from '@/lib/contact';
 
 export const metadata: Metadata = buildMetadata({
   title: 'Liên hệ — 9ent',
@@ -11,7 +12,10 @@ export const metadata: Metadata = buildMetadata({
   path: '/lien-he'
 });
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  // Resolve the same cached contact email the Footer uses, so a Settings
+  // change in /admin/settings (key `contact.email`) propagates here too.
+  const email = await getContactEmail();
   return (
     <Tile tone="parchment">
       <Container width="narrow" className="py-section">
@@ -21,8 +25,8 @@ export default function ContactPage() {
         <h1 className="text-d-md">Liên hệ</h1>
         <p className="mt-4 max-w-[44ch] text-[17px] text-ink-80">
           Gửi yêu cầu cho chúng tôi. Email{' '}
-          <a href="mailto:hello@9ent.vn" className="text-primary hover:underline">
-            hello@9ent.vn
+          <a href={`mailto:${email}`} className="text-primary hover:underline">
+            {email}
           </a>{' '}
           hoặc điền form bên dưới — chúng tôi phản hồi trong 24 giờ làm việc.
         </p>

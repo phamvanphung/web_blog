@@ -4,9 +4,11 @@ import { Logo } from './Logo';
 type Props = {
   siteName?: string;
   tagline?: string;
+  /** Contact email (from `contact.email` Setting). Renders in the "Kết nối" column. */
+  email?: string;
 };
 
-const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
+const STATIC_COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
   {
     title: 'Blog',
     links: [
@@ -22,15 +24,6 @@ const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
       { href: '/dich-vu', label: 'Dịch vụ' },
       { href: '/lien-he', label: 'Liên hệ' }
     ]
-  },
-  {
-    title: 'Kết nối',
-    links: [
-      { href: 'mailto:hello@9ent.vn', label: 'hello@9ent.vn' },
-      { href: 'https://facebook.com', label: 'Facebook' },
-      { href: 'https://youtube.com', label: 'YouTube' },
-      { href: 'https://tiktok.com', label: 'TikTok' }
-    ]
   }
 ];
 
@@ -40,12 +33,28 @@ const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
  * Asserted text per tests/e2e/home.spec.ts: footer must contain the
  * literal "Mọi quyền được bảo lưu".
  */
-export function Footer({ siteName, tagline }: Props = {}) {
+export function Footer({ siteName, tagline, email }: Props = {}) {
   const year = new Date().getFullYear();
   const brand = (siteName ?? '9ent').trim() || '9ent';
   const strip = (
     tagline?.trim() || 'Show dự án, chia sẻ quá trình làm.'
   ).trim();
+  // Contact email rendered into the "Kết nối" column. Caller passes the
+  // resolved value from getContactEmail(); fall back to the literal so the
+  // component still works in isolation (e.g. tests / Storybook).
+  const contactEmail = (email ?? 'hello@9ent.vn').trim() || 'hello@9ent.vn';
+  const columns = [
+    ...STATIC_COLUMNS,
+    {
+      title: 'Kết nối',
+      links: [
+        { href: `mailto:${contactEmail}`, label: contactEmail },
+        { href: 'https://facebook.com', label: 'Facebook' },
+        { href: 'https://youtube.com', label: 'YouTube' },
+        { href: 'https://tiktok.com', label: 'TikTok' }
+      ]
+    }
+  ];
   return (
     <footer className="bg-canvas-parchment">
       <Container
@@ -58,7 +67,7 @@ export function Footer({ siteName, tagline }: Props = {}) {
             {strip}
           </p>
         </div>
-        {COLUMNS.map((col) => (
+        {columns.map((col) => (
           <div key={col.title} className="text-[13px]">
             <h3 className="mb-4 text-[12px] font-semibold uppercase tracking-[0.08em] text-ink-48">
               {col.title}
