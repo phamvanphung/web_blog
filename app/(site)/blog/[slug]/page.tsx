@@ -16,6 +16,7 @@ import {
 } from '@/modules/posts/server/public';
 import { findRedirectForPath } from '@/lib/redirects';
 import { articleJsonLd, breadcrumbJsonLd } from '@/modules/seo/lib/jsonld';
+import { getBrand } from '@/lib/brand';
 
 export const revalidate = 300;
 
@@ -58,6 +59,12 @@ export default async function PostDetailPage({
 
   const APP_URL = process.env.APP_URL ?? 'http://localhost:3000';
   const url = `${APP_URL}${path}`;
+  const brand = await getBrand();
+  // JSON-LD needs an absolute logo URL — admin may set a site-relative path
+  // (`/logo.svg`) or an absolute URL. Prefix when relative.
+  const publisherLogo = /^https?:\/\//i.test(brand.logoUrl)
+    ? brand.logoUrl
+    : `${APP_URL.replace(/\/$/, '')}${brand.logoUrl}`;
   const categoryIds = post.categories.map((pc) => pc.category.id);
   const related = await listRelatedPosts(post.id, categoryIds, 3).catch(() => []);
 
@@ -70,7 +77,8 @@ export default async function PostDetailPage({
           url,
           datePublished: (post.publishedAt ?? post.updatedAt).toISOString(),
           authorName: post.author.name,
-          imageUrl: post.featuredMedia?.url ?? null
+          imageUrl: post.featuredMedia?.url ?? null,
+          publisherLogoUrl: publisherLogo
         })}
       />
       <JsonLd

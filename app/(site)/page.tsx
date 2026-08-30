@@ -59,6 +59,11 @@ export default async function HomePage() {
 
   const APP_URL = process.env.APP_URL ?? 'http://localhost:3000';
 
+  // JSON-LD needs an absolute logo URL — admin may set either a site-relative
+  // path (`/logo.svg`) or an absolute URL. Prefix when relative.
+  const logoAbsoluteUrl = (raw: string, base: string): string =>
+    /^https?:\/\//i.test(raw) ? raw : `${base.replace(/\/$/, '')}${raw}`;
+
   // Split featured into 1 hero post + 2 side posts for visual hierarchy.
   const heroPost = featured[0];
   const sidePosts = featured.slice(1, 3);
@@ -70,7 +75,7 @@ export default async function HomePage() {
         data={organizationJsonLd({
           name: brand.siteName,
           url: APP_URL,
-          logo: `${APP_URL}/logo.svg`
+          logo: logoAbsoluteUrl(brand.logoUrl, APP_URL)
         })}
       />
 

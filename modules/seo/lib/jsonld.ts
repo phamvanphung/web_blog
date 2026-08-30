@@ -12,6 +12,8 @@ export function articleJsonLd(input: {
   datePublished: string;
   authorName: string;
   imageUrl: string | null;
+  /** Absolute or site-relative logo URL. Falls back to `/logo.svg` when unset. */
+  publisherLogoUrl?: string;
 }) {
   return {
     '@context': 'https://schema.org',
@@ -24,7 +26,10 @@ export function articleJsonLd(input: {
     publisher: {
       '@type': 'Organization',
       name: '9ent',
-      logo: { '@type': 'ImageObject', url: `${APP_URL}/logo.svg` }
+      logo: {
+        '@type': 'ImageObject',
+        url: input.publisherLogoUrl ?? `${APP_URL}/logo.svg`
+      }
     },
     image: input.imageUrl ? [input.imageUrl] : undefined
   };

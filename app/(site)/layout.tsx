@@ -35,7 +35,11 @@ export default async function SiteLayout({ children }: { children: ReactNode }) 
 
   return (
     <div className="flex min-h-screen flex-col bg-canvas">
-      <Header siteName={headerSiteName} homeHref={brand.homeHref} />
+      <Header
+        siteName={headerSiteName}
+        homeHref={brand.homeHref}
+        logoUrl={brand.logoUrl}
+      />
       <main className="flex-1">{children}</main>
       <Footer siteName={brand.siteName} tagline={brand.taglineLong} email={contactEmail} />
       <PopupLayer popups={popups} />

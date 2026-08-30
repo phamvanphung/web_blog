@@ -15,6 +15,8 @@ import { cachedGetSetting, BRAND_TAG } from '@/modules/settings/server';
 const DEFAULT_SITE_NAME = '9ent';
 const DEFAULT_TAGLINE = 'Blog công ty 9ent';
 const DEFAULT_HOME_HREF = '/';
+const DEFAULT_LOGO_URL = '/logo.svg';
+const DEFAULT_FAVICON_URL = '/favicon.ico';
 
 export type Brand = {
   siteName: string;
@@ -22,6 +24,10 @@ export type Brand = {
   taglineLong: string;
   /** Logo / wordmark link target. Falls back to `/` if not configured. */
   homeHref: string;
+  /** Logo image URL. Falls back to `/logo.svg` when unset. */
+  logoUrl: string;
+  /** Favicon URL. Falls back to `/favicon.ico` when unset. */
+  faviconUrl: string;
 };
 
 /**
@@ -39,10 +45,12 @@ export async function getHomeHref(): Promise<string> {
 export const getBrand = cache((): Promise<Brand> =>
   unstable_cache(
     async () => {
-      const [name, tagline, homeHref] = await Promise.all([
+      const [name, tagline, homeHref, logoUrl, faviconUrl] = await Promise.all([
         cachedGetSetting('site.name'),
         cachedGetSetting('site.tagline'),
-        cachedGetSetting('site.homeHref')
+        cachedGetSetting('site.homeHref'),
+        cachedGetSetting('site.logo'),
+        cachedGetSetting('site.favicon')
       ]);
       return {
         siteName: name?.trim() || DEFAULT_SITE_NAME,
@@ -50,7 +58,9 @@ export const getBrand = cache((): Promise<Brand> =>
         taglineLong:
           tagline?.trim() ||
           'Show dự án, chia sẻ quá trình làm — nơi khách hàng hiện hữu và tiềm năng thấy cách chúng tôi làm việc.',
-        homeHref: homeHref?.trim() || DEFAULT_HOME_HREF
+        homeHref: homeHref?.trim() || DEFAULT_HOME_HREF,
+        logoUrl: logoUrl?.trim() || DEFAULT_LOGO_URL,
+        faviconUrl: faviconUrl?.trim() || DEFAULT_FAVICON_URL
       };
     },
     ['brand'],

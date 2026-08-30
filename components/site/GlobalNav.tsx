@@ -10,6 +10,8 @@ type Props = {
   siteName?: string;
   /** Logo / wordmark link target. Falls back to `/` when unset. */
   homeHref?: string;
+  /** Logo image URL. Falls back to `/logo.svg` when unset. */
+  logoUrl?: string;
 };
 
 /**
@@ -22,12 +24,15 @@ type Props = {
  * Replaces the previous two-row band (52px black + 52px frosted).
  * Sticky so anchor links feel anchored.
  */
-export function GlobalNav({ items, siteName, homeHref }: Props) {
-  // No default fallback — site.name may legitimately be unset, in which case
-  // the wordmark area renders blank (per design intent). The image logo
-  // (logo.svg) still renders so the home link stays discoverable.
+export function GlobalNav({ items, siteName, homeHref, logoUrl }: Props) {
+  // No default fallback for siteName — site.name may legitimately be unset,
+  // in which case the wordmark area renders blank (per design intent). The
+  // image logo still renders so the home link stays discoverable.
   const brand = (siteName ?? '').trim();
   const home = (homeHref ?? '/').trim() || '/';
+  // logoUrl falls back to `/logo.svg` so existing setups without a configured
+  // logo keep working out of the box. Read from `Setting.site.logo`.
+  const logo = (logoUrl ?? '/logo.svg').trim() || '/logo.svg';
   // Absolute URLs open in a new tab so the in-site nav stack doesn't get
   // ripped out from under the visitor when they click the logo.
   const externalHome = /^https?:\/\//i.test(home);
@@ -45,7 +50,7 @@ export function GlobalNav({ items, siteName, homeHref }: Props) {
           className="inline-flex items-center gap-3 rounded-8 outline-none transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary-focus"
         >
           <Image
-            src="/logo.svg"
+            src={logo}
             alt=""
             width={36}
             height={36}

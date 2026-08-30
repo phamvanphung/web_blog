@@ -7,18 +7,23 @@ type Props = {
   siteName?: string;
   /** Logo / wordmark link target. Falls back to `/` when unset. */
   homeHref?: string;
+  /** Logo image URL. Falls back to `/logo.svg` when unset. */
+  logoUrl?: string;
 };
 
-export async function Header({ siteName, homeHref }: Props = {}) {
+export async function Header({ siteName, homeHref, logoUrl }: Props = {}) {
   const tree = await getMenuByLocation('primary').catch(() => []);
   const items = tree.map((n) => ({
     href: n.href,
     label: n.label,
     openInNew: n.openInNew
   }));
-  // Pass siteName through so GlobalNav can render the brand wordmark.
+  // Pass siteName + logoUrl through so GlobalNav can render the brand
+  // wordmark and logo image sourced from settings.
   if (items.length > 0)
-    return <GlobalNav items={items} siteName={siteName} homeHref={homeHref} />;
+    return (
+      <GlobalNav items={items} siteName={siteName} homeHref={homeHref} logoUrl={logoUrl} />
+    );
   // Fallback: render Nav list inline at the same level GlobalNav would.
   return (
     <header className="sticky top-0 z-50 border-b border-hairline bg-canvas/90 backdrop-blur">
