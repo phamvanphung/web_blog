@@ -658,98 +658,55 @@ export function RawHtmlBlock({ html }: Props) {
             if (rafId) return;
             rafId = requestAnimationFrame(() => {
               rafId = 0;
-              // Touch delta first so any resulting outer `scroll`
-              // event lands in this same task and gets coalesced
-              // into the outerToInner call below instead of firing
-              // its own rAF.
+              // Always scroll the outer page; the existing outerToInner
+              // listener (or the pendingOuterSync forced call below)
+              // re-pins the iframe to match. Going through outer→inner
+              // always — instead of driving the iframe directly with
+              // `iwin.scrollBy` when inner has room — is what made the
+              // slow-swipe case stable: iframe scrollY is always an
+              // integer derived from outer.scrollY - wrapperTop, so
+              // there's never a slow accumulation of sub-pixel deltas
+              // that the browser rounds to zero (which was the
+              // "vuốt chậm → giật" symptom — iframe appeared frozen
+              // while the finger moved).
               if (pendingDeltaY !== 0) {
                 const dy = pendingDeltaY;
                 pendingDeltaY = 0;
-                // ---- Rail-aware scroll chain swap ----
+                // ---- Rail-aware drop ----
                 //
-                // The first version of this block unconditionally
-                // forwarded touch delta to the outer page via
-                // `window.scrollBy`. After the previous rAF coalesce
-                // pass that stopped the per-event stutter, the new
-                // visible bug was at the start / end of the iframe:
+                // The first version of the rail-aware pass tried to
+                // pick the *destination* container (inner vs outer)
+                // based on which had room. That introduced a "chain
+                // swap" between the two surfaces — which is what
+                // caused the slow-swipe stutter, because the inner
+                // branch drove the iframe with `iwin.scrollBy({top:
+                // dy, behavior:'instant'})`, and `dy` of 1–2 px (slow
+                // finger drag) rounds to zero per frame, leaving the
+                // iframe appearing stuck while the outer page also
+                // barely moves.
                 //
-                //   • User reaches the bottom of the iframe (inner
-                //     `scrollY === max`) and keeps swiping down.
-                //     `scrollBy` on the outer page moves the outer
-                //     scrollY forward until outer also hits its
-                //     max. iOS then *bounces* the outer page —
-                //     rubber-band scroll fires further `scroll`
-                //     events at a position past the real `max`,
-                //     and on each one `outerToInner` re-runs
-                //     `iwin.scrollTo(target)` against the inner
-                //     iframe. Because the iframe is also at max,
-                //     the target clamps back to `max`; visually the
-                //     iframe scrolls to a position the user did
-                //     NOT intend, then snaps back — "lướt ngược
-                //     lại thì page chạy về đầu/giữa".
-                //
-                //   • Same shape on overscroll UP at the top.
-                //
-                // Fix: read each container's current scroll & max
-                // BEFORE attempting to move it. Pick whichever
-                // surface has room in the direction of `dy` and
-                // scroll THAT one. If neither has room (both at
-                // their rail), drop the delta entirely so we don't
-                // feed iOS bounce into `outerToInner`.
-                const liveWin = iframe.contentWindow;
-                const liveDoc = iframe.contentDocument;
-                if (liveWin && liveDoc) {
-                  const innerY = liveWin.scrollY;
-                  const innerMax = Math.max(
-                    0,
-                    liveDoc.documentElement.scrollHeight -
-                      liveWin.innerHeight
-                  );
-                  const outerY = window.scrollY;
-                  const outerMax = Math.max(
-                    0,
-                    document.documentElement.scrollHeight -
-                      window.innerHeight
-                  );
-
-                  const innerHasRoomDown =
-                    dy > 0 && innerY < innerMax - 0.5;
-                  const innerHasRoomUp =
-                    dy < 0 && innerY > 0.5;
-                  const outerHasRoomDown =
-                    dy > 0 && outerY < outerMax - 0.5;
-                  const outerHasRoomUp =
-                    dy < 0 && outerY > 0.5;
-
-                  if (innerHasRoomDown || innerHasRoomUp) {
-                    // Inner has scroll room in the swipe direction —
-                    // drive the iframe directly. This is the most
-                    // important branch: it gives iOS native momentum
-                    // a chance to engage for in-iframe swipe, instead
-                    // of going through outer→inner one-way sync which
-                    // fights momentum by re-pinning inner scrollY to
-                    // the (lagging, frame-quantised) outer position.
-                    liveWin.scrollBy({ top: dy, behavior: 'instant' });
-                    // Sync outer anyway in case inner's window
-                    // position relative to outer drifted (e.g. user
-                    // started in middle of wrapper, inner advanced
-                    // beyond outer → now outer should also advance
-                    // proportionally so the iframe stays anchored
-                    // to the wrapper). Skipping this caused the
-                    // "inner races ahead of outer" symptom on long
-                    // swipes inside the iframe.
-                    pendingOuterSync = true;
-                  } else if (outerHasRoomDown || outerHasRoomUp) {
-                    // Inner is at rail in this direction; outer has
-                    // room — scroll the outer.
-                    window.scrollBy(0, dy);
-                    pendingOuterSync = true;
-                  } else {
-                    // Both surfaces at rail — likely iOS bounce.
-                    // Drop the delta and skip the sync entirely so
-                    // we don't re-pin the iframe to a position past
-                    // its real max.
-                  }
+                // Now we ALWAYS scroll the outer page; inner pinning
+                // is handled by outerToInner after. We still DROP
+                // the delta entirely when both surfaces are at
+                // their rail — that's an iOS bounce event and
+                // pushing it into window.scrollBy would just kick
+                // off a re-pin cycle with no real motion.
+                const outerMax = Math.max(
+                  0,
+                  document.documentElement.scrollHeight -
+                    window.innerHeight
+                );
+                const outerY = window.scrollY;
+                const outerHasRoom =
+                  (dy > 0 && outerY < outerMax - 0.5) ||
+                  (dy < 0 && outerY > 0.5);
+                if (outerHasRoom) {
+                  window.scrollBy(0, dy);
+                  // `scrollBy` on iOS sometimes doesn't emit a
+                  // `scroll` event when it lands exactly at the
+                  // rail (last 0.5px of room). Force the outerToInner
+                  // pass so the iframe stays in lock-step.
+                  pendingOuterSync = true;
                 }
               }
               if (pendingOuterSync) {
