@@ -53,7 +53,12 @@ export function PopupFrame({ popup, onClose }: Props) {
         <iframe
           srcDoc={popup.htmlContent}
           title={popup.name}
-          sandbox="allow-scripts allow-forms allow-popups"
+          // `allow-top-navigation-by-user-activation` lets author-supplied
+          // CTAs (e.g. "Quay về Trang chủ") call `window.parent.location.href`
+          // after a real user click. Strictly safer than the unscoped
+          // `allow-top-navigation` because it only fires on user gesture
+          // — script-only redirects stay blocked.
+          sandbox="allow-scripts allow-forms allow-popups allow-top-navigation-by-user-activation"
           className="block h-[80vh] w-full border-0"
         />
       </div>
