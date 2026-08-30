@@ -1,7 +1,9 @@
 'use client';
 
+import { useState, useTransition } from 'react';
 import { Button } from '@/components/ui/Button';
 import type { MenuItemNode } from '@/modules/menus/server/tree';
+import { MenuItemRow } from './[id]/edit/MenuItemRow';
 
 type Props = {
   menuId: string;
@@ -9,6 +11,7 @@ type Props = {
   addAction: (formData: FormData) => Promise<void>;
   deleteAction: (formData: FormData) => Promise<void>;
   toggleVisibleAction: (formData: FormData) => Promise<void>;
+  reorderAction: (formData: FormData) => Promise<void>;
 };
 
 const inputClass =
@@ -20,8 +23,43 @@ export function MenuEditor({
   items,
   addAction,
   deleteAction,
-  toggleVisibleAction
+  toggleVisibleAction,
+  reorderAction
 }: Props) {
+  // Drag state lives at the parent so we can:
+  //   • highlight the source row (faded) and the target row (border-top).
+  //   • disable drag while a reorder server action is in flight.
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [isReordering, startReorderTransition] = useTransition();
+
+  const handleDragStart = (id: string) => setDragId(id);
+  const handleDragEnd = () => setDragId(null);
+
+  const handleDrop = (targetId: string) => {
+    const sourceId = dragId;
+    setDragId(null);
+    if (!sourceId || sourceId === targetId) return;
+
+    // Compute the new flat order. Children of moved items are not part of
+    // `orderedIds` — they keep their existing (per-parent) sortOrder on the
+    // server side because the reorder action only touches the supplied ids.
+    const sourceIdx = items.findIndex((it) => it.id === sourceId);
+    const targetIdx = items.findIndex((it) => it.id === targetId);
+    if (sourceIdx === -1 || targetIdx === -1) return;
+
+    const next = items.slice();
+    const [moved] = next.splice(sourceIdx, 1) as [MenuItemNode];
+    next.splice(targetIdx, 0, moved);
+
+    const formData = new FormData();
+    formData.set('menuId', menuId);
+    formData.set('orderedIds', next.map((it) => it.id).join(','));
+
+    startReorderTransition(() => {
+      void reorderAction(formData);
+    });
+  };
+
   return (
     <div className="max-w-prose space-y-6">
       <form action={addAction} className="space-y-4 border-b border-hairline pb-6">
@@ -71,82 +109,29 @@ export function MenuEditor({
         {items.length === 0 ? (
           <li className="text-ink-48">Chưa có item.</li>
         ) : (
-          items.map((it) => (
-            <ItemRow
-              key={it.id}
-              item={it}
-              depth={0}
-              deleteAction={deleteAction}
-              toggleVisibleAction={toggleVisibleAction}
-            />
-          ))
+          items.map((it) => {
+            const isDragSource = dragId === it.id;
+            const isDropTarget = dragId !== null && dragId !== it.id;
+            return (
+              <MenuItemRow
+                key={it.id}
+                item={it}
+                depth={0}
+                editable={true}
+                draggable={!isReordering}
+                isDragSource={isDragSource}
+                isDropTarget={isDropTarget}
+                isReordering={isReordering}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                onDrop={handleDrop}
+                deleteAction={deleteAction}
+                toggleVisibleAction={toggleVisibleAction}
+              />
+            );
+          })
         )}
       </ul>
     </div>
-  );
-}
-
-function ItemRow({
-  item,
-  depth,
-  deleteAction,
-  toggleVisibleAction
-}: {
-  item: MenuItemNode;
-  depth: number;
-  deleteAction: (formData: FormData) => Promise<void>;
-  toggleVisibleAction: (formData: FormData) => Promise<void>;
-}) {
-  const href =
-    item.targetType === 'EXTERNAL'
-      ? item.externalUrl ?? '#'
-      : `/${item.targetType.toLowerCase()}/${item.targetId ?? ''}`;
-  return (
-    <li
-      className="border-b border-hairline py-3"
-      style={{ marginLeft: depth * 16 }}
-    >
-      <div className="flex items-center justify-between gap-3">
-        <span>
-          <span className="text-ink">{item.label}</span>{' '}
-          <a href={href} className="ml-2 text-[12px] text-primary hover:underline">
-            {href}
-          </a>
-        </span>
-        <div className="flex items-center gap-4 text-[12px]">
-          <form action={toggleVisibleAction}>
-            <input type="hidden" name="itemId" value={item.id} />
-            <label className="flex items-center gap-2 text-ink-80">
-              <input
-                type="checkbox"
-                name="visible"
-                defaultChecked={item.isVisible}
-                onChange={(e) => (e.currentTarget.form as HTMLFormElement).requestSubmit()}
-              />
-              Hiện
-            </label>
-          </form>
-          <form action={deleteAction}>
-            <input type="hidden" name="itemId" value={item.id} />
-            <button type="submit" className="text-error hover:underline">
-              Xóa
-            </button>
-          </form>
-        </div>
-      </div>
-      {item.children.length > 0 && (
-        <ul>
-          {item.children.map((c) => (
-            <ItemRow
-              key={c.id}
-              item={c}
-              depth={depth + 1}
-              deleteAction={deleteAction}
-              toggleVisibleAction={toggleVisibleAction}
-            />
-          ))}
-        </ul>
-      )}
-    </li>
   );
 }

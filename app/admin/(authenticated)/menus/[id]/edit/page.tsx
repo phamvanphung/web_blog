@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { AdminBreadcrumb } from '@/components/admin/AdminBreadcrumb';
 import { MenuEditor } from '../../MenuEditor';
+import { reorderMenuItemsAction } from './actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -116,6 +117,7 @@ export default async function MenuEditPage({
         addAction={addItemAction}
         deleteAction={deleteItemAction}
         toggleVisibleAction={toggleVisibleAction}
+        reorderAction={reorderMenuItemsAction}
       />
     </div>
   );
