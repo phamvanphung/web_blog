@@ -58,4 +58,20 @@ export const getBrand = cache((): Promise<Brand> =>
   )()
 );
 
+/**
+ * Raw `site.name` without any default fallback. Returns an empty string when
+ * the setting is missing — used by the Header so the logo area can render
+ * blank (per design intent) instead of silently substituting "9ent".
+ *
+ * Footer / metadata still get the "9ent" default via `getBrand().siteName`.
+ * Shares `BRAND_TAG` so admin updates to `site.name` invalidate both caches.
+ */
+export const getSiteName = cache((): Promise<string> =>
+  unstable_cache(
+    async () => (await cachedGetSetting('site.name'))?.trim() ?? '',
+    ['site-name'],
+    { tags: [BRAND_TAG], revalidate: 600 }
+  )()
+);
+
 export { BRAND_TAG };

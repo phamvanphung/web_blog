@@ -27,7 +27,7 @@ export async function Header({ siteName, homeHref }: Props = {}) {
         className="mx-auto flex h-[68px] max-w-wide items-center justify-between gap-6 px-6"
       >
         <span className="text-[20px] font-semibold tracking-[-0.01em] text-ink">
-          {siteName ?? '9ent'}
+          {siteName ?? ''}
         </span>
         <Nav items={[]} />
       </nav>
