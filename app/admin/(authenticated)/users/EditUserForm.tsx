@@ -56,7 +56,7 @@ export function EditUserForm({
           className={inputClass}
         />
         <p className="mt-1 text-[11px] text-ink-48">
-          Để trống = giữ mật khẩu cũ. Để đặt lại mật khẩu cho user, dùng nút "Reset pass" ở danh sách.
+          Để trống = giữ mật khẩu cũ. Để đặt lại mật khẩu cho user, dùng nút Reset pass ở danh sách.
         </p>
       </div>
       <div>
