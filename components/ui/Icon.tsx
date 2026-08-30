@@ -17,7 +17,9 @@ export type IconName =
   | 'settings'
   | 'audit'
   | 'megaphone'
-  | 'palette';
+  | 'palette'
+  | 'close'
+  | 'chevron-down';
 
 const PATHS: Record<IconName, string> = {
   // Dashboard — 4 tiles / squares
@@ -95,6 +97,15 @@ const PATHS: Record<IconName, string> = {
     '<circle cx="12" cy="7.5" r="1.2" fill="currentColor"></circle>' +
     '<circle cx="16.5" cy="10.5" r="1.2" fill="currentColor"></circle>' +
     '<path d="M12 21a4 4 0 0 0 0-8h-1a2 2 0 0 1 0-4 4 4 0 0 0 4-4"></path>',
+
+  // Close — X (mobile drawer / dialogs)
+  close:
+    '<path d="M6 6l12 12"></path>' +
+    '<path d="M18 6 6 18"></path>',
+
+  // Chevron down — disclosure / accordion trigger
+  'chevron-down':
+    '<path d="m6 9 6 6 6-6"></path>',
 };
 
 type Props = SVGProps<SVGSVGElement> & {

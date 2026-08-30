@@ -1,5 +1,6 @@
 import { Container } from '@/components/ui/Container';
 import { Logo } from './Logo';
+import { FooterColumns } from './FooterColumns';
 
 type Props = {
   siteName?: string;
@@ -59,7 +60,7 @@ export function Footer({ siteName, tagline, email }: Props = {}) {
     <footer className="bg-canvas-parchment">
       <Container
         width="wide"
-        className="grid grid-cols-2 gap-x-10 gap-y-10 py-section md:grid-cols-4"
+        className="grid grid-cols-2 gap-x-10 gap-y-10 py-12 md:grid-cols-4 md:py-section"
       >
         <div className="col-span-2 md:col-span-1">
           <Logo tone="ink" text={brand} />
@@ -67,29 +68,9 @@ export function Footer({ siteName, tagline, email }: Props = {}) {
             {strip}
           </p>
         </div>
-        {columns.map((col) => (
-          <div key={col.title} className="text-[13px]">
-            <h3 className="mb-4 text-[12px] font-semibold uppercase tracking-[0.08em] text-ink-48">
-              {col.title}
-            </h3>
-            <ul className="space-y-3 leading-snug text-ink-80">
-              {col.links.map((l) => (
-                <li key={`${l.href}-${l.label}`}>
-                  <a
-                    href={l.href}
-                    className="hover:text-primary"
-                    target={l.href.startsWith('http') ? '_blank' : undefined}
-                    rel={
-                      l.href.startsWith('http') ? 'noopener noreferrer' : undefined
-                    }
-                  >
-                    {l.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+        {/* On mobile each column is a collapsible accordion (FooterColumns); */}
+        {/* on md+ they render as static 3-col content matching the prior grid. */}
+        <FooterColumns columns={columns} />
       </Container>
       <div className="border-t border-hairline">
         <Container className="flex flex-wrap items-center justify-between gap-2 py-6 text-[12px] text-ink-48">

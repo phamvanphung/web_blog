@@ -38,7 +38,7 @@ export function SubNavFrosted() {
   if (!section) return null;
 
   return (
-    <div className="frosted sticky top-[57px] z-40 border-b border-hairline">
+    <div className="frosted sticky top-[68px] z-40 border-b border-hairline">
       <div className="mx-auto flex h-subnav max-w-wide items-center justify-between px-6">
         <span className="text-[21px] font-semibold tracking-tight text-ink">
           {section.label}

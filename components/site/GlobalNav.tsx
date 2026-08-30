@@ -1,6 +1,7 @@
 // components/site/GlobalNav.tsx
 import Image from 'next/image';
 import Link from 'next/link';
+import { MobileNav } from './MobileNav';
 
 type Item = { href: string; label: string; openInNew?: boolean };
 
@@ -58,13 +59,13 @@ export function GlobalNav({ items, siteName, homeHref, logoUrl }: Props) {
             priority
           />
           {brand && (
-            <span className="text-[20px] font-semibold tracking-[-0.01em] text-ink">
+            <span className="hidden text-[20px] font-semibold tracking-[-0.01em] text-ink md:inline">
               {brand}
             </span>
           )}
         </Link>
 
-        <ul className="flex items-center gap-7 text-[14px] text-ink-80">
+        <ul className="hidden items-center gap-7 text-[14px] text-ink-80 md:flex">
           {items.map((it, i) => (
             <li key={`${i}-${it.href}`}>
               <Link
@@ -78,6 +79,9 @@ export function GlobalNav({ items, siteName, homeHref, logoUrl }: Props) {
             </li>
           ))}
         </ul>
+
+        {/* Hamburger + right-side drawer for mobile only (md:hidden inside). */}
+        <MobileNav items={items} />
       </nav>
     </header>
   );
