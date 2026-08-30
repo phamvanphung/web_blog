@@ -59,10 +59,32 @@ declare global {
   var __homeHrefCache: CacheEntry | undefined;
 }
 
-const fetchHomeHrefFromApi = async (origin: string): Promise<string | null> => {
+/**
+ * Internal origin used to call back into the Node-side endpoint.
+ *
+ * Must be a scheme + host + port the Node process can actually reach
+ * itself over loopback, regardless of how the public-facing request
+ * arrived. We deliberately ignore `request.nextUrl.origin` here —
+ * on an HTTPS request the origin is `https://daudau.ftrade.io.vn`,
+ * but the Node app only listens on port 3000 by default (HTTP).
+ * Production overrides this via `APP_URL` (e.g. `http://localhost:8368`).
+ * `fetch('https://...')` from inside the same Node process either
+ * round-trips through Cloudflare (slow, occasionally cached, fragile)
+ * or fails outright when the loopback has no TLS listener — both
+ * paths make the middleware silently no-op and the public request
+ * lands on the default homepage instead of the configured homeHref.
+ *
+ * `APP_URL` is the single source of truth configured at deploy time
+ * and points at the internal loopback. Fallback to 3000 (Next.js
+ * default) keeps local dev working without env wiring.
+ */
+const INTERNAL_ORIGIN =
+  process.env.APP_URL?.replace(/\/$/, '') ?? 'http://localhost:3000';
+
+const fetchHomeHrefFromApi = async (): Promise<string | null> => {
   // No-cache so we never serve a stale 200 after an admin write.
   // The Node-side endpoint already memoises via `unstable_cache`.
-  const res = await fetch(`${origin}/api/internal/site-home-href`, {
+  const res = await fetch(`${INTERNAL_ORIGIN}/api/internal/site-home-href`, {
     cache: 'no-store',
     headers: { accept: 'application/json' }
   });
@@ -72,14 +94,14 @@ const fetchHomeHrefFromApi = async (origin: string): Promise<string | null> => {
   return href && href.length > 0 ? href : null;
 };
 
-const getCachedHomeHref = async (origin: string): Promise<string | null> => {
+const getCachedHomeHref = async (): Promise<string | null> => {
   const now = Date.now();
   const cached = globalThis.__homeHrefCache;
   if (cached && now - cached.loadedAt < STALE_AFTER_MS) {
     return cached.value;
   }
   try {
-    const value = await fetchHomeHrefFromApi(origin);
+    const value = await fetchHomeHrefFromApi();
     globalThis.__homeHrefCache = { value, loadedAt: now };
     return value;
   } catch {
@@ -105,7 +127,7 @@ export async function middleware(request: NextRequest) {
   // no-op pass-through that has already been stamped with x-pathname.
   if (pathname !== ROOT_PATH) return forwarded;
 
-  const homeHref = await getCachedHomeHref(request.nextUrl.origin);
+  const homeHref = await getCachedHomeHref();
 
   // No setting (or the default `/`) → no redirect. The homepage renders.
   if (!homeHref || homeHref === '/') return forwarded;
