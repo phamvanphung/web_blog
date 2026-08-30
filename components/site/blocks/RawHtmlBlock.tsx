@@ -225,6 +225,20 @@ export function RawHtmlBlock({ html }: Props) {
       }
     };
 
+    // Forward declaration for the wrapper-grow dirty bit. Hoisted to
+    // BEFORE `measure()` because that function references it
+    // (TypeScript doesn't infer the temporal-dead-zone relationship).
+    // The actual `let` decl lives further down, alongside the
+    // touch/outer-sync state.
+    //
+    // `lastOuterSyncY` & friends (defined below) hold the most
+    // recent legitimate outer scrollY so we can distinguish a
+    // user-driven scroll event (outerY changes) from a
+    // wrapper-grow-induced synthetic scroll event (outerY
+    // unchanged). The dirty bit is set by `measure()` and consumed
+    // by `outerToInner()` to skip the iframe re-pin after a grow.
+    let skipOuterSyncFromGrow = 0;
+
     const measure = () => {
       try {
         const doc = iframe.contentDocument;
@@ -285,6 +299,21 @@ export function RawHtmlBlock({ html }: Props) {
             measure.floor = newHeight;
           }
           wrapper.style.height = `${newHeight}px`;
+          // Mark the next outerToInner pass as untrusted. Growing
+          // the wrapper fires a `scroll` event on `window` (the
+          // browser's outer scroll max just changed), and if we
+          // let outerToInner run normally in response, it would
+          // compute an offset based on the new wrapper geometry
+          // and pin the iframe to a different scrollY — visibly
+          // snapping the iframe back up while the user sat idle
+          // at the bottom of the page (the "cuối trang 2 giây
+          // sau nhảy về đầu" symptom, which is the 2s polling
+          // tick landing right when a late asset finishes loading).
+          // We use a counter instead of a one-shot flag because
+          // the wrapper grow can fire multiple scroll events
+          // (e.g. browser throttles or grows in two steps); drain
+          // the counter naturally in outerToInner.
+          skipOuterSyncFromGrow = 2;
         }
       } catch {
         // Cross-origin (shouldn't happen for srcdoc, but guard anyway).
@@ -597,6 +626,34 @@ export function RawHtmlBlock({ html }: Props) {
           let pendingDeltaY = 0;
           let pendingOuterSync = false;
           let rafId = 0;
+          // Set by `measure()` to >=1 every time the wrapper grows.
+          // Drained by `outerToInner` so we don't re-pin the iframe
+          // scrollY in response to a programmatic wrapper resize
+          // (which fires a synthetic `scroll` event on the outer
+          // page). Without this, the polling 2s tick that happens
+          // to land when a late asset finishes loading grows the
+          // wrapper, fires a scroll event, and snaps the iframe to
+          // a new offset relative to the user's now-stale outer
+          // scrollY — visible as "cuối trang 2s sau nhảy về đầu".
+          //
+          // `skipOuterSyncFromGrow` is declared higher up
+          // (right before `const measure = () => { ... }`) so
+          // both `measure()` and the touch state can read/write
+          // it; TypeScript will not infer the temporal-dead-zone
+          // across that ordering otherwise.
+          //
+          // `lastOuterSyncY` (defined here) holds the most
+          // recent legitimate (user-driven) outer scroll. Combined
+          // with the dirty bit, this distinguishes a user finger
+          // scroll (outerY changes) from a wrapper-grow-induced
+          // synthetic scroll event (outerY unchanged).
+          let lastOuterSyncY = 0;
+          // Snapshot of inner iframe scroll & max at the moment
+          // of the last wrapper-grow skip. Kept for diagnostic
+          // purposes — the simple fix only needs the dirty bit +
+          // outerY comparison above.
+          let lastInnerAfterGrow = 0;
+          let lastInnerMaxAfterGrow = 0;
           const scheduleTick = () => {
             if (rafId) return;
             rafId = requestAnimationFrame(() => {
@@ -705,6 +762,61 @@ export function RawHtmlBlock({ html }: Props) {
           const outerToInner = () => {
             const wrapperRect = wrapper.getBoundingClientRect();
             const viewportH = window.innerHeight;
+            // ---- Wrapper-grow guard ----
+            //
+            // When `measure()` grows the wrapper synchronously inside a
+            // polling tick, the browser fires a synthetic `scroll` event
+            // on `window` — even though `window.scrollY` did NOT
+            // actually change (only `document.documentElement.scrollHeight`
+            // did). Re-running the iframe pin on that event computes a
+            // new `offset = window.scrollY - wrapperTop`, finds the
+            // iframe is no longer at the right pin (because wrapperTop
+            // shifted up by the grow amount), and snaps it back. That's
+            // the "cuối trang 2s sau nhảy về đầu" bug: a late-loading
+            // asset (image, font) finishes decoding right when the 2s
+            // polling tick runs, grows the wrapper, fires the scroll
+            // event, and visually yanks the iframe scroll back to an
+            // earlier position while the user sits idle.
+            //
+            // We detect the grow-triggered event by: (a) the dirty bit
+            // is non-zero (set in measure()), AND (b) window.scrollY
+            // is unchanged from the last sync. The (b) check is
+            // load-bearing — if the user *also* moved their finger at
+            // the same moment, scrollY genuinely changed and we must
+            // run the sync; otherwise we leave the iframe alone.
+            const liveWinForGuard = iframe.contentWindow;
+            const liveDocForGuard = iframe.contentDocument;
+            const outerYNow = window.scrollY;
+            const innerYNow = liveWinForGuard ? liveWinForGuard.scrollY : 0;
+            const innerMaxNow =
+              liveDocForGuard && liveWinForGuard
+                ? Math.max(
+                    0,
+                    liveDocForGuard.documentElement.scrollHeight -
+                      liveWinForGuard.innerHeight
+                  )
+                : 0;
+            if (
+              skipOuterSyncFromGrow > 0 &&
+              Math.abs(outerYNow - lastOuterSyncY) < 1
+            ) {
+              // Update `lastInnerAfterGrow` so the next user-driven
+              // sync that follows a subsequent wrapper grow can still
+              // tell whether the iframe needs to re-pin. Don't drain
+              // the counter here — let it drain once per scroll event
+              // on the next user-driven sync, so we don't accidentally
+              // skip legit scroll events.
+              lastInnerAfterGrow = innerYNow;
+              lastInnerMaxAfterGrow = innerMaxNow;
+              // Conservative: keep the existing pin. The iframe
+              // doesn't know about the wrapper grow, and that's
+              // fine — when the user next scrolls, outerToInner
+              // will run with a fresh wrapper geometry and re-pin
+              // to the correct offset.
+              return;
+            }
+            lastOuterSyncY = outerYNow;
+
             // Skip sync entirely when the wrapper isn't intersecting
             // the viewport — i.e. the user has scrolled past this
             // section into another section of the page. Without
