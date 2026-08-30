@@ -23,10 +23,15 @@ import {
   updateMenuItemAction,
   type MenuItemFormState
 } from './actions';
+import { TargetField, type TargetType } from '../../TargetField';
 
 type Props = {
   item: MenuItemNode;
   depth: number;
+  /** Server-resolved id → label for every target currently linked anywhere
+      in the menu. Passed through to `<TargetField>` so the picker trigger
+      shows the friendly name on first render. */
+  labelMap: Record<string, string>;
   /** Editable rows get the "Sửa" button + inline form. */
   editable: boolean;
   /** Draggable rows wire up onDragStart/onDragOver/onDrop. */
@@ -53,6 +58,7 @@ function hrefFor(item: MenuItemNode): string {
 export function MenuItemRow({
   item,
   depth,
+  labelMap,
   editable,
   draggable,
   isDragSource,
@@ -70,9 +76,19 @@ export function MenuItemRow({
     FormData
   >(updateMenuItemAction, undefined);
 
+  // Edit form needs its own controlled targetType so EXTERNAL vs PAGE/POST/
+  // CATEGORY swap immediately as the user changes the select.
+  const [editType, setEditType] = useState<TargetType>(item.targetType);
+
   useEffect(() => {
     if (state?.ok === true) setEditing(false);
   }, [state]);
+
+  // If the underlying item's type ever changes (e.g. parent rebuilds the
+  // tree after a save), keep the local edit select in sync.
+  useEffect(() => {
+    setEditType(item.targetType);
+  }, [item.targetType]);
 
   const href = hrefFor(item);
 
@@ -100,7 +116,10 @@ export function MenuItemRow({
               <label className={labelClass}>Target type</label>
               <select
                 name="targetType"
-                defaultValue={item.targetType}
+                value={editType}
+                onChange={(e) =>
+                  setEditType(e.currentTarget.value as TargetType)
+                }
                 className={inputClass}
               >
                 <option value="EXTERNAL">External URL</option>
@@ -111,27 +130,14 @@ export function MenuItemRow({
             </div>
           </div>
 
-          <div>
-            <label className={labelClass}>External URL (nếu EXTERNAL)</label>
-            <input
-              name="externalUrl"
-              type="url"
-              defaultValue={item.externalUrl ?? ''}
-              className={inputClass}
-              placeholder="https://…"
-            />
-          </div>
-          <div>
-            <label className={labelClass}>
-              Target ID (nếu PAGE / POST / CATEGORY)
-            </label>
-            <input
-              name="targetId"
-              defaultValue={item.targetId ?? ''}
-              className={inputClass}
-              placeholder="cuid của target…"
-            />
-          </div>
+          <TargetField
+            type={editType}
+            currentExternalUrl={item.externalUrl}
+            currentTargetId={item.targetId}
+            currentTargetLabel={
+              item.targetId ? labelMap[item.targetId] ?? null : null
+            }
+          />
 
           <div className="flex items-center gap-4">
             <label className="flex items-center gap-2 text-[12px] text-ink-80">
@@ -286,6 +292,7 @@ export function MenuItemRow({
               key={c.id}
               item={c}
               depth={depth + 1}
+              labelMap={labelMap}
               editable={false}
               draggable={false}
               isDragSource={false}

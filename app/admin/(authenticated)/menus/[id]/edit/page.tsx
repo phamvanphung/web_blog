@@ -62,6 +62,8 @@ async function toggleVisibleAction(formData: FormData) {
   if (item) revalidatePath(`/admin/menus/${item.menuId}/edit`);
 }
 
+type LabelMap = Record<string, string>;
+
 export default async function MenuEditPage({
   params
 }: {
@@ -74,6 +76,54 @@ export default async function MenuEditPage({
 
   const tree = await buildMenuTreeFor(id);
   const serialisableTree = JSON.parse(JSON.stringify(tree));
+
+  // Build a labelMap for every PAGE/POST/CATEGORY target currently linked
+  // anywhere in this menu's tree, so the picker trigger button in each row
+  // can render the friendly name on first paint without an extra round-trip.
+  const targetIdsByType: Record<'PAGE' | 'POST' | 'CATEGORY', string[]> = {
+    PAGE: [],
+    POST: [],
+    CATEGORY: []
+  };
+  const walk = (nodes: typeof tree): void => {
+    for (const n of nodes) {
+      if (n.targetType !== 'EXTERNAL' && n.targetId) {
+        targetIdsByType[n.targetType].push(n.targetId);
+      }
+      if (n.children.length) walk(n.children);
+    }
+  };
+  walk(tree);
+
+  const [pages, posts, categories] = await Promise.all([
+    targetIdsByType.PAGE.length
+      ? db.page.findMany({
+          where: { id: { in: targetIdsByType.PAGE } },
+          select: { id: true, title: true }
+        })
+      : Promise.resolve([] as { id: string; title: string }[]),
+    targetIdsByType.POST.length
+      ? db.post.findMany({
+          where: {
+            id: { in: targetIdsByType.POST },
+            status: 'PUBLISHED',
+            deletedAt: null
+          },
+          select: { id: true, title: true }
+        })
+      : Promise.resolve([] as { id: string; title: string }[]),
+    targetIdsByType.CATEGORY.length
+      ? db.category.findMany({
+          where: { id: { in: targetIdsByType.CATEGORY } },
+          select: { id: true, name: true }
+        })
+      : Promise.resolve([] as { id: string; name: string }[])
+  ]);
+
+  const labelMap: LabelMap = {};
+  for (const p of pages) labelMap[p.id] = p.title;
+  for (const p of posts) labelMap[p.id] = p.title;
+  for (const c of categories) labelMap[c.id] = c.name;
 
   const inputClass =
     'h-11 w-full rounded-11 bg-canvas-parchment px-4 text-[15px] text-ink border border-transparent outline-none focus:border-primary-focus focus:bg-canvas';
@@ -114,6 +164,7 @@ export default async function MenuEditPage({
       <MenuEditor
         menuId={id}
         items={serialisableTree}
+        labelMap={labelMap}
         addAction={addItemAction}
         deleteAction={deleteItemAction}
         toggleVisibleAction={toggleVisibleAction}

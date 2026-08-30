@@ -4,10 +4,18 @@ import { useState, useTransition } from 'react';
 import { Button } from '@/components/ui/Button';
 import type { MenuItemNode } from '@/modules/menus/server/tree';
 import { MenuItemRow } from './[id]/edit/MenuItemRow';
+import { TargetField, type TargetType } from './TargetField';
 
 type Props = {
   menuId: string;
   items: MenuItemNode[];
+  /**
+   * Pre-resolved id → label for every PAGE/POST/CATEGORY target that
+   * currently appears anywhere in this menu's tree (including nested
+   * children). Used by `MenuItemRow` / `TargetField` to render the
+   * trigger button label without a round-trip.
+   */
+  labelMap: Record<string, string>;
   addAction: (formData: FormData) => Promise<void>;
   deleteAction: (formData: FormData) => Promise<void>;
   toggleVisibleAction: (formData: FormData) => Promise<void>;
@@ -21,6 +29,7 @@ const labelClass = 'mb-1 block text-[13px] text-ink-80';
 export function MenuEditor({
   menuId,
   items,
+  labelMap,
   addAction,
   deleteAction,
   toggleVisibleAction,
@@ -31,6 +40,10 @@ export function MenuEditor({
   //   • disable drag while a reorder server action is in flight.
   const [dragId, setDragId] = useState<string | null>(null);
   const [isReordering, startReorderTransition] = useTransition();
+
+  // Add form needs its own controlled targetType so the `externalUrl` /
+  // `targetId` branch swaps immediately as the user picks PAGE/POST/…
+  const [addType, setAddType] = useState<TargetType>('EXTERNAL');
 
   const handleDragStart = (id: string) => setDragId(id);
   const handleDragEnd = () => setDragId(null);
@@ -73,7 +86,8 @@ export function MenuEditor({
             <label className={labelClass}>Target type</label>
             <select
               name="targetType"
-              defaultValue="EXTERNAL"
+              value={addType}
+              onChange={(e) => setAddType(e.currentTarget.value as TargetType)}
               className={inputClass}
             >
               <option value="EXTERNAL">External URL</option>
@@ -82,23 +96,7 @@ export function MenuEditor({
               <option value="CATEGORY">Category</option>
             </select>
           </div>
-          <div>
-            <label className={labelClass}>External URL (nếu EXTERNAL)</label>
-            <input
-              name="externalUrl"
-              type="url"
-              placeholder="https://…"
-              className={inputClass}
-            />
-          </div>
-        </div>
-        <div>
-          <label className={labelClass}>Target ID (nếu PAGE / POST / CATEGORY)</label>
-          <input
-            name="targetId"
-            className={inputClass}
-            placeholder="cuid của target…"
-          />
+          <TargetField type={addType} />
         </div>
         <Button type="submit" variant="primary-pill" size="sm">
           + Thêm item
@@ -117,6 +115,7 @@ export function MenuEditor({
                 key={it.id}
                 item={it}
                 depth={0}
+                labelMap={labelMap}
                 editable={true}
                 draggable={!isReordering}
                 isDragSource={isDragSource}
