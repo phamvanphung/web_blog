@@ -4,7 +4,7 @@ import path from 'node:path';
 export default defineConfig({
   test: {
     environment: 'node',
-    include: ['tests/unit/**/*.test.ts'],
+    include: ['tests/unit/**/*.test.ts', 'tests/lib/**/*.test.ts'],
     // Load .env so modules that read DATABASE_URL at import time (lib/db.ts)
     // don't throw when tests don't pass env explicitly.
     setupFiles: ['dotenv/config', 'tests/unit/setup.ts'],
