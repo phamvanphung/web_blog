@@ -3,8 +3,9 @@ import type { Metadata } from 'next';
 import { Container } from '@/components/ui/Container';
 import { Tile } from '@/components/ui/Tile';
 import { ContactForm } from '@/components/site/ContactForm';
+import { ChatButtons } from '@/components/site/ChatButtons';
 import { buildMetadata } from '@/lib/seo';
-import { getContactEmail } from '@/lib/contact';
+import { getContactChannels, getContactEmail } from '@/lib/contact';
 
 export const metadata: Metadata = buildMetadata({
   title: 'Liên hệ — 9ent',
@@ -16,6 +17,9 @@ export default async function ContactPage() {
   // Resolve the same cached contact email the Footer uses, so a Settings
   // change in /admin/settings (key `contact.email`) propagates here too.
   const email = await getContactEmail();
+  // Chat channels (Zalo + Messenger). ChatButtons returns null when
+  // neither ID is configured, so the section disappears entirely.
+  const channels = await getContactChannels();
   return (
     <Tile tone="parchment">
       <Container width="narrow" className="py-section">
@@ -33,6 +37,11 @@ export default async function ContactPage() {
         <div className="mt-10">
           <ContactForm />
         </div>
+        <ChatButtons
+          zaloPhone={channels.zaloPhone}
+          messengerPageId={channels.messengerPageId}
+          variant="inline"
+        />
       </Container>
     </Tile>
   );

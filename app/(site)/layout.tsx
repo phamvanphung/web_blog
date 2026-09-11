@@ -4,9 +4,10 @@ import { headers } from 'next/headers';
 import { Header } from '@/components/site/Header';
 import { Footer } from '@/components/site/Footer';
 import { PopupLayer } from '@/components/site/PopupLayer';
+import { ChatFloatingWidget } from '@/components/site/ChatFloatingWidget';
 import { buildMetadata } from '@/lib/seo';
 import { getBrand, getSiteName } from '@/lib/brand';
-import { getContactEmail } from '@/lib/contact';
+import { getContactChannels, getContactEmail } from '@/lib/contact';
 import { getActivePopupsForPath } from '@/modules/popups/server/public';
 
 // Async metadata — reads the same brand cache as the layout below.
@@ -25,6 +26,11 @@ export default async function SiteLayout({ children }: { children: ReactNode }) 
   // unset — Footer / metadata keep the "9ent" default from `brand.siteName`.
   const headerSiteName = await getSiteName();
   const contactEmail = await getContactEmail();
+  // Chat channels — read once per request alongside brand/contact. The
+  // ChatFloatingWidget below is conditional on the admin toggle
+  // (`chat.floatingEnabled`); the inline section in /lien-he always
+  // renders, but ChatButtons inside it returns null when no IDs are set.
+  const channels = await getContactChannels();
 
   // middleware stamps x-pathname on every non-static request. Fall back
   // to '/' so HOMEPAGE-trigger popups still match when the header is
@@ -43,6 +49,12 @@ export default async function SiteLayout({ children }: { children: ReactNode }) 
       <main className="flex-1">{children}</main>
       <Footer siteName={brand.siteName} tagline={brand.taglineLong} email={contactEmail} />
       <PopupLayer popups={popups} />
+      {channels.floatingEnabled && (
+        <ChatFloatingWidget
+          zaloPhone={channels.zaloPhone}
+          messengerPageId={channels.messengerPageId}
+        />
+      )}
     </div>
   );
 }
