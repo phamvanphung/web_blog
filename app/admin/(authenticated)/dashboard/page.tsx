@@ -3,49 +3,91 @@ import { db } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
+type RecentPost = { id: string; title: string; status: string; updatedAt: Date };
+
+type DashboardStats = {
+  posts: number;
+  drafts: number;
+  published: number;
+  users: number;
+  media: number;
+  contacts: number;
+  categories: number;
+  tags: number;
+  recentPosts: RecentPost[];
+};
+
+const EMPTY_STATS: DashboardStats = {
+  posts: 0,
+  drafts: 0,
+  published: 0,
+  users: 0,
+  media: 0,
+  contacts: 0,
+  categories: 0,
+  tags: 0,
+  recentPosts: []
+};
+
 export default async function DashboardPage() {
-  let posts = 0;
-  let drafts = 0;
-  let published = 0;
-  let users = 0;
-  let media = 0;
-  let contacts = 0;
-  let categories = 0;
-  let tags = 0;
-  let recentPosts: Array<{ id: string; title: string; status: string; updatedAt: Date }> = [];
+  let stats: DashboardStats | null = null;
   let dbDown = false;
 
   try {
-    const [pCount, dCount, pubCount, uCount, mCount, cCount, catCount, tagCount, recent] =
-      await Promise.all([
-        db.post.count(),
-        db.post.count({ where: { status: 'DRAFT', deletedAt: null } }),
-        db.post.count({ where: { status: 'PUBLISHED', deletedAt: null } }),
-        db.user.count(),
-        db.media.count(),
-        db.contactSubmission.count({ where: { status: 'NEW' } }),
-        db.category.count(),
-        db.tag.count(),
-        db.post.findMany({
-          where: { deletedAt: null },
-          orderBy: { updatedAt: 'desc' },
-          take: 5,
-          select: { id: true, title: true, status: true, updatedAt: true }
-        })
-      ]);
-    posts = pCount;
-    drafts = dCount;
-    published = pubCount;
-    users = uCount;
-    media = mCount;
-    contacts = cCount;
-    categories = catCount;
-    tags = tagCount;
-    recentPosts = recent;
+    // ONE pool acquire for all 8 counts. UNION ALL beats Promise.all of
+    // count() because (a) 8 SQL statements share one round-trip, (b) one
+    // pool slot instead of 8 in flight, (c) each branch is independent so
+    // no risk of correlated-subquery miscounts. `posts` intentionally
+    // omits the soft-delete filter to match the original `db.post.count()`
+    // (all rows including soft-deleted); drafts / published keep
+    // `deletedAt IS NULL` to match the previous counts.
+    const rows = await db.$queryRaw<Array<{ k: string; n: bigint }>>`
+      SELECT 'posts' AS k, COUNT(*) AS n FROM Post
+      UNION ALL
+      SELECT 'drafts' AS k, COUNT(*) AS n FROM Post WHERE status = 'DRAFT'     AND deletedAt IS NULL
+      UNION ALL
+      SELECT 'published' AS k, COUNT(*) AS n FROM Post WHERE status = 'PUBLISHED' AND deletedAt IS NULL
+      UNION ALL
+      SELECT 'users' AS k, COUNT(*) AS n FROM User
+      UNION ALL
+      SELECT 'media' AS k, COUNT(*) AS n FROM Media
+      UNION ALL
+      SELECT 'contacts_new' AS k, COUNT(*) AS n FROM ContactSubmission WHERE status = 'NEW'
+      UNION ALL
+      SELECT 'categories' AS k, COUNT(*) AS n FROM Category
+      UNION ALL
+      SELECT 'tags' AS k, COUNT(*) AS n FROM Tag
+    `;
+    const num = (k: string) => Number(rows.find((r) => r.k === k)?.n ?? 0);
+
+    // findMany stays separate — the row shape is different from the count
+    // UNION, and merging it would complicate the SELECT.
+    const recent = await db.post.findMany({
+      where: { deletedAt: null },
+      orderBy: { updatedAt: 'desc' },
+      take: 5,
+      select: { id: true, title: true, status: true, updatedAt: true }
+    });
+
+    stats = {
+      posts: num('posts'),
+      drafts: num('drafts'),
+      published: num('published'),
+      users: num('users'),
+      media: num('media'),
+      contacts: num('contacts_new'),
+      categories: num('categories'),
+      tags: num('tags'),
+      recentPosts: recent
+    };
   } catch {
+    // DB unreachable: UI shows the "Database chưa kết nối" banner below.
+    // `stats` stays null → EMPTY_STATS fallback (all counts render as 0,
+    // recent posts list shows "Chưa có bài viết").
     dbDown = true;
-    // DB unreachable: UI shows a banner via {dbDown && ...} further down.
   }
+
+  const s = stats ?? EMPTY_STATS;
 
   return (
     <div>
@@ -62,26 +104,30 @@ export default async function DashboardPage() {
       )}
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <Stat label="Bài viết" sub={`${published} đã xuất bản / ${drafts} nháp`} href="/admin/posts" />
-        <Stat label="Users" sub={`${users} tài khoản`} href="/admin/users" />
-        <Stat label="Media" sub={`${media} ảnh`} href="/admin/media" />
+        <Stat
+          label="Bài viết"
+          sub={`${s.published} đã xuất bản / ${s.drafts} nháp`}
+          href="/admin/posts"
+        />
+        <Stat label="Users" sub={`${s.users} tài khoản`} href="/admin/users" />
+        <Stat label="Media" sub={`${s.media} ảnh`} href="/admin/media" />
         <Stat
           label="Liên hệ"
-          sub={contacts > 0 ? `${contacts} mới` : 'Không có mới'}
+          sub={s.contacts > 0 ? `${s.contacts} mới` : 'Không có mới'}
           href="/admin/contacts"
         />
-        <Stat label="Chủ đề" sub={`${categories} categories`} href="/admin/categories" />
-        <Stat label="Tags" sub={`${tags} tags`} href="/admin/tags" />
+        <Stat label="Chủ đề" sub={`${s.categories} categories`} href="/admin/categories" />
+        <Stat label="Tags" sub={`${s.tags} tags`} href="/admin/tags" />
         <Stat label="Menus" sub="Cấu hình nav" href="/admin/menus" />
         <Stat label="Settings" sub="Key/value" href="/admin/settings" />
       </div>
 
       <h2 className="mb-4 mt-12 text-[21px] font-semibold tracking-tight">Bài viết gần đây</h2>
-      {recentPosts.length === 0 ? (
+      {s.recentPosts.length === 0 ? (
         <p className="text-[13px] text-ink-48">Chưa có bài viết.</p>
       ) : (
         <ul className="divide-y divide-hairline border-y border-hairline">
-          {recentPosts.map((p) => (
+          {s.recentPosts.map((p) => (
             <li key={p.id} className="py-3">
               <Link
                 href={`/admin/posts/${p.id}/edit`}
