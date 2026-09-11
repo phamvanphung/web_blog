@@ -8,8 +8,8 @@
 
 import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
-import { cachedGetSetting } from '@/modules/settings/server';
-import type { ThemeKey } from '@/modules/settings/types';
+import { cachedGetSettings } from '@/modules/settings/server';
+import { THEME_KEYS, type ThemeKey } from '@/modules/settings/types';
 
 // DEFAULT_THEME_HEX / HEX_REGEX / isValidHex live in the client-safe
 // `modules/settings/theme-defaults.ts` so the admin form can import them
@@ -31,10 +31,13 @@ export type ResolvedTheme = Record<ThemeKey, string | null>;
 /**
  * Resolve all 8 theme colors from the Setting table.
  *
- * - `cachedGetSetting` wraps each lookup in `unstable_cache` keyed on the
- *   individual `settings:<key>` tag with a 10-minute TTL.
- * - The outer `unstable_cache` bundles them so a single admin write can
- *   invalidate all 8 with one `revalidateTag(THEME_TAG)`.
+ * - `cachedGetSettings('theme', THEME_KEYS)` batches the lookup into ONE
+ *   `findMany({ where: { key: { in: THEME_KEYS } } })` → ONE pool acquire.
+ *   Previously each key went through its own `cachedGetSetting`, so a
+ *   cache miss after `revalidateTag(THEME_TAG)` fired 8 concurrent
+ *   `findUnique` calls and could exhaust the pool under load.
+ * - Tagged with `THEME_TAG` AND every per-key tag, so admin writes that
+ *   invalidate via either path still bust the cache.
  * - Falls back to `DEFAULT_THEME_HEX` (from tokens.css) when the DB row
  *   is missing — this lets the system boot cleanly on a fresh DB before
  *   the admin opens the theme page.
@@ -43,26 +46,20 @@ export const getTheme = cache(
   (): Promise<ResolvedTheme> =>
     unstable_cache(
       async () => {
-        const [primary, secondary, surfaceCanvas, surfaceWarm, surfaceDark, inkHeading, hairline, badge] =
-          await Promise.all([
-            cachedGetSetting('theme.primary'),
-            cachedGetSetting('theme.secondary'),
-            cachedGetSetting('theme.surface.canvas'),
-            cachedGetSetting('theme.surface.warm'),
-            cachedGetSetting('theme.surface.dark'),
-            cachedGetSetting('theme.ink.heading'),
-            cachedGetSetting('theme.hairline'),
-            cachedGetSetting('theme.badge')
-          ]);
+        const rows = await cachedGetSettings('theme', THEME_KEYS);
         return {
-          'theme.primary': primary ?? DEFAULT_THEME_HEX['theme.primary'],
-          'theme.secondary': secondary ?? DEFAULT_THEME_HEX['theme.secondary'],
-          'theme.surface.canvas': surfaceCanvas ?? DEFAULT_THEME_HEX['theme.surface.canvas'],
-          'theme.surface.warm': surfaceWarm ?? DEFAULT_THEME_HEX['theme.surface.warm'],
-          'theme.surface.dark': surfaceDark ?? DEFAULT_THEME_HEX['theme.surface.dark'],
-          'theme.ink.heading': inkHeading ?? DEFAULT_THEME_HEX['theme.ink.heading'],
-          'theme.hairline': hairline ?? DEFAULT_THEME_HEX['theme.hairline'],
-          'theme.badge': badge ?? DEFAULT_THEME_HEX['theme.badge']
+          'theme.primary': rows['theme.primary'] ?? DEFAULT_THEME_HEX['theme.primary'],
+          'theme.secondary': rows['theme.secondary'] ?? DEFAULT_THEME_HEX['theme.secondary'],
+          'theme.surface.canvas':
+            rows['theme.surface.canvas'] ?? DEFAULT_THEME_HEX['theme.surface.canvas'],
+          'theme.surface.warm':
+            rows['theme.surface.warm'] ?? DEFAULT_THEME_HEX['theme.surface.warm'],
+          'theme.surface.dark':
+            rows['theme.surface.dark'] ?? DEFAULT_THEME_HEX['theme.surface.dark'],
+          'theme.ink.heading':
+            rows['theme.ink.heading'] ?? DEFAULT_THEME_HEX['theme.ink.heading'],
+          'theme.hairline': rows['theme.hairline'] ?? DEFAULT_THEME_HEX['theme.hairline'],
+          'theme.badge': rows['theme.badge'] ?? DEFAULT_THEME_HEX['theme.badge']
         };
       },
       ['theme'],

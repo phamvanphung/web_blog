@@ -10,13 +10,28 @@
 
 import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
-import { cachedGetSetting, BRAND_TAG } from '@/modules/settings/server';
+import { cachedGetSetting, cachedGetSettings, BRAND_TAG } from '@/modules/settings/server';
 
 const DEFAULT_SITE_NAME = '9ent';
 const DEFAULT_TAGLINE = 'Blog công ty 9ent';
 const DEFAULT_HOME_HREF = '/';
 const DEFAULT_LOGO_URL = '/logo.svg';
 const DEFAULT_FAVICON_URL = '/favicon.ico';
+const DEFAULT_TAGLINE_LONG =
+  'Show dự án, chia sẻ quá trình làm — nơi khách hàng hiện hữu và tiềm năng thấy cách chúng tôi làm việc.';
+
+/**
+ * Brand-affecting keys, read together as one batched `findMany` via
+ * `cachedGetSettings`. Adding a new brand key here is the ONLY place to
+ * touch — every consumer of `getBrand()` picks it up automatically.
+ */
+const BRAND_KEYS = [
+  'site.name',
+  'site.tagline',
+  'site.homeHref',
+  'site.logo',
+  'site.favicon'
+] as const;
 
 export type Brand = {
   siteName: string;
@@ -45,19 +60,20 @@ export async function getHomeHref(): Promise<string> {
 export const getBrand = cache((): Promise<Brand> =>
   unstable_cache(
     async () => {
-      const [name, tagline, homeHref, logoUrl, faviconUrl] = await Promise.all([
-        cachedGetSetting('site.name'),
-        cachedGetSetting('site.tagline'),
-        cachedGetSetting('site.homeHref'),
-        cachedGetSetting('site.logo'),
-        cachedGetSetting('site.favicon')
-      ]);
+      // ONE pool acquire instead of five. cachedGetSettings batches the
+      // findMany; `BRAND_TAG` keeps admin writes invalidating this group
+      // cache as before (per-key tags are also wired so a write to any
+      // single key still busts the cache).
+      const rows = await cachedGetSettings('brand', BRAND_KEYS);
+      const name = rows['site.name'];
+      const tagline = rows['site.tagline'];
+      const homeHref = rows['site.homeHref'];
+      const logoUrl = rows['site.logo'];
+      const faviconUrl = rows['site.favicon'];
       return {
         siteName: name?.trim() || DEFAULT_SITE_NAME,
         tagline: tagline?.trim() || DEFAULT_TAGLINE,
-        taglineLong:
-          tagline?.trim() ||
-          'Show dự án, chia sẻ quá trình làm — nơi khách hàng hiện hữu và tiềm năng thấy cách chúng tôi làm việc.',
+        taglineLong: tagline?.trim() || DEFAULT_TAGLINE_LONG,
         homeHref: homeHref?.trim() || DEFAULT_HOME_HREF,
         logoUrl: logoUrl?.trim() || DEFAULT_LOGO_URL,
         faviconUrl: faviconUrl?.trim() || DEFAULT_FAVICON_URL
