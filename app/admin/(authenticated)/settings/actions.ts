@@ -12,6 +12,22 @@ const SettingUpdate = z.object({
   value: z.string().max(2000)
 });
 
+// Per-key validation schemas. Map keys to stricter shapes than the generic
+// SettingUpdate (which only bounds length). The runtime dispatcher picks the
+// strictest applicable schema; keys not listed here fall back to SettingUpdate.
+const KEY_SCHEMAS: Record<string, z.ZodType<string>> = {
+  'chat.zaloPhone': z
+    .string()
+    .trim()
+    .max(20)
+    .regex(/^[\d\s\-+()]*$/, 'Chỉ chứa chữ số và dấu + - ( ) khoảng trắng'),
+  'chat.messengerPageId': z
+    .string()
+    .trim()
+    .regex(/^\d{6,30}$/, 'Page ID phải là số, 6-30 chữ số'),
+  'chat.floatingEnabled': z.enum(['true', 'false'])
+};
+
 export type SettingFormState = { ok: true } | { ok: false; error: string };
 
 export async function updateSettingAction(
@@ -20,13 +36,27 @@ export async function updateSettingAction(
 ): Promise<SettingFormState> {
   const me = await requireRole('ADMIN');
 
-  const parsed = SettingUpdate.safeParse({
-    key: String(formData.get('key') ?? ''),
-    value: String(formData.get('value') ?? '')
-  });
-  if (!parsed.success) {
+  const key = String(formData.get('key') ?? '');
+  const value = String(formData.get('value') ?? '');
+
+  // Generic length check first (cheap, runs on every key).
+  const baseParsed = SettingUpdate.safeParse({ key, value });
+  if (!baseParsed.success) {
     return { ok: false, error: 'Key/value không hợp lệ (key 1–80 chars, value ≤ 2000 chars).' };
   }
+
+  // Per-key stricter validation if a schema is registered. Empty value
+  // is allowed (admin clearing a key); only non-empty values are validated.
+  const strict = KEY_SCHEMAS[key];
+  if (strict && value.trim().length > 0) {
+    const strictParsed = strict.safeParse(value);
+    if (!strictParsed.success) {
+      const issue = strictParsed.error.issues[0]?.message ?? 'Giá trị không hợp lệ';
+      return { ok: false, error: issue };
+    }
+  }
+
+  const parsed = baseParsed;
 
   await upsertSetting(parsed.data.key, parsed.data.value);
 

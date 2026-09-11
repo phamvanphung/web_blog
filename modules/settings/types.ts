@@ -30,7 +30,10 @@ export type SettingKey =
   | 'theme.surface.dark'
   | 'theme.ink.heading'
   | 'theme.hairline'
-  | 'theme.badge';
+  | 'theme.badge'
+  | 'chat.zaloPhone'
+  | 'chat.messengerPageId'
+  | 'chat.floatingEnabled';
 
 export type SettingsMap = Partial<Record<SettingKey, string>>;
 

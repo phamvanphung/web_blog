@@ -9,7 +9,7 @@ import { THEME_LABELS } from '@/modules/settings/types';
 export type SettingMeta = {
   label: string;
   description: string;
-  group: 'site' | 'contact' | 'social' | 'analytics' | 'newsletter' | 'seo' | 'content' | 'theme';
+  group: 'site' | 'contact' | 'social' | 'analytics' | 'newsletter' | 'seo' | 'content' | 'theme' | 'chat';
 };
 
 export const SETTING_META: Record<SettingKey, SettingMeta> = {
@@ -112,7 +112,25 @@ export const SETTING_META: Record<SettingKey, SettingMeta> = {
   'theme.surface.dark': { ...THEME_LABELS['theme.surface.dark'], group: 'theme' },
   'theme.ink.heading': { ...THEME_LABELS['theme.ink.heading'], group: 'theme' },
   'theme.hairline': { ...THEME_LABELS['theme.hairline'], group: 'theme' },
-  'theme.badge': { ...THEME_LABELS['theme.badge'], group: 'theme' }
+  'theme.badge': { ...THEME_LABELS['theme.badge'], group: 'theme' },
+  'chat.zaloPhone': {
+    label: 'Số điện thoại Zalo',
+    description:
+      'Số ĐT đăng ký Zalo (vd: 0912345678 hoặc +84 912 345 678). Tạo nút "Chat Zalo" trên trang liên hệ và widget nổi. Để trống = ẩn nút.',
+    group: 'chat'
+  },
+  'chat.messengerPageId': {
+    label: 'Messenger Page ID',
+    description:
+      'Page ID Facebook dạng số (vd: 123456789012345, 6-30 chữ số). Tạo nút "Chat Messenger". Để trống = ẩn nút.',
+    group: 'chat'
+  },
+  'chat.floatingEnabled': {
+    label: 'Hiện widget nổi chat',
+    description:
+      'Bật/tắt widget nổi góc phải-dưới (2 nút Zalo + Messenger). Mặc định BẬT. Nút trong trang Liên hệ vẫn hiện khi tắt widget.',
+    group: 'chat'
+  }
 };
 
 export const GROUP_LABELS: Record<SettingMeta['group'], string> = {
@@ -123,5 +141,6 @@ export const GROUP_LABELS: Record<SettingMeta['group'], string> = {
   newsletter: 'Newsletter',
   seo: 'SEO',
   content: 'Nội dung',
-  theme: 'Giao diện'
+  theme: 'Giao diện',
+  chat: 'Chat'
 };
