@@ -19,7 +19,9 @@ export type IconName =
   | 'megaphone'
   | 'palette'
   | 'close'
-  | 'chevron-down';
+  | 'chevron-down'
+  | 'zalo'
+  | 'messenger';
 
 const PATHS: Record<IconName, string> = {
   // Dashboard — 4 tiles / squares
@@ -106,6 +108,17 @@ const PATHS: Record<IconName, string> = {
   // Chevron down — disclosure / accordion trigger
   'chevron-down':
     '<path d="m6 9 6 6 6-6"></path>',
+
+  // Zalo — chat bubble (Zalo brand generic-ish). Brand colour applied
+  // at component level, not in the icon.
+  zalo:
+    '<path d="M21 12a8 8 0 0 1-12.4 6.7L3 20l1.4-4.6A8 8 0 1 1 21 12z"></path>',
+
+  // Messenger — chat bubble with lightning bolt (Messenger brand
+  // generic-ish). Brand colour applied at component level.
+  messenger:
+    '<path d="M21 11.5a8.4 8.4 0 0 1-12.5 7.3L3 20l1.3-4.4A8.4 8.4 0 1 1 21 11.5z"></path>' +
+    '<path d="m11 9 2 2 4-4"></path>',
 };
 
 type Props = SVGProps<SVGSVGElement> & {
