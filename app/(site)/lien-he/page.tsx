@@ -35,13 +35,20 @@ export default async function ContactPage() {
           hoặc điền form bên dưới — chúng tôi phản hồi trong 24 giờ làm việc.
         </p>
         <div className="mt-10">
-          <ContactForm />
+          {/* Chat buttons render inside the form's action row as siblings
+              of Submit (`bare` removes the wrapper div) so all 3 share
+              the row width evenly via flex-1. */}
+          <ContactForm
+            actionSlot={
+              <ChatButtons
+                zaloPhone={channels.zaloPhone}
+                messengerPageId={channels.messengerPageId}
+                variant="inline"
+                bare
+              />
+            }
+          />
         </div>
-        <ChatButtons
-          zaloPhone={channels.zaloPhone}
-          messengerPageId={channels.messengerPageId}
-          variant="inline"
-        />
       </Container>
     </Tile>
   );

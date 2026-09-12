@@ -1,6 +1,7 @@
 // components/site/ContactForm.tsx
 'use client';
 
+import type { ReactNode } from 'react';
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { submitContact } from '@/modules/contact/server';
@@ -29,20 +30,20 @@ async function action(_prev: ActionResult, formData: FormData): Promise<ActionRe
   return { ok: false, error: 'Có lỗi. Vui lòng thử lại sau.' };
 }
 
-function SubmitBtn() {
+function SubmitBtn({ className = '' }: { className?: string }) {
   const { pending } = useFormStatus();
   return (
     <button
       type="submit"
       disabled={pending}
-      className="inline-flex h-11 items-center justify-center rounded-pill bg-primary px-md text-[15px] text-white transition-colors hover:bg-primary-focus disabled:opacity-40 disabled:pointer-events-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-focus"
+      className={`inline-flex h-11 items-center justify-center rounded-pill bg-primary px-8 text-[15px] text-white transition-colors hover:bg-primary-focus disabled:opacity-40 disabled:pointer-events-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-focus ${className}`}
     >
       {pending ? 'Đang gửi…' : 'Gửi'}
     </button>
   );
 }
 
-export function ContactForm() {
+export function ContactForm({ actionSlot }: { actionSlot?: ReactNode }) {
   const [state, formAction] = useActionState<ActionResult, FormData>(action, { ok: false });
   return (
     <form action={formAction} className="space-y-5">
@@ -55,13 +56,22 @@ export function ContactForm() {
         <Field label="Chủ đề" name="subject" />
       </div>
       <Field label="Nội dung" name="message" required textarea rows={6} />
-      <div className="flex items-center gap-4">
-        <SubmitBtn />
-        {state.ok && state.message && (
-          <p className="text-[13px] text-primary">{state.message}</p>
-        )}
-        {!state.ok && state.error && <p className="text-[13px] text-error">{state.error}</p>}
+      {/* Action row: Submit + optional actionSlot share width via flex-1
+          so Gửi sits in the same row as the chat buttons when both are
+          configured. Status messages move to their own row below to
+          avoid breaking the equal-width distribution. */}
+      <div className="mt-2 flex flex-wrap items-center gap-3">
+        <SubmitBtn className="flex-1 sm:flex-none sm:px-12" />
+        {actionSlot}
       </div>
+      {(state.ok && state.message) || (!state.ok && state.error) ? (
+        <p
+          role="status"
+          className={`text-[13px] ${state.ok ? 'text-primary' : 'text-error'}`}
+        >
+          {state.ok ? state.message : state.error}
+        </p>
+      ) : null}
     </form>
   );
 }

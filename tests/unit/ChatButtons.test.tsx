@@ -77,4 +77,60 @@ describe('<ChatButtons>', () => {
       'https://zalo.me/84912345678'
     );
   });
+
+  it('renders brand-logo <img> in floating variant', () => {
+    const { container } = render(
+      <ChatButtons
+        zaloPhone="0912345678"
+        messengerPageId="123456789012345"
+        variant="floating"
+      />
+    );
+    // alt="" maps to role="presentation", not "img" — query via DOM.
+    const imgs = container.querySelectorAll('img');
+    expect(imgs).toHaveLength(2);
+    expect(imgs[0]).toHaveAttribute('src', '/chat/zalo-logo.png');
+    expect(imgs[1]).toHaveAttribute('src', '/chat/messenger-logo.png');
+  });
+});
+
+describe('<ChatButtons bare>', () => {
+  it('returns Fragment (no wrapper) when bare=true', () => {
+    const { container } = render(
+      <ChatButtons
+        zaloPhone="0912345678"
+        messengerPageId="123456789012345"
+        variant="inline"
+        bare
+      />
+    );
+    // render() wraps in a <div>, but inside it the bare Fragment means
+    // the 2 links are direct children of the container — no <div> between
+    // container and the links.
+    expect(container.children).toHaveLength(2);
+    expect(container.firstElementChild?.tagName).toBe('A');
+    expect(screen.getAllByRole('link')).toHaveLength(2);
+  });
+
+  it('adds flex-1 to each button in bare mode so siblings share width', () => {
+    render(
+      <ChatButtons
+        zaloPhone="0912345678"
+        messengerPageId="123456789012345"
+        variant="inline"
+        bare
+      />
+    );
+    const zalo = screen.getByRole('link', { name: /chat qua zalo/i });
+    const messenger = screen.getByRole('link', { name: /chat qua messenger/i });
+    expect(zalo.className).toContain('flex-1');
+    expect(messenger.className).toContain('flex-1');
+  });
+
+  it('still hides both buttons and returns null in bare mode', () => {
+    const { container } = render(
+      <ChatButtons zaloPhone={null} messengerPageId={null} variant="inline" bare />
+    );
+    expect(container).toBeEmptyDOMElement();
+  });
 });
