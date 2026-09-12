@@ -27,8 +27,8 @@ type Props = {
   bare?: boolean;
 };
 
-const ZALO_LOGO_SRC = '/chat/zalo-icon.svg';
-const MESSENGER_LOGO_SRC = '/chat/messenger-logo.svg';
+const ZALO_LOGO_SRC = '/chat/zalo-icon.png';
+const MESSENGER_LOGO_SRC = '/chat/messenger-logo.png';
 
 export function ChatButtons({
   zaloPhone,
