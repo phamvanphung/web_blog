@@ -6,7 +6,8 @@ import { requireRole } from '@/lib/auth';
 import {
   createPopup,
   updatePopup,
-  softDeletePopup
+  softDeletePopup,
+  getPopup
 } from '@/modules/popups/server';
 import type { CreatePopupInput } from '@/modules/popups/types';
 
@@ -94,4 +95,20 @@ export async function deletePopupAction(formData: FormData): Promise<void> {
   await softDeletePopup(id);
   revalidatePath('/admin/popups');
   revalidateTag('popups:public');
+}
+
+/**
+ * Flip a popup's status (PUBLISHED ↔ DRAFT). Used by the list page quick-
+ * action button so admins can turn a popup on/off without opening the edit
+ * form. Delegates to `updatePopup` so audit log + cache invalidation stay
+ * identical to a manual edit. Soft-deleted popups are not toggleable.
+ */
+export async function togglePopupStatusAction(formData: FormData): Promise<void> {
+  await requireRole('ADMIN');
+  const id = asString(formData.get('id'));
+  const popup = await getPopup(id);
+  if (!popup) throw new Error('Popup not found');
+  const nextStatus = popup.status === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED';
+  await updatePopup({ id, status: nextStatus });
+  revalidatePath('/admin/popups');
 }

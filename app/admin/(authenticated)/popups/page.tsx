@@ -3,7 +3,7 @@ import { ButtonLink } from '@/components/ui/ButtonLink';
 import { AdminBreadcrumb } from '@/components/admin/AdminBreadcrumb';
 import { requireRole } from '@/lib/auth';
 import { listPopups } from '@/modules/popups/server';
-import { deletePopupAction } from './actions';
+import { deletePopupAction, togglePopupStatusAction } from './actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,6 +77,26 @@ export default async function PopupsPage() {
                     >
                       Sửa
                     </Link>
+                    <form action={togglePopupStatusAction}>
+                      <input type="hidden" name="id" value={p.id} />
+                      <button
+                        type="submit"
+                        className={
+                          p.status === 'PUBLISHED'
+                            ? 'text-amber-600 hover:underline'
+                            : 'text-success hover:underline'
+                        }
+                        // text-warning/text-success are theme-bound in the
+                        // Tailwind config — amber for off, green for on.
+                        title={
+                          p.status === 'PUBLISHED'
+                            ? 'Chuyển sang Nháp (ẩn khỏi trang public)'
+                            : 'Chuyển sang Đã xuất bản (hiện trên trang public)'
+                        }
+                      >
+                        {p.status === 'PUBLISHED' ? 'Tắt' : 'Bật'}
+                      </button>
+                    </form>
                     <form action={deletePopupAction}>
                       <input type="hidden" name="id" value={p.id} />
                       <button
