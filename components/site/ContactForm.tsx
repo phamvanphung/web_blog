@@ -61,7 +61,7 @@ export function ContactForm({ actionSlot }: { actionSlot?: ReactNode }) {
           configured. Status messages move to their own row below to
           avoid breaking the equal-width distribution. */}
       <div className="mt-2 flex flex-wrap items-center gap-3">
-        <SubmitBtn className="flex-1 sm:flex-none sm:px-12" />
+        <SubmitBtn className="flex-1 sm:px-12" />
         {actionSlot}
       </div>
       {(state.ok && state.message) || (!state.ok && state.error) ? (
