@@ -19,6 +19,18 @@ const globalForPrisma = globalThis as unknown as {
 // v3: append pool tuning (connectionLimit / acquireTimeout / connectTimeout
 // / idleTimeout / keepAliveDelay) as URL query parameters so the mariadb
 // driver parses them at connect time. See `buildDatabaseUrl` for details.
+//
+// IMPORTANT: this cache is used in BOTH dev and production (including
+// `next build`). The previous `NODE_ENV !== 'production'` gate skipped
+// caching in production, which broke `next build` because Next.js build
+// uses worker threads for parallel page rendering — each worker has its
+// own globalThis, and without caching each module load created a fresh
+// mariadb pool. With N workers + N pool creations of 20 conns each, a
+// 6-route build opens 100+ simultaneous connections, MySQL chokes, and
+// the mariadb driver's acquireTimeout (30s) fires, surfacing as
+// `pool timeout: ... active=0 idle=0 limit=20`. Caching unconditionally
+// is safe here because (a) production has no HMR so the cache never
+// goes stale, and (b) deploy = process restart = fresh globalThis.
 const CONFIG_KEY = 'log:error:v3';
 
 /**
@@ -112,10 +124,10 @@ function getPrisma(): PrismaClient {
     return cached;
   }
   const fresh = createPrismaClient();
-  if (process.env.NODE_ENV !== 'production') {
-    globalForPrisma.prisma = fresh;
-    globalForPrisma.__prismaConfigKey = CONFIG_KEY;
-  }
+  // Cache unconditionally (dev + production including `next build`). See
+  // the CONFIG_KEY comment block above for why this is safe and required.
+  globalForPrisma.prisma = fresh;
+  globalForPrisma.__prismaConfigKey = CONFIG_KEY;
   return fresh;
 }
 
