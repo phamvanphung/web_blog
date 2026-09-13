@@ -115,6 +115,17 @@ function isFullDocument(h: string): boolean {
  *    that `<script>` tags inside fragment HTML are inert by design
  *    (the innerHTML parser skips them); admin must use a full
  *    document for script support.
+ *
+ * 3. **Pasted HTML rules** (full-document path only). HTML pasted into
+ *    `rawhtml` MUST follow the 8 rules documented at
+ *    `docs/superpowers/specs/2026-09-13-iframe-html-guidelines.md`.
+ *    The wrapper does NOT auto-rewrite the HTML — authors own the
+ *    rules, and HTML that obeys them is also a better standalone
+ *    page if extracted. Below, `setup()` runs a non-blocking scan
+ *    after iframe load and emits up to 4 `console.warn()`s for the
+ *    most common violations (smooth scroll, `body { overflow: hidden }`,
+ *    missing `<html>` background, naked `#anchor` links) so authors
+ *    see them in the dev console without us blocking the paste.
  */
 export function RawHtmlBlock({ html }: Props) {
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -447,6 +458,82 @@ export function RawHtmlBlock({ html }: Props) {
         }
       };
       injectScrollbarHider();
+
+      // Lint pasted HTML — surface the 4 most common iframe-hostile
+      // patterns as console.warn so authors see them in dev tools
+      // without us blocking the paste. Full rulebook:
+      // docs/superpowers/specs/2026-09-13-iframe-html-guidelines.md
+      //
+      // Each check maps to one rule. We check `getComputedStyle` for
+      // Rule 1/3/4 because authors may set the property via inline
+      // `style` or via a `<style>` block — both resolve through the
+      // computed style. Rule 2 scans the DOM for `<a href="#…" >` links
+      // without `target`; we intentionally allow `<a target="_top">`
+      // and externally-targeted anchors because they navigate out of
+      // the iframe cleanly.
+      //
+      // `getComputedStyle` reads happen synchronously here; the parent
+      // call (above) just injected a scrollbar-hiding style that
+      // touches `scrollbar-width` / `touch-action` — neither of which
+      // is read below, so the warnings reflect the original HTML.
+      const lintPastedHtml = () => {
+        try {
+          const idoc = iframe.contentDocument;
+          if (!idoc) return;
+          const htmlEl = idoc.documentElement;
+          const bodyEl = idoc.body;
+          if (!htmlEl || !bodyEl) return;
+          const view = idoc.defaultView;
+          if (!view) return;
+          const SPEC =
+            'docs/superpowers/specs/2026-09-13-iframe-html-guidelines.md';
+
+          // Rule 1 — `html { scroll-behavior: smooth }`
+          const htmlStyle = view.getComputedStyle(htmlEl);
+          if (htmlStyle.scrollBehavior === 'smooth') {
+            console.warn(
+              `[RawHtmlBlock] html { scroll-behavior: smooth } detected — see Rule 1 in ${SPEC}`
+            );
+          }
+
+          // Rule 3 — `body { overflow-y: hidden }` blocks the wrapper's
+          // `measure()` walk (scrollHeight collapses to viewport) and
+          // stops the parent page from getting scroll length. We only
+          // flag `overflow-y: hidden`; `overflow-x: hidden` (very common
+          // for horizontal scroll suppression) doesn't break measurement.
+          const bodyStyle = view.getComputedStyle(bodyEl);
+          if (bodyStyle.overflowY === 'hidden') {
+            console.warn(
+              `[RawHtmlBlock] body { overflow-y: hidden } detected — see Rule 3 in ${SPEC}`
+            );
+          }
+
+          // Rule 4 — `<html>` has no background → dark themes flash
+          // white before CSS applies. Browsers report transparent as
+          // `rgba(0, 0, 0, 0)` from getComputedStyle.
+          const bg = htmlStyle.backgroundColor;
+          if (bg === 'rgba(0, 0, 0, 0)' || bg === 'transparent') {
+            console.warn(
+              `[RawHtmlBlock] <html> has no background set — dark themes may flash white before CSS loads. See Rule 4 in ${SPEC}`
+            );
+          }
+
+          // Rule 2 — naked in-page anchors (`<a href="#id">` without
+          // `target`). Count them so authors see the magnitude on
+          // multi-anchor pages. Externally-targeted anchors and
+          // real-URL anchors are intentionally NOT flagged.
+          const naked = idoc.querySelectorAll('a[href^="#"]:not([target])');
+          if (naked.length > 0) {
+            console.warn(
+              `[RawHtmlBlock] Found ${naked.length} naked in-page anchor link(s) (<a href="#…"> without target) — see Rule 2 in ${SPEC}`
+            );
+          }
+        } catch {
+          // Cross-origin or detached — silently degrade. Spec compliance
+          // is best-effort diagnostics, never a hard error.
+        }
+      };
+      lintPastedHtml();
 
       // Defer initial measure by 2 animation frames so the browser has
       // had time to fully lay out the iframe content. We start with
