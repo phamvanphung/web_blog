@@ -45,20 +45,26 @@ function intEnv(name: string, defaultValue: number): number {
  * re-parsing the URL into individual fields and stays compatible with
  * any existing query params the operator may have on `DATABASE_URL`.
  *
- * Defaults are tuned for a cross-internet MariaDB deployment (DB on a
- * remote VPS, not localhost):
+ * Defaults are tuned for a **localhost** MySQL/MariaDB deployment (DB on
+ * the same host as the app — the common production case for this stack).
+ * Override via env vars when DB lives on a remote VPS over the internet:
  *   - connectionLimit=20: headroom for 13+ concurrent cachedGetSetting
  *     fanout on cache miss + admin dashboard. Capped by server's
  *     `max_connections` (default 151).
  *   - acquireTimeout=30s: absorb transient spikes without 500ing users.
  *   - connectTimeout=5s: cross-internet TCP+TLS handshake to a remote
- *     VPS needs more than the driver default of 1s.
- *   - idleTimeout=600s (10min): MUST be lower than MySQL `@@wait_timeout`
- *     (default 28800s = 8h) so the pool closes idle connections before
- *     the server kills them. Comfortably below common `wait_timeout` and
- *     aggressive firewall idle timers (5–15 min).
+ *     VPS needs more than the driver default of 1s. Localhost connects
+ *     in sub-ms, so this is overkill locally but harmless.
+ *   - idleTimeout=60s (1min): aggressively rotate idle connections so a
+ *     transient burst (config drift, server restart, NAT/firewall
+ *     idle-killer) never leaves the pool with all-zombie connections.
+ *     MUST stay well below MySQL `@@wait_timeout` (default 28800s = 8h).
+ *     Localhost TCP reconnect is sub-ms, so the cost is negligible.
+ *     Bump via DB_POOL_IDLE_TIMEOUT_MS if your DB is on a remote VPS
+ *     with aggressive firewall idle-timers.
  *   - keepAliveDelay=30s: send TCP keep-alive probes to defeat
- *     NAT/firewall idle-killers. mariadb default is 0 (off).
+ *     NAT/firewall idle-killers. mariadb default is 0 (off). Harmless
+ *     on localhost; required for cross-internet deployments.
  *
  * NOTE: mariadb's `idleTimeout` is in SECONDS, not milliseconds. We expose
  * it as `DB_POOL_IDLE_TIMEOUT_MS` for consistency with other DB_*_MS vars
@@ -80,7 +86,7 @@ function buildDatabaseUrl(): string {
   );
   url.searchParams.set(
     'idleTimeout',
-    String(Math.floor(intEnv('DB_POOL_IDLE_TIMEOUT_MS', 600_000) / 1000))
+    String(Math.floor(intEnv('DB_POOL_IDLE_TIMEOUT_MS', 60_000) / 1000))
   );
   url.searchParams.set(
     'keepAliveDelay',
