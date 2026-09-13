@@ -332,3 +332,147 @@ Test function `lintPastedHtml(html: string)` exposed từ `RawHtmlBlock.tsx`:
 - User phải sửa 2 HTML files hiện có (manual, không có migration script).
 
 **Alternative đã loại trừ**: Wrapper rewrite HTML trước khi inject (anchor → target_top, smooth → auto, body overflow override). Lý do loại: parser edge cases (CDATA, comments, inline `<style>` quirks), magic dễ vỡ, debug khó.
+
+
+Có. Nếu mục tiêu là không chỉ “iframe-safe” mà còn mobile UX tốt như trang About, tôi sẽ bổ sung thêm một nhóm rule riêng gọi là Mobile UX Rules.
+
+Rule 9: Mobile-first layout collapse
+Desktop có thể 2–3 cột, nhưng trên mobile phải về 1 cột rõ ràng.
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+Tránh cố giữ 2 cột chỉ vì “vẫn còn đủ chỗ”.
+
+Rule 10: Decorative elements phải được giảm hoặc bỏ trên mobile
+Các thứ như orbit, floating chip, blur ball, mouse-follow glow, 3D tilt không nên giữ nguyên trên màn hình nhỏ.
+
+@media (max-width: 768px) {
+  .visual-orbit,
+  .floating-chip,
+  .cursor-light {
+    display: none;
+  }
+}
+
+Đây là một trong những lý do About cho cảm giác nhẹ hơn Home.
+
+Rule 11: Không giữ min-height lớn chỉ để phục vụ desktop visual
+Ví dụ Home có hero-visual { min-height: 365px; } trên mobile thì vẫn chiếm khá nhiều không gian.
+
+@media (max-width: 768px) {
+  .hero,
+  .hero-visual {
+    min-height: auto;
+  }
+}
+
+Rule 12: CTA trên mobile ưu tiên stack
+Hai button cạnh nhau trên desktop thì được, nhưng mobile nên chuyển thành:
+
+@media (max-width: 640px) {
+  .hero-actions {
+    flex-direction: column;
+  }
+
+  .hero-actions .btn {
+    width: 100%;
+  }
+}
+
+Đây là pattern UX an toàn hơn flex: 1 nhưng vẫn nằm cùng hàng.
+
+Rule 13: Font size không phụ thuộc quá mạnh vào vw
+14vw có thể đẹp ở một số máy nhưng dễ quá lớn hoặc nhảy layout.
+Nên dùng:
+
+font-size: clamp(38px, 10vw, 58px);
+
+Tức là có min và max rõ ràng.
+
+Rule 14: Mobile spacing phải giảm theo hệ thống
+Không chỉ đổi grid, mà phải giảm cả:
+
+section padding
+gap
+card padding
+margin title
+khoảng cách CTA
+
+Ví dụ:
+
+section {
+  padding: 88px 0;
+}
+
+@media (max-width: 768px) {
+  section {
+    padding: 56px 0;
+  }
+}
+
+Rule 15: Interactive effects phải theo input capability
+Không chỉ theo width.
+
+@media (hover: none), (pointer: coarse) {
+  .magnetic,
+  .tilt-card {
+    transform: none !important;
+  }
+}
+
+Mobile touch không cần magnetic button, hover tilt hay mouse glow.
+
+Rule 16: Nội dung phụ có thể ẩn trên mobile
+Không phải mọi thứ desktop có đều cần tồn tại trên mobile.
+Ví dụ:
+
+@media (max-width: 640px) {
+  .quiet-note,
+  .decorative-copy,
+  .secondary-chip {
+    display: none;
+  }
+}
+
+About đang làm điều này tốt hơn Home.
+
+Rule 17: Touch target tối thiểu 44–48px
+Button/link phải đủ lớn để bấm bằng ngón tay:
+
+.btn {
+  min-height: 48px;
+}
+Rule 18: Không dùng absolute positioning cho content chính trên mobile
+position:absolute chỉ nên dành cho decoration. Nội dung chính, CTA, text, card nên ở normal flow để tránh overlap khi chữ tiếng Việt xuống dòng.
+Rule 19: Mobile không nên phụ thuộc hover để hiểu UI
+Nếu card chỉ hiện thông tin hoặc đổi trạng thái khi hover thì mobile sẽ không có trải nghiệm tương đương.
+
+Rule 20: Respect prefers-reduced-motion và chủ động giảm animation trên mobile
+Rule hiện tại của bạn đã có prefers-reduced-motion, nhưng có thể thêm:
+
+@media (max-width: 768px) {
+  .floating,
+  .orbit,
+  .word-animation {
+    animation: none;
+  }
+}
+
+Tức là không cần đợi user bật reduced motion mới giảm hiệu ứng.
+
+Tôi sẽ chia spec của bạn thành 2 tầng:
+
+Rule 1–8 = Iframe Safety
+
+đảm bảo iframe không lỗi scroll, navigation, flicker, asset.
+
+Rule 9–20 = Responsive & Mobile UX
